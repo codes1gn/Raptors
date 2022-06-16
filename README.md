@@ -22,6 +22,15 @@ cargo install
 cargo run
 ```
 
+### Design Doc
+Attempt to keep the core module as compact as possible and make implementation flatten and straight-forward.
+
+We make the abstraction according to the following axioms assumed:
+* Actors:
+* Messages:
+* Supervisors:
+* Scheduler:
+
 ### Contributing
 
 ### License
@@ -29,5 +38,3 @@ This project is licensed under the mit license
 ### Show your support
 Leave a ⭐ if you like this project
 
-***
-Readme made with 💖 using [README Generator by Dhravya Shah](https://github.com/Dhravya/readme-generator)
