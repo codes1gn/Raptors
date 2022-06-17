@@ -24,6 +24,7 @@ cargo run
 
 ### Design Doc
 TODO: make a link here to jump to design doc
+[link text](design_docs/conceptual_model.md)
 
 ### Contributing
 
