@@ -1,5 +1,6 @@
 pub mod messages;
 pub mod actors;
+pub mod executor;
 
 #[cfg(test)]
 mod tests {

@@ -25,6 +25,7 @@ type Message = Box<dyn Any + Send>;
 // 2. DataMsg, support data exchange
 // 3. CommandMsg, operations that instruct the action of 
 // each actor
+// 
 //
 pub struct DummyWorkload {
     payload: usize,
@@ -42,6 +43,9 @@ impl DummyWorkload {
     }
 
     // mock function that will fakely run for that period long
+    // TODO:
+    // 1. change signiture to return values
+    // 2. values may use a value type that defined include possible results
     pub fn mock_run(&self) -> () {
         thread::sleep(time::Duration::from_millis(self.payload as u64));
     }

@@ -1,6 +1,7 @@
 // LICENSE PLACEHOLDER
 //
 use crate::messages;
+use crate::executor;
 
 // placehold for actors
 pub struct Actor {
@@ -18,6 +19,8 @@ impl Actor {
         self.id
     }
 
+    // TODO: make it message passing, test with inter-threads
+    // TODO: gradually support higher granularity parallelism
     pub fn receive(&self, msg: messages::DummyWorkload) -> () {
         self.on_compute(msg);
     }
