@@ -19,7 +19,11 @@ cargo install
 
 ### Usage
 ```
-cargo run
+cargo build // to build the project
+
+cargo run 
+
+cargo test // project all unit tests
 ```
 
 ### Design Doc
