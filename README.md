@@ -21,7 +21,7 @@ cargo install
 ```
 cargo build // to build the project
 
-cargo run 
+cargo run // run the project
 
 cargo test // project all unit tests
 ```
