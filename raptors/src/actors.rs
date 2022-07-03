@@ -164,6 +164,13 @@ mod tests {
         assert_eq!(load.payload(), 16 as usize);
     }
 
+    /// Doc test for actors
+    /// ```
+    /// let load = messages::DummyWorkload::new(16);
+    /// let now = time::Instant::now();
+    /// load.mock_run();
+    /// assert!(now.elapsed() >= time::Duration::from_millis(16));
+    /// ```
     #[test]
     fn workload_mock_run_test() {
         let load = messages::DummyWorkload::new(16);

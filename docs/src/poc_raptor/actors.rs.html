@@ -192,6 +192,13 @@
 <span id="187">187</span>
 <span id="188">188</span>
 <span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
 </pre><pre class="rust"><code><span class="comment">// LICENSE PLACEHOLDER</span>
 <span class="comment">// test</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::messages</span>::{<span class="self">self</span>, <span class="ident">ActorMsg</span>};
@@ -358,6 +365,13 @@ struct ActorData {
         <span class="macro">assert_eq!</span>(<span class="ident">load</span>.<span class="ident">payload</span>(), <span class="number">16</span> <span class="kw">as</span> <span class="ident">usize</span>);
     }
 
+    <span class="doccomment">/// Doc test for actors</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// let load = messages::DummyWorkload::new(16);</span>
+    <span class="doccomment">/// let now = time::Instant::now();</span>
+    <span class="doccomment">/// load.mock_run();</span>
+    <span class="doccomment">/// assert!(now.elapsed() &gt;= time::Duration::from_millis(16));</span>
+    <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">workload_mock_run_test</span>() {
         <span class="kw">let</span> <span class="ident">load</span> <span class="op">=</span> <span class="ident">messages::DummyWorkload::new</span>(<span class="number">16</span>);
