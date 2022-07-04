@@ -16,6 +16,13 @@ use std::{thread, time};
 // 4. consider stream processing and compression designs
 type Message = Box<dyn Any + Send>;
 
+// TODO complete the family of MessageTypes
+// test with simple design at first
+#[derive(Clone, Debug, PartialEq)]
+pub enum TypedMessage {
+    SystemMsg,
+    ActorMsg,
+}
 
 // dummy workload as dummy message but has a timeout for 
 // emulating the execution
@@ -78,5 +85,14 @@ mod tests {
         let now = time::Instant::now();
         load.mock_run();
         assert!(now.elapsed() >= time::Duration::from_millis(16));
+    }
+
+    #[test]
+    fn typed_message_create_and_partialeq_test() {
+        let msg = TypedMessage::SystemMsg;
+        assert_eq!(msg, TypedMessage::SystemMsg);
+
+        let msg = TypedMessage::ActorMsg;
+        assert_eq!(msg, TypedMessage::ActorMsg);
     }
 }

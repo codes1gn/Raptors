@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Keyword",""]],"struct":[["ActorContent",""],["ActorMsg",""],["DummyWorkload",""],["Workload",""]]});
+initSidebarItems({"enum":[["TypedMessage",""]],"struct":[["DummyWorkload",""]]});

@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["actors",""],["executor",""],["messages",""]]});
+initSidebarItems({"mod":[["actors",""],["executor",""],["messages",""],["system",""]]});
