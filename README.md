@@ -27,7 +27,7 @@ cargo test // project all unit tests
 ```
 
 ### DOCUMENTATION
-[Api Doc](https://tianyu9748.github.io/Raptors/)
+[Api Doc](https://codes1gn.github.io/Raptors/)
 
 ### Design Doc
 TODO: make a link here to jump to design doc
