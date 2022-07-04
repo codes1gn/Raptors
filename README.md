@@ -22,8 +22,8 @@ cargo install
 cargo run
 ```
 
-### DOCUMENT
-[api document](https://tianyu9748.github.io/Raptors/)
+### DOCUMENTATION
+[Api Doc](https://tianyu9748.github.io/Raptors/)
 
 ### Design Doc
 TODO: make a link here to jump to design doc

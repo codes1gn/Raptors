@@ -6,6 +6,7 @@ use crate::executor;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time;
 //use uuid::Uuid;
 
 //===----------------------------------------------------------------------===//
@@ -146,9 +147,21 @@ impl Actor {
     }
 }
 
-
-
-
+/// Doc test for actors
+/// #  Examples
+/// ```
+/// use std::time;
+/// use poc_raptor::messages;
+/// 
+/// let load = messages::DummyWorkload::new(16);
+/// let now = time::Instant::now();
+/// load.mock_run();
+/// assert!(now.elapsed() >= time::Duration::from_millis(16));
+// 
+/// ```
+fn workload_mock_run_test_doc() -> () {
+    println!("Test");
+}
 
 // unit tests
 #[cfg(test)]
@@ -164,13 +177,6 @@ mod tests {
         assert_eq!(load.payload(), 16 as usize);
     }
 
-    /// Doc test for actors
-    /// ```
-    /// let load = messages::DummyWorkload::new(16);
-    /// let now = time::Instant::now();
-    /// load.mock_run();
-    /// assert!(now.elapsed() >= time::Duration::from_millis(16));
-    /// ```
     #[test]
     fn workload_mock_run_test() {
         let load = messages::DummyWorkload::new(16);
