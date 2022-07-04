@@ -22,6 +22,9 @@ cargo install
 cargo run
 ```
 
+### DOCUMENTATION
+[Api Doc](https://tianyu9748.github.io/Raptors/)
+
 ### Design Doc
 TODO: make a link here to jump to design doc
 [link text](design_docs/conceptual_model.md)
