@@ -19,6 +19,16 @@ impl Executor {
     }
 }
 
+/// Documentation test
+/// ```
+/// let exec = Executor::new();
+/// let load = messages::DummyWorkload::new(16);
+/// let now = time::Instant::now();
+/// exec.compute(load);
+/// assert!(now.elapsed() >= time::Duration::from_millis(16));
+/// ```
+fn doc_test() -> () {}
+
 // unit tests
 #[cfg(test)]
 
