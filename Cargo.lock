@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "poc_raptor"
+name = "raptors"
 version = "0.1.0"
