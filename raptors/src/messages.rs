@@ -60,6 +60,9 @@ impl DummyWorkload {
 
 /// Documentation test
 /// ```
+/// use raptors::messages;
+/// use std::time;
+///
 /// let load = messages::DummyWorkload::new(16);
 /// let now = time::Instant::now();
 /// load.mock_run();

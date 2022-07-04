@@ -21,9 +21,13 @@ impl Executor {
 
 /// Documentation test
 /// ```
+/// use raptors::executor::Executor;
+/// use raptors::messages::DummyWorkload;
+/// use std::time;
+///
 /// let exec = Executor::new();
-/// let load = messages::DummyWorkload::new(16);
-/// let now = time::Instant::now();
+/// let load = DummyWorkload::new(16);
+/// let now = std::time::Instant::now();
 /// exec.compute(load);
 /// assert!(now.elapsed() >= time::Duration::from_millis(16));
 /// ```
