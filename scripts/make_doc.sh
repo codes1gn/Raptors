@@ -11,5 +11,5 @@ cargo doc --no-deps
 
 # update to github pages source directory
 rm -rf ./docs
-echo "<meta http-equiv=\"refresh\" content=\"0; url=raptors\">" > target/doc/raptors/index.html
+echo "<meta http-equiv=\"refresh\" content=\"0; url=raptors\">" > target/doc/index.html
 cp -r target/doc ./docs
