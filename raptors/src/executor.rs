@@ -19,19 +19,6 @@ impl Executor {
     }
 }
 
-/// Documentation test
-/// ```
-/// use raptors::executor::Executor;
-/// use raptors::messages::DummyWorkload;
-/// use std::time;
-///
-/// let exec = Executor::new();
-/// let load = DummyWorkload::new(16);
-/// let now = std::time::Instant::now();
-/// exec.compute(load);
-/// assert!(now.elapsed() >= time::Duration::from_millis(16));
-/// ```
-fn doc_test() -> () {}
 
 // unit tests
 #[cfg(test)]

@@ -1,5 +1,6 @@
 
 use crate::actors::{Actor};
+use crate::messages::{TypedMessage, SystemMsg};
 
 /// TODO make dedicated mod and move it to there, maybe name it system_config.rs
 /// test SystemConfig creation and get
@@ -156,6 +157,18 @@ impl System {
             None => { self.actors = Some(vec![actor]); },
         };
         0
+    }
+    // TODO support register multiple
+    // TODO support MSG to create actor and register in system
+    
+
+    pub fn on_receive(&self, msg: TypedMessage) -> () {
+        match msg {
+            SystemMsg => {
+                ()
+            },
+            _ => panic!("not implemented"),
+        }
     }
 
     pub fn actors(&self) -> Option<&Vec<Actor>> {

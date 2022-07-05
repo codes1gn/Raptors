@@ -23,6 +23,11 @@ pub enum TypedMessage {
     ActorMsg,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum SystemMsg {
+    CreateActor,
+}
+
 // dummy workload as dummy message but has a timeout for
 // emulating the execution
 //
@@ -55,17 +60,6 @@ impl DummyWorkload {
     }
 }
 
-/// Documentation test
-/// ```
-/// use raptors::messages;
-/// use std::time;
-///
-/// let load = messages::DummyWorkload::new(16);
-/// let now = time::Instant::now();
-/// load.mock_run();
-/// assert!(now.elapsed() >= time::Duration::from_millis(16));
-/// ```
-fn doc_test() -> () {}
 
 // unit tests
 #[cfg(test)]
