@@ -1,18 +1,18 @@
 // LICENSE PLACEHOLDER
 //
-use crate::messages;
 use crate::actors;
+use crate::messages;
 
 // wrap a dedicated executor module that only consider how to do computations
 //
-// TODO: 
-// as a interface, make refactor as Trait and expose to CRT level, 
+// TODO:
+// as a interface, make refactor as Trait and expose to CRT level,
 // make CRT vm to impl this trait
 pub struct Executor {}
 
 impl Executor {
     pub fn new() -> Self {
-        return Self {}
+        return Self {};
     }
     pub fn compute(&self, workload: messages::DummyWorkload) -> () {
         workload.mock_run();

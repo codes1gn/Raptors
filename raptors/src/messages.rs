@@ -3,7 +3,6 @@
 use std::any::Any;
 use std::{thread, time};
 
-
 // message trait is the definition of behaviours that the concept
 // `message` shall obey, in other words, two properties referred.
 // 1. sendable via mailboxes
@@ -24,15 +23,15 @@ pub enum TypedMessage {
     ActorMsg,
 }
 
-// dummy workload as dummy message but has a timeout for 
+// dummy workload as dummy message but has a timeout for
 // emulating the execution
 //
 // TODO: extend this desing into typed messages
 // 1. WorkloadMsg, contains bytecode modules
 // 2. DataMsg, support data exchange
-// 3. CommandMsg, operations that instruct the action of 
+// 3. CommandMsg, operations that instruct the action of
 // each actor
-// 
+//
 //
 pub struct DummyWorkload {
     payload: usize,
@@ -40,11 +39,9 @@ pub struct DummyWorkload {
 
 impl DummyWorkload {
     pub fn new(payload: usize) -> DummyWorkload {
-        return Self {
-            payload: payload,
-        }
+        return Self { payload: payload };
     }
-    
+
     pub fn payload(&self) -> usize {
         self.payload
     }

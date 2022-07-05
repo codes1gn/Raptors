@@ -1,7 +1,7 @@
 // LICENSE PLACEHOLDER
 //
-use crate::messages;
 use crate::executor;
+use crate::messages;
 
 // placehold for actors
 pub struct Actor {
@@ -11,10 +11,7 @@ pub struct Actor {
 
 impl Actor {
     pub fn new(name: String, id: usize) -> Actor {
-        return Self {
-            name: name,
-            id: id,
-        }
+        return Self { name: name, id: id };
     }
 
     pub fn id(&self) -> usize {
@@ -35,16 +32,6 @@ impl Actor {
         workload.mock_run();
     }
 }
-
-/// Documentation test
-/// ```
-///
-/// let load = raptors::messages::DummyWorkload::new(16);
-/// let now = std::time::Instant::now();
-/// load.mock_run();
-/// assert!(now.elapsed() >= std::time::Duration::from_millis(16));
-/// ```
-fn doc_test() -> () {}
 
 // unit tests
 #[cfg(test)]

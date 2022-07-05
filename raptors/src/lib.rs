@@ -1,6 +1,6 @@
-pub mod messages;
 pub mod actors;
 pub mod executor;
+pub mod messages;
 pub mod system;
 
 #[cfg(test)]
