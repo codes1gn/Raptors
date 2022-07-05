@@ -1,13 +1,14 @@
-use crate::actors::Actor;
+
+use crate::actors::{Actor};
 
 /// TODO make dedicated mod and move it to there, maybe name it system_config.rs
 /// test SystemConfig creation and get
 ///
 /// Definition: SystemConfig contains the static data to describe the actor system
 /// and used for builder to build the system.
-/// It also contains the strategies, hardware/software environment info used for
+/// It also contains the strategies, hardware/software environment info used for 
 /// query purpose.
-///
+/// 
 /// ```
 /// use raptors::system;
 ///
@@ -36,14 +37,14 @@ impl SystemConfig {
 /// this class wraps all the complex logic used to build elements in;
 /// actor system, for convenient.
 ///
-/// backdoors for mocking tests are also provided by this helper
+/// backdoors for mocking tests are also provided by this helper 
 ///
 /// ```
 /// use raptors::system;
 ///
 /// let sys_builder = system::SystemBuilder::new();
 /// let sys_config = system::SystemConfig::new();
-/// let syst = sys_builder.build("mock system".to_string(), sys_config);
+/// let syst = sys_builder.build_with_config("mock system".to_string(), sys_config);
 /// assert_eq!(syst.name(), &"mock system".to_string());
 /// ```
 ///
@@ -57,9 +58,21 @@ impl SystemBuilder {
         SystemBuilder::default()
     }
 
-    pub fn build(&self, name: String, config: SystemConfig) -> System {
+    pub fn use_config(&mut self, config: SystemConfig) -> () {
+        self.cfg = Some(config);
+    }
+
+    pub fn build_with_config(&self, name: String, config: SystemConfig) -> System {
+        let num_of_actors = config.num_of_actors().unwrap_or_default();
+        // panic!("{:?}", num_of_actors);
         System::new(name)
     }
+
+    pub fn build(&self, name: String) -> System {
+        let config = self.cfg.as_ref().expect("failed to unwrap config");
+        System::new(name)
+    }
+    
 }
 
 /// System is the actor system that manages all the actors, supervisors and message channels
@@ -80,9 +93,9 @@ impl SystemBuilder {
 /// use raptors::actors::Actor;
 ///
 /// let syst = System::new("system 1".to_string());
-/// let actor = syst.create_actor("dummy_name".to_string(), 17);
+/// let actor = syst.create_actor("raptor".to_string(), 17);
 /// assert_eq!(actor.id(), 17);
-/// assert_eq!(actor.name(), &"dummy_name".to_string());
+/// assert_eq!(actor.name(), &"raptor".to_string());
 /// ```
 ///
 /// workflow of System
@@ -93,23 +106,67 @@ impl SystemBuilder {
 /// step 5: create a context from system? (pros: we can make a registry for that to query quickly)
 /// step 6: actor start or init with ctx
 ///
+#[derive(Default)]
 pub struct System {
     name: String,
+    actors: Option<Vec<Actor>>,
 }
 
 impl System {
     pub fn new(name: String) -> Self {
-        return Self { name: name };
+        return Self {
+            name: name,
+            ..Default::default()
+        }
     }
 
     pub fn create_actor(&self, actor_name: String, actor_id: usize) -> Actor {
         Actor::new(actor_name, actor_id)
     }
 
+    // use base name and base id for temp use
+    pub fn create_actors(&self, count: usize, base_name: String, base_id: usize) -> Vec<Actor> {
+        let mut akts: Vec<Actor> = vec![];
+        for idx in 1..count {
+            let akt = Actor::new(format!("{} #{}", base_name, idx), base_id - 1 + idx);
+            akts.push(akt);
+        };
+        akts
+    }
+
+    // TODO make the status code into Result struct
+    ///
+    ///
+    /// ```
+    /// use raptors::system;
+    ///
+    /// let mut syst = system::System::new("system #1".to_string());
+    /// let actor = syst.create_actor("raptor".to_string(), 17);
+    /// let status = syst.register_actor(actor);
+    ///
+    /// let query_actors = syst.actors().unwrap();
+    ///
+    /// assert_eq!(status, 0)
+    /// ```
+    pub fn register_actor(&mut self, actor: Actor) -> usize {
+        match &mut self.actors {
+            Some(v) => {
+                v.push(actor);
+            },
+            None => { self.actors = Some(vec![actor]); },
+        };
+        0
+    }
+
+    pub fn actors(&self) -> Option<&Vec<Actor>> {
+        self.actors.as_ref()
+    }
+
     pub fn name(&self) -> &String {
         &self.name
     }
 }
+
 
 // unit tests
 #[cfg(test)]
@@ -119,8 +176,8 @@ mod tests {
 
     #[test]
     fn create_system() {
-        let syst = System::new("system 1".to_string());
-        assert_eq!(syst.name(), &"system 1".to_string());
+        let syst = System::new("raptor system".to_string());
+        assert_eq!(syst.name(), &"raptor system".to_string());
     }
 
     #[test]
@@ -128,5 +185,48 @@ mod tests {
         let sys_config = SystemConfig::new();
         let na = sys_config.num_of_actors().unwrap_or_default();
         assert_eq!(na, 0);
+    }
+
+    #[test]
+    fn system_create_actor_test() {
+        let syst = System::new("raptor system".to_string());
+        let actor = syst.create_actor("raptor".to_string(), 17);
+        assert_eq!(actor.id(), 17);
+        assert_eq!(actor.name(), &"raptor".to_string());
+    }
+
+    #[test]
+    fn system_create_actors_test() {
+        let syst = System::new("raptor system".to_string());
+        let actors = syst.create_actors(4, "raptor".to_string(), 17);
+        assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn system_create_register_then_query_actor_test() {
+        let mut syst = System::new("raptor system".to_string());
+
+        // register
+        let actor = syst.create_actor("raptor".to_string(), 17);
+        let status = syst.register_actor(actor);
+        
+        // check result
+        assert_eq!(status, 0);
+        let query_actors = syst.actors().unwrap();
+        assert_eq!(query_actors.len(), 1);
+        assert_eq!(query_actors[0].name(), &"raptor".to_string());
+
+        // register twice
+        // TODO duplicating and identification of Actor
+        // TODO duplicating and identification of System
+        let actor = syst.create_actor("raptor2".to_string(), 19);
+        let status = syst.register_actor(actor);
+        
+        // check result
+        assert_eq!(status, 0);
+        let query_actors = syst.actors().unwrap();
+        assert_eq!(query_actors.len(), 2);
+        assert_eq!(query_actors[0].name(), &"raptor".to_string());
+        assert_eq!(query_actors[1].name(), &"raptor2".to_string());
     }
 }

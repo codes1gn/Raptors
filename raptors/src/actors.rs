@@ -4,7 +4,9 @@ use crate::executor;
 use crate::messages;
 
 // placehold for actors
+#[derive(Debug)]
 pub struct Actor {
+    // TODO use &str is better for short piece of name string
     name: String,
     id: usize,
 }
