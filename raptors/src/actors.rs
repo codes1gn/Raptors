@@ -12,16 +12,16 @@ pub struct Actor {
 }
 
 impl Actor {
-    pub fn new(name: String, id: usize) -> Actor {
-        return Self { name: name, id: id };
+    pub fn new(name: &str, id: usize) -> Actor {
+        return Self { name: String::from(name), id: id };
     }
 
     pub fn id(&self) -> usize {
         self.id
     }
 
-    pub fn name(&self) -> &String {
-        &self.name
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 
     // TODO: make it message passing, test with inter-threads
@@ -59,19 +59,19 @@ mod tests {
 
     #[test]
     fn query_actor_id() {
-        let actor = Actor::new("A".to_string(), 17);
+        let actor = Actor::new("A", 17);
         assert_eq!(actor.id(), 17);
     }
 
     #[test]
     fn query_actor_name() {
-        let actor = Actor::new("A".to_string(), 17);
-        assert_eq!(actor.name(), &"A".to_string());
+        let actor = Actor::new("A", 17);
+        assert_eq!(actor.name(), "A");
     }
 
     #[test]
     fn receive_workload() {
-        let actor = Actor::new("A".to_string(), 1);
+        let actor = Actor::new("A", 1);
         let load = messages::DummyWorkload::new(16);
         let now = time::Instant::now();
         actor.receive(load);
