@@ -93,49 +93,31 @@ impl DummyWorkload {
 //
 /// ```
 /// use raptors::messages;
+/// use crate::raptors::messages::SetOpcode;
 /// 
-/// let matmul = messages::MatmulOp::new(vec![1,1], vec![2,2]);
-/// assert_eq!(vec![1,1], *matmul.lhs());
-/// let conv = messages::ConvOp::new(vec!{1,2}, vec![1,3]);
-/// assert_eq!(vec![1,3], *conv.kernel());
+/// let matmul = messages::Opcode::MatmulOp;
+/// assert_eq!("Set the MatmulOp".to_owned(), matmul.new());
 /// ```
 
 #[derive(Clone, Debug)]
 pub enum Opcode {
     MatmulOp,
-    ConvOp,
 }
 
-#[derive(Clone, Debug)]
-pub struct MatmulOp {
-    lhs: Vec<u32>,
-    rhs: Vec<u32>,
+pub trait SetOpcode {
+    fn new(&self) -> String;
 }
 
-impl MatmulOp {
-    pub fn new(lhs: Vec<u32>, rhs: Vec<u32>) -> MatmulOp {
-        return Self {lhs, rhs}
-    }
-
-    pub fn lhs(&self) -> &Vec<u32> {
-        return &self.lhs
+impl SetOpcode for Opcode {
+    fn new(&self) -> String {
+        match self {
+            MatmulOp => {
+                "Set the MatmulOp".to_owned()
+            }
+        }
     }
 }
-#[derive(Clone, Debug)]
-pub struct ConvOp {
-    input: Vec<u32>,
-    kernel: Vec<u32>,
-}
 
-impl ConvOp {
-    pub fn new(input: Vec<u32>, kernel: Vec<u32>) -> ConvOp {
-        return Self {input, kernel}
-    }
-
-    pub fn kernel(&self) -> &Vec<u32> {
-        return &self.kernel
-    }
-}
 
 // unit tests
 #[cfg(test)]
