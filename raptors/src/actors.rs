@@ -13,7 +13,10 @@ pub struct Actor {
 
 impl Actor {
     pub fn new(name: &str, id: usize) -> Actor {
-        return Self { name: String::from(name), id: id };
+        return Self {
+            name: String::from(name),
+            id: id,
+        };
     }
 
     pub fn id(&self) -> usize {

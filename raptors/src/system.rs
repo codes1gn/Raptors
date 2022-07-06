@@ -1,4 +1,3 @@
-
 use crate::actors::*;
 use crate::messages::*;
 
@@ -7,9 +6,9 @@ use crate::messages::*;
 ///
 /// Definition: SystemConfig contains the static data to describe the actor system
 /// and used for builder to build the system.
-/// It also contains the strategies, hardware/software environment info used for 
+/// It also contains the strategies, hardware/software environment info used for
 /// query purpose.
-/// 
+///
 /// ```
 /// use raptors::system;
 ///
@@ -38,7 +37,7 @@ impl SystemConfig {
 /// this class wraps all the complex logic used to build elements in;
 /// actor system, for convenient.
 ///
-/// backdoors for mocking tests are also provided by this helper 
+/// backdoors for mocking tests are also provided by this helper
 ///
 /// ```
 /// use raptors::system;
@@ -73,7 +72,6 @@ impl SystemBuilder {
         let config = self.cfg.as_ref().expect("failed to unwrap config");
         System::new(name)
     }
-    
 }
 
 /// System is the actor system that manages all the actors, supervisors and message channels
@@ -118,7 +116,7 @@ impl System {
         return Self {
             name: String::from(name),
             ..Default::default()
-        }
+        };
     }
 
     pub fn create_actor(&self, actor_name: &str, actor_id: usize) -> Actor {
@@ -129,9 +127,12 @@ impl System {
     pub fn create_actors(&self, count: usize, base_name: &str, base_id: usize) -> Vec<Actor> {
         let mut akts: Vec<Actor> = vec![];
         for idx in 1..count {
-            let akt = Actor::new(format!("{} #{}", base_name, idx).as_str(), base_id - 1 + idx);
+            let akt = Actor::new(
+                format!("{} #{}", base_name, idx).as_str(),
+                base_id - 1 + idx,
+            );
             akts.push(akt);
-        };
+        }
         akts
     }
 
@@ -153,14 +154,15 @@ impl System {
         match &mut self.actors {
             Some(v) => {
                 v.push(actor);
-            },
-            None => { self.actors = Some(vec![actor]); },
+            }
+            None => {
+                self.actors = Some(vec![actor]);
+            }
         };
         0
     }
     // TODO support register multiple
     // TODO support MSG to create actor and register in system
-    
 
     /// TODO support id and name for create actor MSG command
     ///
@@ -191,10 +193,10 @@ impl System {
                         let status = self.register_actor(actor);
                         // return usize currently
                         status
-                    },
+                    }
                     _ => panic!("not implemented"),
                 }
-            },
+            }
             _ => panic!("not implemented"),
         }
     }
@@ -207,7 +209,6 @@ impl System {
         self.name.clone()
     }
 }
-
 
 // unit tests
 #[cfg(test)]
@@ -250,7 +251,7 @@ mod tests {
         // register
         let actor = syst.create_actor("raptor", 17);
         let status = syst.register_actor(actor);
-        
+
         // check result
         assert_eq!(status, 0);
         let query_actors = syst.actors().unwrap();
@@ -262,7 +263,7 @@ mod tests {
         // TODO duplicating and identification of System
         let actor = syst.create_actor("raptor2", 19);
         let status = syst.register_actor(actor);
-        
+
         // check result
         assert_eq!(status, 0);
         let query_actors = syst.actors().unwrap();

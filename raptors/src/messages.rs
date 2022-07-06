@@ -38,12 +38,10 @@ pub enum TypedMessage {
     ActorMsg,
 }
 
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum SystemCommand {
     CreateActor,
 }
-
 
 impl Into<TypedMessage> for SystemCommand {
     fn into(self) -> TypedMessage {
@@ -85,7 +83,7 @@ impl DummyWorkload {
 
 // Definition for Opcode
 //
-//TODO: 
+//TODO:
 //  1. Replace 'Vec<u32>' with more suitable type
 //  2. More dedicated functions for Ops
 // TODO complete the family of Opcodes
@@ -94,7 +92,7 @@ impl DummyWorkload {
 /// ```
 /// use raptors::messages;
 /// use crate::raptors::messages::SetOpcode;
-/// 
+///
 /// let matmul = messages::Opcode::MatmulOp;
 /// assert_eq!("Set the MatmulOp".to_owned(), matmul.new());
 /// ```
@@ -111,13 +109,10 @@ pub trait SetOpcode {
 impl SetOpcode for Opcode {
     fn new(&self) -> String {
         match self {
-            MatmulOp => {
-                "Set the MatmulOp".to_owned()
-            }
+            MatmulOp => "Set the MatmulOp".to_owned(),
         }
     }
 }
-
 
 // unit tests
 #[cfg(test)]
