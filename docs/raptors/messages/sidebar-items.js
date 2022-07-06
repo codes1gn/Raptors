@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["TypedMessage",""]],"struct":[["DummyWorkload",""]]});
