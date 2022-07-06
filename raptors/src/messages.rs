@@ -83,16 +83,31 @@ impl DummyWorkload {
     }
 }
 
-//-------------------------------//
-// Opcode definition 
-//-------------------------------//s
+// Definition for Opcode
+//
 //TODO: 
 //  1. Replace 'Vec<u32>' with more suitable type
-//  2. More dedicated functions for Ops, right now just for test purpose
-
+//  2. More dedicated functions for Ops
+// TODO complete the family of Opcodes
+// test with simple design at first
+//
+/// ```
+/// use raptors::messages;
+/// 
+/// let matmul = messages::MatmulOp::new(vec![1,1], vec![2,2]);
+/// assert_eq!(vec![1,1], *matmul.lhs());
+/// let conv = messages::ConvOp::new(vec!{1,2}, vec![1,3]);
+/// assert_eq!(vec![1,3], *conv.kernel());
+/// ```
 
 #[derive(Clone, Debug)]
-struct MatmulOp {
+pub enum Opcode {
+    MatmulOp,
+    ConvOp,
+}
+
+#[derive(Clone, Debug)]
+pub struct MatmulOp {
     lhs: Vec<u32>,
     rhs: Vec<u32>,
 }
@@ -107,29 +122,20 @@ impl MatmulOp {
     }
 }
 #[derive(Clone, Debug)]
-struct ConvOp {
+pub struct ConvOp {
     input: Vec<u32>,
     kernel: Vec<u32>,
-    pad: u32,
-    stride: u32,
 }
 
 impl ConvOp {
-    pub fn new(input: Vec<u32>, kernel: Vec<u32>, pad: u32, stride: u32) -> ConvOp {
-        return Self {input, kernel, pad, stride}
+    pub fn new(input: Vec<u32>, kernel: Vec<u32>) -> ConvOp {
+        return Self {input, kernel}
     }
 
     pub fn kernel(&self) -> &Vec<u32> {
         return &self.kernel
     }
 }
-
-#[derive(Clone, Debug)]
-pub enum Opcode {
-    MatmulOp,
-    ConvOp,
-}
-
 
 #[cfg(test)]
 mod opcode_test {
@@ -138,8 +144,9 @@ mod opcode_test {
     #[test]
     fn dummy_op_code() {
         let matmul = MatmulOp::new(vec![1,1], vec![2,2]);
+        matmul.type_id();
         assert_eq!(vec![1,1], *matmul.lhs());
-        let conv = ConvOp::new(vec!{1,2}, vec![1,3], 1, 2);
+        let conv = ConvOp::new(vec!{1,2}, vec![1,3]);
         assert_eq!(vec![1,3], *conv.kernel());
     }
 
