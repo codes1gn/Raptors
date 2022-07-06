@@ -38,12 +38,10 @@ pub enum TypedMessage {
     ActorMsg,
 }
 
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum SystemCommand {
     CreateActor,
 }
-
 
 impl Into<TypedMessage> for SystemCommand {
     fn into(self) -> TypedMessage {
@@ -82,7 +80,6 @@ impl DummyWorkload {
         thread::sleep(time::Duration::from_millis(self.payload as u64));
     }
 }
-
 
 // unit tests
 #[cfg(test)]
