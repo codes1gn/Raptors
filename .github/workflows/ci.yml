@@ -16,9 +16,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: formatting
+      run: cargo fmt -- --check
     - name: Build
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
     - name: Update documentation
       run: bash ./scripts/make_doc.sh
+    - name:
+      run: cargo package
