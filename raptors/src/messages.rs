@@ -17,15 +17,38 @@ type Message = Box<dyn Any + Send>;
 
 // TODO complete the family of MessageTypes
 // test with simple design at first
+///```
+/// use raptors::messages;
+///
+/// let msg = messages::TypedMessage::ActorMsg;
+/// assert_eq!(msg, messages::TypedMessage::ActorMsg);
+///
+/// let msg = messages::SystemCommand::CreateActor;
+/// assert_eq!(msg, messages::SystemCommand::CreateActor);
+///
+/// # // define a test function for type check
+/// pub fn test_msg_type(msg: messages::TypedMessage) -> bool {
+///     true
+/// }
+/// assert!(test_msg_type(msg.into()));
+///```
 #[derive(Clone, Debug, PartialEq)]
 pub enum TypedMessage {
-    SystemMsg,
+    SystemMsg(SystemCommand),
     ActorMsg,
 }
 
+
 #[derive(Clone, Debug, PartialEq)]
-pub enum SystemMsg {
+pub enum SystemCommand {
     CreateActor,
+}
+
+
+impl Into<TypedMessage> for SystemCommand {
+    fn into(self) -> TypedMessage {
+        TypedMessage::SystemMsg(self)
+    }
 }
 
 // dummy workload as dummy message but has a timeout for
@@ -79,14 +102,5 @@ mod tests {
         let now = time::Instant::now();
         load.mock_run();
         assert!(now.elapsed() >= time::Duration::from_millis(16));
-    }
-
-    #[test]
-    fn typed_message_create_and_partialeq_test() {
-        let msg = TypedMessage::SystemMsg;
-        assert_eq!(msg, TypedMessage::SystemMsg);
-
-        let msg = TypedMessage::ActorMsg;
-        assert_eq!(msg, TypedMessage::ActorMsg);
     }
 }

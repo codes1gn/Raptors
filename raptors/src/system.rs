@@ -1,6 +1,6 @@
 
-use crate::actors::{Actor};
-use crate::messages::{TypedMessage, SystemMsg};
+use crate::actors::*;
+use crate::messages::*;
 
 /// TODO make dedicated mod and move it to there, maybe name it system_config.rs
 /// test SystemConfig creation and get
@@ -162,10 +162,38 @@ impl System {
     // TODO support MSG to create actor and register in system
     
 
-    pub fn on_receive(&self, msg: TypedMessage) -> () {
+    /// TODO support id and name for create actor MSG command
+    ///
+    /// ```
+    /// use raptors::system::*;
+    /// use raptors::messages::*;
+    ///
+    /// let mut syst = System::new("system #1".to_string());
+    /// let msg = SystemCommand::CreateActor;
+    /// syst.on_receive(msg.into());
+    /// let query_actors = syst.actors().unwrap();
+    /// assert_eq!(query_actors.len(), 1);
+    /// assert_eq!(query_actors[0].name(), &"raptor".to_string());
+    ///
+    /// # // create one more actor
+    /// let msg = SystemCommand::CreateActor;
+    /// syst.on_receive(msg.into());
+    /// let query_actors = syst.actors().unwrap();
+    /// assert_eq!(query_actors.len(), 2);
+    /// assert_eq!(query_actors[0].name(), &"raptor".to_string());
+    /// ```
+    pub fn on_receive(&mut self, msg: TypedMessage) -> usize {
         match msg {
-            SystemMsg => {
-                ()
+            TypedMessage::SystemMsg(cmd) => {
+                match cmd {
+                    SystemCommand::CreateActor => {
+                        let actor = self.create_actor("raptor".to_string(), 17);
+                        let status = self.register_actor(actor);
+                        // return usize currently
+                        status
+                    },
+                    _ => panic!("not implemented"),
+                }
             },
             _ => panic!("not implemented"),
         }
