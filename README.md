@@ -9,6 +9,8 @@ Actor Models for Parallelised System built on Rust-lang
 </div>
 
 ***
+### CI status
+[![Rust](https://github.com/codes1gn/Raptors/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/codes1gn/Raptors/actions/workflows/ci.yml)
 
 ### Installation
 ```
