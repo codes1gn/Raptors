@@ -83,6 +83,69 @@ impl DummyWorkload {
     }
 }
 
+//-------------------------------//
+// Opcode definition 
+//-------------------------------//s
+//TODO: 
+//  1. Replace 'Vec<u32>' with more suitable type
+//  2. More dedicated functions for Ops, right now just for test purpose
+
+
+#[derive(Clone, Debug)]
+struct MatmulOp {
+    lhs: Vec<u32>,
+    rhs: Vec<u32>,
+}
+
+impl MatmulOp {
+    pub fn new(lhs: Vec<u32>, rhs: Vec<u32>) -> MatmulOp {
+        return Self {lhs, rhs}
+    }
+
+    pub fn lhs(&self) -> &Vec<u32> {
+        return &self.lhs
+    }
+}
+#[derive(Clone, Debug)]
+struct ConvOp {
+    input: Vec<u32>,
+    kernel: Vec<u32>,
+    pad: u32,
+    stride: u32,
+}
+
+impl ConvOp {
+    pub fn new(input: Vec<u32>, kernel: Vec<u32>, pad: u32, stride: u32) -> ConvOp {
+        return Self {input, kernel, pad, stride}
+    }
+
+    pub fn kernel(&self) -> &Vec<u32> {
+        return &self.kernel
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum Opcode {
+    MatmulOp,
+    ConvOp,
+}
+
+
+#[cfg(test)]
+mod opcode_test {
+    use super::*;
+
+    #[test]
+    fn dummy_op_code() {
+        let matmul = MatmulOp::new(vec![1,1], vec![2,2]);
+        assert_eq!(vec![1,1], *matmul.lhs());
+        let conv = ConvOp::new(vec!{1,2}, vec![1,3], 1, 2);
+        assert_eq!(vec![1,3], *conv.kernel());
+    }
+
+
+
+}
 
 // unit tests
 #[cfg(test)]
