@@ -137,23 +137,6 @@ impl ConvOp {
     }
 }
 
-#[cfg(test)]
-mod opcode_test {
-    use super::*;
-
-    #[test]
-    fn dummy_op_code() {
-        let matmul = MatmulOp::new(vec![1,1], vec![2,2]);
-        matmul.type_id();
-        assert_eq!(vec![1,1], *matmul.lhs());
-        let conv = ConvOp::new(vec!{1,2}, vec![1,3]);
-        assert_eq!(vec![1,3], *conv.kernel());
-    }
-
-
-
-}
-
 // unit tests
 #[cfg(test)]
 
