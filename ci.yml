@@ -1,0 +1,28 @@
+name: Raptors CI/CD
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+  push:
+      - branches: [ main ]
+  workflow_call:
+
+jobs:
+  runs-on: self-hosted
+  steps:
+    - name: "Update Git Pages"
+    - uses: actions/checnkout@master
+    - run: |
+        current_path=`dirname $0`
+        raptors_root=`realpath $current_path"/.."`
+        cd $raptors_root
+        cargo doc --no-deps
+        rm -rf ./docs
+        echo "<meta http-equiv=\"refresh\" content=\"0; url=raptors\">" > target/doc/index.html
+        cp -r target/doc ./docs
+    - run: echo " Pages udpate done"
+
