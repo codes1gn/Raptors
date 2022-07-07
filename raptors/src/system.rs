@@ -1,37 +1,6 @@
 use crate::actors::*;
 use crate::messages::*;
-
-/// TODO(short-term) make dedicated mod and move it to there, maybe name it system_config.rs
-/// test SystemConfig creation and get
-///
-/// Definition: SystemConfig contains the static data to describe the actor system
-/// and used for builder to build the system.
-/// It also contains the strategies, hardware/software environment info used for
-/// query purpose.
-///
-/// ```
-/// use raptors::system;
-///
-/// let sys_config = system::SystemConfig::new();
-/// let num_actor = sys_config.num_of_actors().unwrap_or_default();
-/// assert_eq!(num_actor, 0);
-///
-/// ```
-///
-#[derive(Default)]
-pub struct SystemConfig {
-    num_of_actors: Option<usize>,
-}
-
-impl SystemConfig {
-    pub fn new() -> Self {
-        SystemConfig::default()
-    }
-
-    pub fn num_of_actors(&self) -> Option<usize> {
-        self.num_of_actors
-    }
-}
+use crate::system_config::SystemConfig;
 
 /// Definition: The helper that provide helper functions for system creation
 /// this class wraps all the complex logic used to build elements in;
@@ -40,10 +9,10 @@ impl SystemConfig {
 /// backdoors for mocking tests are also provided by this helper
 ///
 /// ```
-/// use raptors::system;
+/// use raptors::prelude::*;
 ///
-/// let sys_builder = system::SystemBuilder::new();
-/// let sys_config = system::SystemConfig::new();
+/// let sys_builder = SystemBuilder::new();
+/// let sys_config = SystemConfig::new();
 /// let syst = sys_builder.build_with_config("mock system", sys_config);
 /// assert_eq!(syst.name(), "mock system".to_string());
 /// ```
@@ -80,7 +49,7 @@ impl SystemBuilder {
 ///
 /// test system create
 /// ```
-/// use raptors::system::System;
+/// use raptors::prelude::*;
 ///
 /// let syst = System::new("system 1");
 /// assert_eq!(syst.name(), "system 1".to_string());
@@ -88,8 +57,7 @@ impl SystemBuilder {
 ///
 /// test actor create
 /// ```
-/// use raptors::system::System;
-/// use raptors::actors::Actor;
+/// use raptors::prelude::*;
 ///
 /// let syst = System::new("system 1");
 /// let actor = syst.create_actor("raptor");
@@ -137,9 +105,9 @@ impl System {
     ///
     ///
     /// ```
-    /// use raptors::system;
+    /// use raptors::prelude::*;
     ///
-    /// let mut syst = system::System::new("system #1");
+    /// let mut syst = System::new("system #1");
     /// let actor = syst.create_actor("raptor");
     /// let status = syst.register_actor(actor);
     ///
@@ -164,8 +132,7 @@ impl System {
     /// TODO support id and name for create actor MSG command
     ///
     /// ```
-    /// use raptors::system::*;
-    /// use raptors::messages::*;
+    /// use raptors::prelude::*;
     ///
     /// let mut syst = System::new("system #1");
     /// let msg = SystemCommand::CreateActor;
@@ -217,13 +184,6 @@ mod tests {
     fn create_system() {
         let syst = System::new("raptor system");
         assert_eq!(syst.name(), "raptor system");
-    }
-
-    #[test]
-    fn config_test() {
-        let sys_config = SystemConfig::new();
-        let na = sys_config.num_of_actors().unwrap_or_default();
-        assert_eq!(na, 0);
     }
 
     #[test]

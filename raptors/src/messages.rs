@@ -18,16 +18,16 @@ type Message = Box<dyn Any + Send>;
 // TODO(albert, short-term) complete the family of MessageTypes
 // test with simple design at first
 ///```
-/// use raptors::messages;
+/// use raptors::prelude::*;
 ///
-/// let msg = messages::TypedMessage::ActorMsg;
-/// assert_eq!(msg, messages::TypedMessage::ActorMsg);
+/// let msg = TypedMessage::ActorMsg;
+/// assert_eq!(msg, TypedMessage::ActorMsg);
 ///
-/// let msg = messages::SystemCommand::CreateActor;
-/// assert_eq!(msg, messages::SystemCommand::CreateActor);
+/// let msg = SystemCommand::CreateActor;
+/// assert_eq!(msg, SystemCommand::CreateActor);
 ///
 /// # // define a test function for type check
-/// pub fn test_msg_type(msg: messages::TypedMessage) -> bool {
+/// pub fn test_msg_type(msg: TypedMessage) -> bool {
 ///     true
 /// }
 /// assert!(test_msg_type(msg.into()));
@@ -100,6 +100,7 @@ impl Workload {
 /// ```
 /// # // Test default function for OpCode
 /// use raptors::messages::OpCode;
+///
 /// assert_eq!(OpCode::default(), OpCode::DummyOp);
 /// ```
 #[derive(Clone, Copy, Debug, PartialEq)]

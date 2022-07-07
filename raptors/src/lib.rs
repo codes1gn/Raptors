@@ -2,12 +2,18 @@ pub mod actors;
 pub mod executor;
 pub mod messages;
 pub mod system;
+pub mod system_config;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
+/// Prelude module for users to import
+///
+/// ```
+/// use raptors::prelude::*;
+/// ```
+pub mod prelude {
+    pub use crate::messages::{TypedMessage, SystemCommand, Workload};
+    pub use crate::actors::{Actor};
+    pub use crate::system::{SystemBuilder, System};
+    pub use crate::system_config::{SystemConfig};
+    pub use crate::executor::{Executor};
 }
+
