@@ -5,7 +5,7 @@ use crate::messages;
 
 // wrap a dedicated executor module that only consider how to do computations
 //
-// TODO:
+// TODO(long-term):
 // as a interface, make refactor as Trait and expose to CRT level,
 // make CRT vm to impl this trait
 pub struct Executor {}

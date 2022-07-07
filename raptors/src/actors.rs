@@ -2,24 +2,27 @@
 //
 use crate::executor;
 use crate::messages;
+use uuid::Uuid;
 
 // placehold for actors
 #[derive(Debug)]
 pub struct Actor {
-    // TODO use &str is better for short piece of name string
     name: String,
-    id: usize,
+    // TODO(long-term) use v5 uuid, and give a hardcoded namespace, for removing randomness, also to allow
+    // testing
+    id: Uuid,
 }
 
 impl Actor {
-    pub fn new(name: &str, id: usize) -> Actor {
+    pub fn new(name: &str) -> Actor {
+        let new_uuid = Uuid::new_v4();
         return Self {
             name: String::from(name),
-            id: id,
+            id: new_uuid,
         };
     }
 
-    pub fn id(&self) -> usize {
+    pub fn id(&self) -> Uuid {
         self.id
     }
 
@@ -27,8 +30,7 @@ impl Actor {
         self.name.clone()
     }
 
-    // TODO: make it message passing, test with inter-threads
-    // TODO: gradually support higher granularity parallelism
+    // TODO(long-term): make it message passing, test with inter-threads
     pub fn receive(&self, msg: messages::DummyWorkload) -> () {
         self.on_compute(msg);
     }
@@ -61,20 +63,14 @@ mod tests {
     }
 
     #[test]
-    fn query_actor_id() {
-        let actor = Actor::new("A", 17);
-        assert_eq!(actor.id(), 17);
-    }
-
-    #[test]
     fn query_actor_name() {
-        let actor = Actor::new("A", 17);
+        let actor = Actor::new("A");
         assert_eq!(actor.name(), "A");
     }
 
     #[test]
     fn receive_workload() {
-        let actor = Actor::new("A", 1);
+        let actor = Actor::new("A");
         let load = messages::DummyWorkload::new(16);
         let now = time::Instant::now();
         actor.receive(load);

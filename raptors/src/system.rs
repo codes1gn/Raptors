@@ -1,7 +1,7 @@
 use crate::actors::*;
 use crate::messages::*;
 
-/// TODO make dedicated mod and move it to there, maybe name it system_config.rs
+/// TODO(short-term) make dedicated mod and move it to there, maybe name it system_config.rs
 /// test SystemConfig creation and get
 ///
 /// Definition: SystemConfig contains the static data to describe the actor system
@@ -92,8 +92,7 @@ impl SystemBuilder {
 /// use raptors::actors::Actor;
 ///
 /// let syst = System::new("system 1");
-/// let actor = syst.create_actor("raptor", 17);
-/// assert_eq!(actor.id(), 17);
+/// let actor = syst.create_actor("raptor");
 /// assert_eq!(actor.name(), "raptor");
 /// ```
 ///
@@ -119,31 +118,29 @@ impl System {
         };
     }
 
-    pub fn create_actor(&self, actor_name: &str, actor_id: usize) -> Actor {
-        Actor::new(actor_name, actor_id)
+    pub fn create_actor(&self, actor_name: &str) -> Actor {
+        Actor::new(actor_name)
     }
 
     // use base name and base id for temp use
-    pub fn create_actors(&self, count: usize, base_name: &str, base_id: usize) -> Vec<Actor> {
+    // TODO(albert, short-term): name redirection, maybe append one region from uuid
+    pub fn create_actors(&self, count: usize, base_name: &str) -> Vec<Actor> {
         let mut akts: Vec<Actor> = vec![];
         for idx in 1..count {
-            let akt = Actor::new(
-                format!("{} #{}", base_name, idx).as_str(),
-                base_id - 1 + idx,
-            );
+            let akt = Actor::new(format!("{} #{}", base_name, idx).as_str());
             akts.push(akt);
         }
         akts
     }
 
-    // TODO make the status code into Result struct
+    // TODO(short-term) make the status code into Result struct
     ///
     ///
     /// ```
     /// use raptors::system;
     ///
     /// let mut syst = system::System::new("system #1");
-    /// let actor = syst.create_actor("raptor", 17);
+    /// let actor = syst.create_actor("raptor");
     /// let status = syst.register_actor(actor);
     ///
     /// let query_actors = syst.actors().unwrap();
@@ -189,7 +186,7 @@ impl System {
             TypedMessage::SystemMsg(cmd) => {
                 match cmd {
                     SystemCommand::CreateActor => {
-                        let actor = self.create_actor("raptor", 17);
+                        let actor = self.create_actor("raptor");
                         let status = self.register_actor(actor);
                         // return usize currently
                         status
@@ -232,15 +229,14 @@ mod tests {
     #[test]
     fn system_create_actor_test() {
         let syst = System::new("raptor system");
-        let actor = syst.create_actor("raptor", 17);
-        assert_eq!(actor.id(), 17);
+        let actor = syst.create_actor("raptor");
         assert_eq!(actor.name(), "raptor");
     }
 
     #[test]
     fn system_create_actors_test() {
         let syst = System::new("raptor system");
-        let actors = syst.create_actors(4, "raptor", 17);
+        let actors = syst.create_actors(4, "raptor");
         assert_eq!(1, 1);
     }
 
@@ -249,7 +245,7 @@ mod tests {
         let mut syst = System::new("raptor system");
 
         // register
-        let actor = syst.create_actor("raptor", 17);
+        let actor = syst.create_actor("raptor");
         let status = syst.register_actor(actor);
 
         // check result
@@ -259,9 +255,9 @@ mod tests {
         assert_eq!(query_actors[0].name(), "raptor".to_string());
 
         // register twice
-        // TODO duplicating and identification of Actor
-        // TODO duplicating and identification of System
-        let actor = syst.create_actor("raptor2", 19);
+        // duplicating and identification of Actor
+        // duplicating and identification of System
+        let actor = syst.create_actor("raptor2");
         let status = syst.register_actor(actor);
 
         // check result
