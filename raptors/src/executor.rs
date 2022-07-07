@@ -14,7 +14,7 @@ impl Executor {
     pub fn new() -> Self {
         return Self {};
     }
-    pub fn compute(&self, workload: messages::DummyWorkload) -> () {
+    pub fn compute(&self, workload: messages::Workload) -> () {
         workload.mock_run();
     }
 }
@@ -29,7 +29,7 @@ mod tests {
     #[test]
     fn compute_workload() {
         let exec = Executor::new();
-        let load = messages::DummyWorkload::new(16);
+        let load = messages::Workload::new(16, messages::OpCode::AddOp);
         let now = time::Instant::now();
         exec.compute(load);
         assert!(now.elapsed() >= time::Duration::from_millis(16));
