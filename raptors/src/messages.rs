@@ -53,9 +53,6 @@ impl Into<TypedMessage> for SystemCommand {
 // dummy workload as dummy message but has a timeout for
 // emulating the execution
 //
-// TODO(short-term): add OpCode enums as class of workload
-// considering some elementwise ops, and some binary ops;
-//
 // TODO(short-term): set up the cost-model, and make workload query
 // payload capacity from it, by opcode; future should extend to polymorphic
 // querying on both opcode and scale.

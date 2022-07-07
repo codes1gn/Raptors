@@ -61,7 +61,8 @@ impl System {
         akts
     }
 
-    // TODO(short-term) make the status code into Result struct
+    // TODO(short-term) make the status code into Result struct | Done
+    // TODO: add errors for fn: register_actor, right now it always returns Ok()
     ///
     ///
     /// ```
@@ -70,21 +71,21 @@ impl System {
     /// let mut syst = System::new("system #1");
     /// let actor = syst.create_actor("raptor");
     /// let status = syst.register_actor(actor);
-    ///
     /// let query_actors = syst.actors().unwrap();
     ///
-    /// assert_eq!(status, 0)
+    /// assert!(status.is_ok());
     /// ```
-    pub fn register_actor(&mut self, actor: Actor) -> usize {
+    pub fn register_actor(&mut self, actor: Actor) -> Result<(), String> {
         match &mut self.actors {
             Some(v) => {
                 v.push(actor);
+                return Ok(());
             }
             None => {
                 self.actors = Some(vec![actor]);
+                return Ok(());
             }
         };
-        0
     }
     // TODO support register multiple
     // TODO support MSG to create actor and register in system
@@ -96,20 +97,22 @@ impl System {
     ///
     /// let mut syst = System::new("system #1");
     /// let msg = SystemCommand::CreateActor;
-    /// syst.on_receive(msg.into());
+    /// let status = syst.on_receive(msg.into());
     /// let query_actors = syst.actors().unwrap();
     /// assert_eq!(query_actors.len(), 1);
     /// assert_eq!(query_actors[0].name(), "raptor".to_string());
+    /// assert!(status.is_ok());
     ///
     /// # // create one more actor
     /// let msg = SystemCommand::CreateActor;
-    /// syst.on_receive(msg.into());
+    /// let status = syst.on_receive(msg.into());
     /// let query_actors = syst.actors().unwrap();
     /// assert_eq!(query_actors.len(), 2);
     /// assert_eq!(query_actors[0].name(), "raptor".to_string());
+    /// assert!(status.is_ok());
     /// ```
     #[allow(unreachable_patterns)]
-    pub fn on_receive(&mut self, msg: TypedMessage) -> usize {
+    pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
         match msg {
             TypedMessage::SystemMsg(cmd) => {
                 match cmd {
@@ -117,12 +120,15 @@ impl System {
                         let actor = self.create_actor("raptor");
                         let status = self.register_actor(actor);
                         // return usize currently
-                        status
+                        match status {
+                            Ok(_) => Ok(()),
+                            Err(_e) => Err("Fail to register the actor".to_string()),
+                        }
                     }
-                    _ => panic!("not implemented"),
+                    _ => Err("not implemented".to_string()),
                 }
             }
-            _ => panic!("not implemented"),
+            _ => Err("not implemented".to_string()),
         }
     }
 
@@ -171,7 +177,7 @@ mod tests {
         let status = syst.register_actor(actor);
 
         // check result
-        assert_eq!(status, 0);
+        assert!(status.is_ok());
         let query_actors = syst.actors().unwrap();
         assert_eq!(query_actors.len(), 1);
         assert_eq!(query_actors[0].name(), "raptor".to_string());
@@ -183,10 +189,31 @@ mod tests {
         let status = syst.register_actor(actor);
 
         // check result
-        assert_eq!(status, 0);
+        assert!(status.is_ok());
         let query_actors = syst.actors().unwrap();
         assert_eq!(query_actors.len(), 2);
         assert_eq!(query_actors[0].name(), "raptor".to_string());
         assert_eq!(query_actors[1].name(), "raptor2".to_string());
+    }
+
+    #[test]
+    #[ignore]
+    fn register_actor_fail_test() {
+        let mut syst = System::new("raptor system");
+
+        // register
+        let actor = syst.create_actor("raptor");
+        let status = syst.register_actor(actor);
+        // register_actor only returns Ok() currently, extend it in the future
+        assert!(status.is_err());
+    }
+
+    #[test]
+    fn on_receive_notSystemMsg_test() {
+        let mut syst = System::new("system #1");
+        let msg = TypedMessage::ActorMsg;
+        let status = syst.on_receive(msg.into());
+        assert!(status.is_err());
+        assert_eq!(status.unwrap_err(), "not implemented".to_string());
     }
 }
