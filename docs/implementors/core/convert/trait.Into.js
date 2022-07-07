@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["raptors"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.57.0/core/convert/trait.Into.html\" title=\"trait core::convert::Into\">Into</a>&lt;<a class=\"enum\" href=\"raptors/messages/enum.TypedMessage.html\" title=\"enum raptors::messages::TypedMessage\">TypedMessage</a>&gt; for <a class=\"enum\" href=\"raptors/messages/enum.SystemCommand.html\" title=\"enum raptors::messages::SystemCommand\">SystemCommand</a>","synthetic":false,"types":["raptors::messages::SystemCommand"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
