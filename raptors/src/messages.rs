@@ -8,14 +8,14 @@ use std::{thread, time};
 // 1. sendable via mailboxes
 // 2. tracable on its sender and receiver
 //
-// TODO:
+// TODO(long-term):
 // 1. make msg async to passing with non-blocking style
 // 2. make it typed to build the effect system/handlers.
 // 3. support Se/Des in future
 // 4. consider stream processing and compression designs
 type Message = Box<dyn Any + Send>;
 
-// TODO complete the family of MessageTypes
+// TODO(albert, short-term) complete the family of MessageTypes
 // test with simple design at first
 ///```
 /// use raptors::messages;
@@ -52,7 +52,14 @@ impl Into<TypedMessage> for SystemCommand {
 // dummy workload as dummy message but has a timeout for
 // emulating the execution
 //
-// TODO: extend this desing into typed messages
+// TODO(short-term): add OpCode enums as class of workload
+// considering some elementwise ops, and some binary ops;
+//
+// TODO(short-term): set up the cost-model, and make workload query
+// payload capacity from it, by opcode; future should extend to polymorphic
+// querying on both opcode and scale.
+//
+// TODO(long-term): extend this desing into typed messages
 // 1. WorkloadMsg, contains bytecode modules
 // 2. DataMsg, support data exchange
 // 3. CommandMsg, operations that instruct the action of

@@ -1,7 +1,7 @@
 use crate::actors::*;
 use crate::messages::*;
 
-/// TODO make dedicated mod and move it to there, maybe name it system_config.rs
+/// TODO(short-term) make dedicated mod and move it to there, maybe name it system_config.rs
 /// test SystemConfig creation and get
 ///
 /// Definition: SystemConfig contains the static data to describe the actor system
@@ -123,6 +123,7 @@ impl System {
     }
 
     // use base name and base id for temp use
+    // TODO(albert, short-term): name redirection, maybe append one region from uuid
     pub fn create_actors(&self, count: usize, base_name: &str) -> Vec<Actor> {
         let mut akts: Vec<Actor> = vec![];
         for idx in 1..count {
@@ -132,7 +133,7 @@ impl System {
         akts
     }
 
-    // TODO make the status code into Result struct
+    // TODO(short-term) make the status code into Result struct
     ///
     ///
     /// ```
@@ -254,8 +255,8 @@ mod tests {
         assert_eq!(query_actors[0].name(), "raptor".to_string());
 
         // register twice
-        // TODO duplicating and identification of Actor
-        // TODO duplicating and identification of System
+        // duplicating and identification of Actor
+        // duplicating and identification of System
         let actor = syst.create_actor("raptor2");
         let status = syst.register_actor(actor);
 

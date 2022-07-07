@@ -8,7 +8,7 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct Actor {
     name: String,
-    // TODO use v5 uuid, and give a hardcoded namespace, for removing randomness, also to allow
+    // TODO(long-term) use v5 uuid, and give a hardcoded namespace, for removing randomness, also to allow
     // testing
     id: Uuid,
 }
@@ -30,8 +30,7 @@ impl Actor {
         self.name.clone()
     }
 
-    // TODO: make it message passing, test with inter-threads
-    // TODO: gradually support higher granularity parallelism
+    // TODO(long-term): make it message passing, test with inter-threads
     pub fn receive(&self, msg: messages::DummyWorkload) -> () {
         self.on_compute(msg);
     }
