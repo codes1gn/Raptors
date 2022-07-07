@@ -1,7 +1,7 @@
 // LICENSE PLACEHOLDER
 
 use std::any::Any;
-use std::{default, thread, time};
+use std::{thread, time};
 
 // message trait is the definition of behaviours that the concept
 // `message` shall obey, in other words, two properties referred.

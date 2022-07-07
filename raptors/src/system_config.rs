@@ -1,5 +1,3 @@
-use crate::actors::*;
-
 /// TODO(short-term) make dedicated mod and move it to there, maybe name it system_config.rs
 /// test SystemConfig creation and get
 ///
@@ -17,7 +15,7 @@ use crate::actors::*;
 ///
 /// ```
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SystemConfig {
     num_of_actors: Option<usize>,
 }
@@ -31,7 +29,6 @@ impl SystemConfig {
         self.num_of_actors
     }
 }
-
 
 // unit tests
 #[cfg(test)]

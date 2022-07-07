@@ -1,6 +1,5 @@
 // LICENSE PLACEHOLDER
 //
-use crate::actors;
 use crate::messages;
 
 // wrap a dedicated executor module that only consider how to do computations
@@ -24,7 +23,7 @@ impl Executor {
 
 mod tests {
     use super::*;
-    use std::{thread, time};
+    use std::time;
 
     #[test]
     fn compute_workload() {

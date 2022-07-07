@@ -33,12 +33,14 @@ impl SystemBuilder {
 
     pub fn build_with_config(&self, name: &str, config: SystemConfig) -> System {
         let num_of_actors = config.num_of_actors().unwrap_or_default();
-        // panic!("{:?}", num_of_actors);
+        println!("{:?}", num_of_actors);
         System::new(name)
     }
 
     pub fn build(&self, name: &str) -> System {
         let config = self.cfg.as_ref().expect("failed to unwrap config");
+        println!("{:?}", config);
+        // TODO build system with configs
         System::new(name)
     }
 }
@@ -94,7 +96,7 @@ impl System {
     // TODO(albert, short-term): name redirection, maybe append one region from uuid
     pub fn create_actors(&self, count: usize, base_name: &str) -> Vec<Actor> {
         let mut akts: Vec<Actor> = vec![];
-        for idx in 1..count {
+        for idx in 0..count {
             let akt = Actor::new(format!("{} #{}", base_name, idx).as_str());
             akts.push(akt);
         }
@@ -197,7 +199,8 @@ mod tests {
     fn system_create_actors_test() {
         let syst = System::new("raptor system");
         let actors = syst.create_actors(4, "raptor");
-        assert_eq!(1, 1);
+        assert_eq!(actors.len(), 4);
+        // TODO add more asserts
     }
 
     #[test]

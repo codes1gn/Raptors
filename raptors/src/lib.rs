@@ -10,10 +10,9 @@ pub mod system_config;
 /// use raptors::prelude::*;
 /// ```
 pub mod prelude {
-    pub use crate::messages::{TypedMessage, SystemCommand, Workload};
-    pub use crate::actors::{Actor};
-    pub use crate::system::{SystemBuilder, System};
-    pub use crate::system_config::{SystemConfig};
-    pub use crate::executor::{Executor};
+    pub use crate::actors::Actor;
+    pub use crate::executor::Executor;
+    pub use crate::messages::{SystemCommand, TypedMessage, Workload};
+    pub use crate::system::{System, SystemBuilder};
+    pub use crate::system_config::SystemConfig;
 }
-

@@ -1,6 +1,5 @@
 // LICENSE PLACEHOLDER
 //
-use crate::executor;
 use crate::messages;
 use uuid::Uuid;
 
@@ -46,7 +45,7 @@ impl Actor {
 
 mod tests {
     use super::*;
-    use std::{thread, time};
+    use std::time;
 
     // test visibility
     #[test]
