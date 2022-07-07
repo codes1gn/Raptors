@@ -1,0 +1,12 @@
+name: Raptors CI/CD
+
+on: [push, pull_request]
+
+jobs:
+  runs-on: self-hosted
+  steps:
+    - name: "Update Git Pages"
+    - uses: actions/checkout@master
+    - run: bash ./scripts/make_doc.sh
+    - run: echo " Pages udpate done"
+

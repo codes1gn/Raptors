@@ -1,7 +1,7 @@
 // LICENSE PLACEHOLDER
 
 use std::any::Any;
-use std::{thread, time};
+use std::{default, thread, time};
 
 // message trait is the definition of behaviours that the concept
 // `message` shall obey, in other words, two properties referred.
@@ -66,17 +66,25 @@ impl Into<TypedMessage> for SystemCommand {
 // each actor
 //
 //
-pub struct DummyWorkload {
+pub struct Workload {
     payload: usize,
+    op: OpCode,
 }
 
-impl DummyWorkload {
-    pub fn new(payload: usize) -> DummyWorkload {
-        return Self { payload: payload };
+impl Workload {
+    pub fn new(payload: usize, op: OpCode) -> Workload {
+        return Self {
+            payload: payload,
+            op: op,
+        };
     }
 
     pub fn payload(&self) -> usize {
         self.payload
+    }
+
+    pub fn op(&self) -> OpCode {
+        self.op
     }
 
     // mock function that will fakely run for that period long
@@ -88,6 +96,30 @@ impl DummyWorkload {
     }
 }
 
+// Definition for Opcode
+/// ```
+/// # // Test default function for OpCode
+/// use raptors::messages::OpCode;
+/// assert_eq!(OpCode::default(), OpCode::DummyOp);
+/// ```
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum OpCode {
+    MatmulOp,
+    ConvOp,
+    AddOp,
+    SubOp,
+    ExpOp,
+    SinOp,
+    DummyOp,
+}
+
+impl Default for OpCode {
+    fn default() -> Self {
+        OpCode::DummyOp
+    }
+}
+// TODO: More Ops to add; Other way to implement Opcode
+
 // unit tests
 #[cfg(test)]
 
@@ -96,15 +128,35 @@ mod tests {
 
     #[test]
     fn create_dummy_workload_test() {
-        let load = DummyWorkload::new(16);
+        let load = Workload::new(16, OpCode::AddOp);
         assert_eq!(load.payload(), 16 as usize);
+        assert_eq!(load.op(), OpCode::AddOp);
     }
 
     #[test]
     fn worklaod_mock_run_test() {
-        let load = DummyWorkload::new(16);
+        let load = Workload::new(16, OpCode::ConvOp);
         let now = time::Instant::now();
         load.mock_run();
         assert!(now.elapsed() >= time::Duration::from_millis(16));
+        assert_eq!(load.op(), OpCode::ConvOp);
+    }
+
+    #[test]
+    fn workload_ops_default_test() {
+        let load = Workload::new(16, OpCode::default());
+        assert_eq!(load.op(), OpCode::DummyOp);
+    }
+
+    #[test]
+    fn workload_ops_matmul_test() {
+        let load = Workload::new(16, OpCode::MatmulOp);
+        assert_eq!(load.op(), OpCode::MatmulOp);
+    }
+
+    #[test]
+    fn workload_ops_exp_test() {
+        let load = Workload::new(16, OpCode::ExpOp);
+        assert_eq!(load.op(), OpCode::ExpOp);
     }
 }
