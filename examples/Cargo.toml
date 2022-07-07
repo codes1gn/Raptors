@@ -1,0 +1,18 @@
+[package]
+name = "raptors-examples"
+version = "0.1.0"
+edition = "2021"
+workspace = ".."
+
+
+# diamond diamond-tasks
+# 4 tasks, task 1 is the precedence of 2 and 3
+# then 2 and 3 is the precedence of task 4
+# they form a diamond shape on deps topology
+[[bin]]
+name = "diamond-tasks"
+path = "diamond-tasks/main.rs"
+
+[dependencies]
+raptors = { path = "../raptors", package = "raptors", version = "0.1.0" }
+

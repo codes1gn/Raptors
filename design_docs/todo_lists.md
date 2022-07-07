@@ -1,6 +1,4 @@
 to-dos:
-* define preludes for user
-* add example end-to-end use cases
 * add tmp logging for debug => use logger actor
 * profiler actors and its interaction with others
 * message builder for help and code boilerplating

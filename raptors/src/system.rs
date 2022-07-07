@@ -150,6 +150,7 @@ impl System {
     /// assert_eq!(query_actors.len(), 2);
     /// assert_eq!(query_actors[0].name(), "raptor".to_string());
     /// ```
+    #[allow(unreachable_patterns)]
     pub fn on_receive(&mut self, msg: TypedMessage) -> usize {
         match msg {
             TypedMessage::SystemMsg(cmd) => {
