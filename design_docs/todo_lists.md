@@ -1,5 +1,4 @@
 to-dos:
-* add tmp logging for debug => use logger actor
 * profiler actors and its interaction with others
 * message builder for help and code boilerplating
 * make system config mod dedicatedly

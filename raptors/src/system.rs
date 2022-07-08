@@ -14,15 +14,6 @@ use crate::system_config::SystemConfig;
 /// assert_eq!(syst.name(), "system 1".to_string());
 /// ```
 ///
-/// test actor create
-/// ```
-/// use raptors::prelude::*;
-///
-/// let syst = System::new("system 1");
-/// let actor = syst.create_actor("raptor");
-/// assert_eq!(actor.name(), "raptor");
-/// ```
-///
 /// workflow of System
 /// step 1: new a system_builder
 /// step 2: customise a actor_config
@@ -45,13 +36,20 @@ impl System {
         };
     }
 
-    pub fn create_actor(&self, actor_name: &str) -> Actor {
+    fn create_actor(&self, actor_name: &str) -> Actor {
         Actor::new(actor_name)
     }
 
     // use base name and base id for temp use
     // TODO(albert, short-term): name redirection, maybe append one region from uuid
-    pub fn create_actors(&self, count: usize, base_name: &str) -> Vec<Actor> {
+    // ```
+    // use raptors::prelude::*;
+    //
+    // let syst = System::new("raptor system");
+    // let actors = syst.create_actors(4, "raptor");
+    // assert_eq!(actors.len(), 4);
+    // ```
+    fn create_actors(&self, count: usize, base_name: &str) -> Vec<Actor> {
         let mut akts: Vec<Actor> = vec![];
         for idx in 0..count {
             let akt = Actor::new(format!("{} #{}", base_name, idx).as_str());
@@ -62,30 +60,32 @@ impl System {
 
     // TODO(short-term)(Almost Done) make the status code into Result struct
     // TODO(max): extend ErrMsg for fn: register_actor, currently it always returns Ok()
-    ///
-    ///
-    /// ```
-    /// use raptors::prelude::*;
-    ///
-    /// let mut syst = System::new("system #1");
-    /// let actor = syst.create_actor("raptor");
-    /// let status = syst.register_actor(actor);
-    /// let query_actors = syst.actors().unwrap();
-    ///
-    /// assert!(status.is_ok());
-    /// ```
     pub fn register_actor(&mut self, actor: Actor) -> Result<(), String> {
         match &mut self.actors {
             Some(v) => {
                 v.push(actor);
-                return Ok(());
+                Ok(())
             }
             None => {
                 self.actors = Some(vec![actor]);
-                return Ok(());
+                Ok(())
             }
-        };
+        }
     }
+
+    fn register_actors(&mut self, mut actors: Vec<Actor>) -> Result<(), String> {
+        match &mut self.actors {
+            Some(v) => {
+                v.append(&mut actors);
+                Ok(())
+            }
+            None => {
+                self.actors = Some(actors);
+                Ok(())
+            }
+        }
+    }
+
     // TODO support register multiple
     // TODO support MSG to create actor and register in system
 
@@ -96,29 +96,28 @@ impl System {
     /// use raptors::prelude::*;
     ///
     /// let mut syst = System::new("system #1");
-    /// let msg = SystemCommand::CreateActor;
-    /// let status = syst.on_receive(msg.into());
+    /// let msg = SystemCommand::CreateActor(1, String::from("raptor"));
+    /// syst.on_receive(msg.into());
     /// let query_actors = syst.actors().unwrap();
     /// assert_eq!(query_actors.len(), 1);
-    /// assert_eq!(query_actors[0].name(), "raptor".to_string());
-    /// assert!(status.is_ok());
+    /// assert_eq!(query_actors[0].name(), "raptor #0".to_string());
     ///
     /// # // create one more actor
-    /// let msg = SystemCommand::CreateActor;
-    /// let status = syst.on_receive(msg.into());
+    /// let msg = SystemCommand::CreateActor(1, String::from("raptor"));
+    /// syst.on_receive(msg.into());
     /// let query_actors = syst.actors().unwrap();
     /// assert_eq!(query_actors.len(), 2);
-    /// assert_eq!(query_actors[0].name(), "raptor".to_string());
-    /// assert!(status.is_ok());
+    /// assert_eq!(query_actors[0].name(), "raptor #0".to_string());
     /// ```
     #[allow(unreachable_patterns)]
     pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
         match msg {
             TypedMessage::SystemMsg(cmd) => {
                 match cmd {
-                    SystemCommand::CreateActor => {
-                        let actor = self.create_actor("raptor");
-                        let status = self.register_actor(actor);
+                    SystemCommand::CreateActor(cnt, base_name) => {
+                        // let actor = self.create_actor("raptor");
+                        let mut actors = self.create_actors(cnt, &base_name);
+                        let status = self.register_actors(actors);
                         // return usize currently
                         match status {
                             Ok(_) => Ok(()),
@@ -214,5 +213,21 @@ mod tests {
         let status = syst.on_receive(msg.into());
         assert!(status.is_err());
         assert_eq!(status.unwrap_err(), "not implemented".to_string());
+    }
+
+    #[test]
+    fn system_create_then_register_multiple_actors_test() {
+        let mut syst = System::new("raptor system");
+
+        // register
+        let actors = syst.create_actors(2, "raptor");
+        let status = syst.register_actors(actors);
+
+        // check result
+        assert_eq!(status.is_ok(), true);
+        let query_actors = syst.actors().unwrap();
+        assert_eq!(query_actors.len(), 2);
+        assert_eq!(query_actors[0].name(), "raptor #0".to_string());
+        assert_eq!(query_actors[1].name(), "raptor #1".to_string());
     }
 }

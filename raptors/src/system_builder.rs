@@ -25,6 +25,7 @@ pub struct SystemBuilder {
 
 impl SystemBuilder {
     pub fn new() -> Self {
+        println!("SystemBuilder::new");
         SystemBuilder::default()
     }
 
@@ -33,8 +34,9 @@ impl SystemBuilder {
     }
 
     pub fn build_with_config(&self, name: &str, config: SystemConfig) -> System {
-        let num_of_actors = config.num_of_actors().unwrap_or_default();
-        println!("{:?}", num_of_actors);
+        println!("SystemBuilder::build_with_config {:?}", config);
+        let amount_of_actors = config.amount_of_actors().unwrap_or_default();
+        println!("actor cnts = {:?}", amount_of_actors);
         System::new(name)
     }
 

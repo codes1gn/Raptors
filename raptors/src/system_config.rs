@@ -10,23 +10,28 @@
 /// use raptors::prelude::*;
 ///
 /// let sys_config = SystemConfig::new();
-/// let num_actor = sys_config.num_of_actors().unwrap_or_default();
+/// let num_actor = sys_config.amount_of_actors().unwrap_or_default();
 /// assert_eq!(num_actor, 0);
 ///
 /// ```
 ///
 #[derive(Default, Debug)]
 pub struct SystemConfig {
-    num_of_actors: Option<usize>,
+    amount_of_actors: Option<usize>,
 }
 
 impl SystemConfig {
     pub fn new() -> Self {
+        println!("SystemConfig::new");
         SystemConfig::default()
     }
 
-    pub fn num_of_actors(&self) -> Option<usize> {
-        self.num_of_actors
+    pub fn set_amount_of_actors(&mut self, num: usize) -> () {
+        self.amount_of_actors = Some(num);
+    }
+
+    pub fn amount_of_actors(&self) -> Option<usize> {
+        self.amount_of_actors
     }
 }
 
@@ -39,7 +44,7 @@ mod tests {
     #[test]
     fn config_test() {
         let sys_config = SystemConfig::new();
-        let na = sys_config.num_of_actors().unwrap_or_default();
+        let na = sys_config.amount_of_actors().unwrap_or_default();
         assert_eq!(na, 0);
     }
 }
