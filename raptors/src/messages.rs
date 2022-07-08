@@ -53,9 +53,6 @@ impl Into<TypedMessage> for SystemCommand {
 // dummy workload as dummy message but has a timeout for
 // emulating the execution
 //
-// TODO(short-term): add OpCode enums as class of workload
-// considering some elementwise ops, and some binary ops;
-//
 // TODO(short-term): set up the cost-model, and make workload query
 // payload capacity from it, by opcode; future should extend to polymorphic
 // querying on both opcode and scale.
@@ -104,15 +101,16 @@ impl Workload {
 ///
 /// assert_eq!(OpCode::default(), OpCode::DummyOp);
 /// ```
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+// Copy trait is necessary, otherwise ownership will transit into the cost model
 pub enum OpCode {
-    MatmulOp,
-    ConvOp,
-    AddOp,
-    SubOp,
-    ExpOp,
-    SinOp,
     DummyOp,
+    AddOp,
+    ConvOp,
+    ExpOp,
+    MatmulOp,
+    SinOp,
+    SubOp,
 }
 
 impl Default for OpCode {

@@ -46,10 +46,8 @@ impl SystemBuilder {
     }
 }
 
-
 #[cfg(test)]
 
 mod tests {
     use super::*;
-
 }
