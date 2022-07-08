@@ -15,6 +15,10 @@ pub struct WorkloadEstimator {
 /// TODO estimator read files, like json, to update the cost model
 //
 impl WorkloadEstimator {
+    pub fn new() -> Self {
+        WorkloadEstimator::default()
+    }
+
     pub fn set_model(cost_model: HashMap<OpCode, usize>) -> Self {
         return Self {
             cost_model: cost_model,
@@ -64,7 +68,7 @@ mod tests {
 
     #[test]
     fn create_estimator_wtihout_model_test() {
-        let est = WorkloadEstimator::default();
+        let est = WorkloadEstimator::new();
         let model = est.cost_model();
         assert_eq!(
             model.get_key_value(&OpCode::AddOp),
@@ -100,7 +104,7 @@ mod tests {
 
     #[test]
     fn estimate_computation_cost_test() {
-        let est = WorkloadEstimator::default();
+        let est = WorkloadEstimator::new();
 
         let load_1 = Workload::new(16, OpCode::AddOp);
         let cost_1 = est.estimate(load_1);
