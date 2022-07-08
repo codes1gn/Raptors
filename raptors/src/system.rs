@@ -37,7 +37,7 @@ pub struct System {
     name: String,
     actors: Option<Vec<Actor>>,
 }
-
+// TODO(max): make return type as Result<(Actor/Vec<Actor>), Err> to meld ErrMsg
 impl System {
     pub fn new(name: &str) -> Self {
         return Self {
@@ -61,8 +61,8 @@ impl System {
         akts
     }
 
-    // TODO(short-term) make the status code into Result struct | Done
-    // TODO: add errors for fn: register_actor, right now it always returns Ok()
+    // TODO(short-term)(Almost Done) make the status code into Result struct
+    // TODO(max): extend ErrMsg for fn: register_actor, currently it always returns Ok()
     ///
     ///
     /// ```
@@ -204,12 +204,12 @@ mod tests {
         // register
         let actor = syst.create_actor("raptor");
         let status = syst.register_actor(actor);
-        // register_actor only returns Ok() currently, extend it in the future
+        // register_actor only returns Ok() currently, extend its ErrorMsg in the future
         assert!(status.is_err());
     }
 
     #[test]
-    fn on_receive_not_SystemMsg_test() {
+    fn on_receive_not_systemmsg_test() {
         let mut syst = System::new("system #1");
         let msg = TypedMessage::ActorMsg;
         let status = syst.on_receive(msg.into());
