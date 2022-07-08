@@ -15,7 +15,7 @@ pub mod prelude {
     pub use crate::actors::Actor;
     pub use crate::executor::Executor;
     pub use crate::messages::{SystemCommand, TypedMessage, Workload};
-    pub use crate::system::{System};
-    pub use crate::system_builder::{SystemBuilder};
+    pub use crate::system::System;
+    pub use crate::system_builder::SystemBuilder;
     pub use crate::system_config::SystemConfig;
 }
