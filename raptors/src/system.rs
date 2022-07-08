@@ -90,6 +90,7 @@ impl System {
     // TODO support MSG to create actor and register in system
 
     /// TODO support id and name for create actor MSG command
+    /// TODO convert String into ErrMsg in future
     ///
     /// ```
     /// use raptors::prelude::*;
