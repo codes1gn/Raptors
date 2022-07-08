@@ -209,7 +209,7 @@ mod tests {
     }
 
     #[test]
-    fn on_receive_notSystemMsg_test() {
+    fn on_receive_not_SystemMsg_test() {
         let mut syst = System::new("system #1");
         let msg = TypedMessage::ActorMsg;
         let status = syst.on_receive(msg.into());
