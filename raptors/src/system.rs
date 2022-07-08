@@ -143,7 +143,6 @@ impl System {
 
 // unit tests
 #[cfg(test)]
-
 mod tests {
     use super::*;
 

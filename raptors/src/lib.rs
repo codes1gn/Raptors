@@ -1,4 +1,5 @@
 pub mod actors;
+pub mod estimator;
 pub mod executor;
 pub mod messages;
 pub mod system;
