@@ -24,5 +24,3 @@ jobs:
       run: cargo test --verbose
     - name: Update documentation
       run: bash ./scripts/make_doc.sh
-    - name:
-      run: cargo package
