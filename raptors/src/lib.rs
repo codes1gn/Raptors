@@ -13,6 +13,7 @@ pub mod system_config;
 /// ```
 pub mod prelude {
     pub use crate::actors::Actor;
+    pub use crate::estimator::WorkloadEstimator;
     pub use crate::executor::Executor;
     pub use crate::messages::{SystemCommand, TypedMessage, Workload, OpCode};
     pub use crate::system::System;
