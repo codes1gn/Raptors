@@ -15,7 +15,15 @@ use raptors::prelude::*;
 ///
 fn main() {
     println!("================ Running raptors::diamond-tasks example ================");
-    
+
+    let a: Vec<usize> = vec![1, 2, 3];
+    a.iter()
+        .map(|name| -> () {
+            println!("haha = {:?}", name);
+        })
+        .collect::<()>();
+    return;
+
     // init system
     let sys_builder = SystemBuilder::new();
     let mut sys_config = SystemConfig::new();
@@ -36,11 +44,14 @@ fn main() {
     // create a list of workload
     // TODO we need workload builder later
     let mut workloads: Vec<TypedMessage> = vec![];
-    
+
     workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::AddOp)));
     workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::SinOp)));
     workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::ConvOp)));
-    workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::MatmulOp)));
+    workloads.push(TypedMessage::WorkloadMsg(Workload::new(
+        16,
+        OpCode::MatmulOp,
+    )));
     workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::AddOp)));
     workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::ExpOp)));
     println!("{:?}", workloads);

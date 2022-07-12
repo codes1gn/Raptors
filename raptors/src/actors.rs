@@ -1,7 +1,7 @@
 // LICENSE PLACEHOLDER
-//
-use crate::messages;
 use uuid::Uuid;
+
+use crate::messages;
 
 // placehold for actors
 #[derive(Debug)]
