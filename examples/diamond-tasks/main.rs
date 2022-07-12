@@ -26,12 +26,9 @@ fn main() {
     // create 4 actors
     let msg = SystemCommand::CreateActor(4, String::from("raptor"));
     syst.on_receive(msg.into());
-    let query_actors = syst.actors().expect("None of actors in system");
-    assert_eq!(query_actors.len(), 4);
-    assert_eq!(query_actors[0].name(), "raptor #0".to_string());
-    assert_eq!(query_actors[1].name(), "raptor #1".to_string());
-    assert_eq!(query_actors[2].name(), "raptor #2".to_string());
-    assert_eq!(query_actors[3].name(), "raptor #3".to_string());
+    let actor_reg = syst.actor_registry();
+    assert_eq!(actor_reg.len(), 4);
+    println!("{:?}", actor_reg);
 
     // create a list of workload
     // TODO we need workload builder later
@@ -54,6 +51,6 @@ fn main() {
     // TODO we need msg builder
     let msg = SystemCommand::DestroyAllActors;
     syst.on_receive(msg.into());
-    let query_actors = syst.actors().expect("None of actors in system");
-    assert_eq!(query_actors.len(), 0);
+    let actor_reg = syst.actor_registry();
+    assert_eq!(actor_reg.len(), 0);
 }

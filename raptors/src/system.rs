@@ -29,7 +29,6 @@ use crate::system_config::SystemConfig;
 #[derive(Debug)]
 pub struct System {
     name: String,
-    actors: Option<Vec<Actor>>,
     actor_registry: HashMap<Uuid, Actor>,
 }
 
@@ -37,7 +36,6 @@ impl Default for System {
     fn default() -> Self {
         System {
             name: String::from("Raptor System"),
-            actors: None,
             actor_registry: HashMap::new(),
         }
     }
@@ -75,36 +73,16 @@ impl System {
     }
 
     pub fn destroy_all_actors(&mut self) -> Result<(), String> {
-        match &mut self.actors {
-            Some(v) => {
-                v.clear();
-                Ok(())
-            }
-            None => Ok(()),
-        }
+        self.actor_registry.clear();
+        Ok(())
     }
 
-    // TODO(short-term)(Almost Done) make the status code into Result struct
-    // TODO(max): extend ErrMsg for fn: register_actor, currently it always returns Ok()
     pub fn register_actor(&mut self, actor: Actor) -> Result<(), String> {
-        match &mut self.actors {
-            Some(v) => {
-                v.push(actor);
-                Ok(())
-            }
-            None => {
-                self.actors = Some(vec![actor]);
-                Ok(())
-            }
-        }
-    }
-
-    pub fn register_actor_to_map(&mut self, actor: Actor) -> Result<(), String> {
         self.actor_registry.insert(actor.id(), actor);
         Ok(())
     }
 
-    pub fn register_actors_to_map(&mut self, mut actors: Vec<Actor>) -> Result<(), String> {
+    pub fn register_actors(&mut self, mut actors: Vec<Actor>) -> Result<(), String> {
         // println!("before register {:?}", self.actor_registry);
         actors
             .into_iter()
@@ -117,24 +95,12 @@ impl System {
         Ok(())
     }
 
-    fn register_actors(&mut self, mut actors: Vec<Actor>) -> Result<(), String> {
-        match &mut self.actors {
-            Some(v) => {
-                v.append(&mut actors);
-                Ok(())
-            }
-            None => {
-                self.actors = Some(actors);
-                Ok(())
-            }
-        }
-    }
-
     // TODO support register multiple
     // TODO support MSG to create actor and register in system
 
     /// TODO support id and name for create actor MSG command
     /// TODO convert String into ErrMsg in future
+    /// TODO test run on_receive twice, and add naming redirection in it
     ///
     /// ```
     /// use raptors::prelude::*;
@@ -142,16 +108,25 @@ impl System {
     /// let mut syst = System::new("system #1");
     /// let msg = SystemCommand::CreateActor(1, String::from("raptor"));
     /// syst.on_receive(msg.into());
-    /// let query_actors = syst.actors().unwrap();
-    /// assert_eq!(query_actors.len(), 1);
-    /// assert_eq!(query_actors[0].name(), "raptor #0".to_string());
+    /// let actor_reg = syst.actor_registry();
+    /// assert_eq!(actor_reg.len(), 1);
+    /// let actors: Vec<&Actor> = actor_reg.values().collect();
+    /// assert_eq!(actors[0].name(), "raptor #0".to_string());
+    /// ```
     ///
-    /// # // create one more actor
-    /// let msg = SystemCommand::CreateActor(1, String::from("raptor"));
+    /// ```
+    /// use raptors::prelude::*;
+    ///
+    /// let mut syst = System::new("system #1");
+    /// let msg = SystemCommand::CreateActor(2, String::from("raptor"));
     /// syst.on_receive(msg.into());
-    /// let query_actors = syst.actors().unwrap();
-    /// assert_eq!(query_actors.len(), 2);
-    /// assert_eq!(query_actors[0].name(), "raptor #0".to_string());
+    /// let actor_reg = syst.actor_registry();
+    /// assert_eq!(actor_reg.len(), 2);
+    /// let mut actors: Vec<&Actor> = actor_reg.values().collect();
+    /// actors.sort_unstable();
+    /// println!("{:?}", actors);
+    /// assert_eq!(actors[0].name(), "raptor #0".to_string());
+    /// assert_eq!(actors[1].name(), "raptor #1".to_string());
     /// ```
     #[allow(unreachable_patterns)]
     pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
@@ -174,10 +149,6 @@ impl System {
             }
             _ => Err("not implemented".to_string()),
         }
-    }
-
-    pub fn actors(&self) -> Option<&Vec<Actor>> {
-        self.actors.as_ref()
     }
 
     pub fn actor_registry(&self) -> &HashMap<Uuid, Actor> {
@@ -216,57 +187,17 @@ mod tests {
     }
 
     #[test]
-    fn system_create_register_then_query_actor_test() {
-        let mut syst = System::new("raptor system");
-
-        // register
-        let actor = syst.create_actor("raptor");
-        let status = syst.register_actor(actor);
-
-        // check result
-        assert!(status.is_ok());
-        let query_actors = syst.actors().unwrap();
-        assert_eq!(query_actors.len(), 1);
-        assert_eq!(query_actors[0].name(), "raptor".to_string());
-
-        // register twice
-        // duplicating and identification of Actor
-        // duplicating and identification of System
-        let actor = syst.create_actor("raptor2");
-        let status = syst.register_actor(actor);
-
-        // check result
-        assert!(status.is_ok());
-        let query_actors = syst.actors().unwrap();
-        assert_eq!(query_actors.len(), 2);
-        assert_eq!(query_actors[0].name(), "raptor".to_string());
-        assert_eq!(query_actors[1].name(), "raptor2".to_string());
-    }
-
-    #[test]
     fn system_create_register_then_query_actor_from_map_test() {
         let mut syst = System::new("raptor system");
 
         // register
         let actor = syst.create_actor("raptor");
-        let status = syst.register_actor_to_map(actor);
+        let status = syst.register_actor(actor);
 
         // check result
         assert!(status.is_ok());
         let mactor = syst.actor_registry();
         assert_eq!(mactor.len(), 1);
-    }
-
-    #[test]
-    #[ignore]
-    fn register_actor_fail_test() {
-        let mut syst = System::new("raptor system");
-
-        // register
-        let actor = syst.create_actor("raptor");
-        let status = syst.register_actor(actor);
-        // register_actor only returns Ok() currently, extend its ErrorMsg in the future
-        assert!(status.is_err());
     }
 
     #[test]
@@ -284,29 +215,23 @@ mod tests {
 
         // register
         let actors = syst.create_actors(2, "raptor");
+        let query_id = actors
+            .iter()
+            .map(|actor| actor.id().clone())
+            .collect::<Vec<Uuid>>();
         let status = syst.register_actors(actors);
-
-        // check result
-        assert_eq!(status.is_ok(), true);
-        let query_actors = syst.actors().unwrap();
-        assert_eq!(query_actors.len(), 2);
-        assert_eq!(query_actors[0].name(), "raptor #0".to_string());
-        assert_eq!(query_actors[1].name(), "raptor #1".to_string());
-    }
-
-    #[test]
-    fn system_create_then_register_multiple_actors_to_map_test() {
-        let mut syst = System::new("raptor system");
-
-        // register
-        let actors = syst.create_actors(2, "raptor");
-        let status = syst.register_actors_to_map(actors);
 
         // check result
         assert_eq!(status.is_ok(), true);
         let query_actors = syst.actor_registry();
         assert_eq!(query_actors.len(), 2);
-        // assert_eq!(query_actors[0].name(), "raptor #0".to_string());
-        // assert_eq!(query_actors[1].name(), "raptor #1".to_string());
+        assert_eq!(
+            query_actors.get(&query_id[0]).unwrap().name(),
+            "raptor #0".to_string()
+        );
+        assert_eq!(
+            query_actors.get(&query_id[1]).unwrap().name(),
+            "raptor #1".to_string()
+        );
     }
 }
