@@ -19,6 +19,7 @@ impl WorkloadEstimator {
         WorkloadEstimator::default()
     }
 
+    // TODO support load cost model from deserialize from proto files
     pub fn set_model(cost_model: HashMap<OpCode, usize>) -> Self {
         return Self {
             cost_model: cost_model,
@@ -33,6 +34,7 @@ impl WorkloadEstimator {
         *self.cost_model.get(&workload.op()).unwrap() * workload.payload()
     }
 
+    // TODO support update with moving average strategy
     pub fn update_model(&mut self, op: OpCode, new_cost: usize) -> () {
         match self.cost_model.get_mut(&op) {
             Some(cost) => {

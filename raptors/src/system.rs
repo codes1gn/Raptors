@@ -58,6 +58,18 @@ impl System {
         akts
     }
 
+    pub fn destroy_all_actors(&mut self) -> Result<(), String> {
+        match &mut self.actors {
+            Some(v) => {
+                v.clear();
+                Ok(())
+            }
+            None => {
+                Ok(())
+            }
+        }
+    }
+
     // TODO(short-term)(Almost Done) make the status code into Result struct
     // TODO(max): extend ErrMsg for fn: register_actor, currently it always returns Ok()
     pub fn register_actor(&mut self, actor: Actor) -> Result<(), String> {
@@ -123,6 +135,9 @@ impl System {
                             Ok(_) => Ok(()),
                             Err(_e) => Err("Fail to register the actor".to_string()),
                         }
+                    }
+                    SystemCommand::DestroyAllActors => {
+                        self.destroy_all_actors()
                     }
                     _ => Err("not implemented".to_string()),
                 }

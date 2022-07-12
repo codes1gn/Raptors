@@ -37,11 +37,13 @@ type Message = Box<dyn Any + Send>;
 pub enum TypedMessage {
     SystemMsg(SystemCommand),
     ActorMsg,
+    WorkloadMsg(Workload),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum SystemCommand {
     CreateActor(usize, String),
+    DestroyAllActors, // add more accurate destroy control msg when needed
 }
 
 impl Into<TypedMessage> for SystemCommand {
@@ -64,6 +66,7 @@ impl Into<TypedMessage> for SystemCommand {
 // each actor
 //
 //
+#[derive(Clone, Debug, PartialEq)]
 pub struct Workload {
     payload: usize,
     op: OpCode,
@@ -158,5 +161,12 @@ mod tests {
     fn workload_ops_exp_test() {
         let load = Workload::new(16, OpCode::ExpOp);
         assert_eq!(load.op(), OpCode::ExpOp);
+    }
+
+    #[test]
+    fn workload_message_test() {
+        let load = Workload::new(16, OpCode::ExpOp);
+        let wlmsg = TypedMessage::WorkloadMsg(load);
+        assert_eq!(wlmsg, TypedMessage::WorkloadMsg(Workload::new(16, OpCode::ExpOp)));
     }
 }
