@@ -1,10 +1,12 @@
 // LICENSE PLACEHOLDER
 use uuid::Uuid;
 
+use std::cmp::Ordering;
+
 use crate::messages;
 
 // placehold for actors
-#[derive(Debug)]
+#[derive(Debug, Eq)]
 pub struct Actor {
     name: String,
     // TODO(long-term) use v5 uuid, and give a hardcoded namespace, for removing randomness, also to allow
@@ -37,6 +39,25 @@ impl Actor {
 
     fn on_compute(&self, workload: messages::Workload) -> () {
         workload.mock_run();
+    }
+}
+
+impl PartialOrd for Actor {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Actor {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.name.cmp(&other.name)
+    }
+}
+
+// TODO fix duplicate with uuid add to name
+impl PartialEq for Actor {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == self.name
     }
 }
 
