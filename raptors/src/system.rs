@@ -1,3 +1,7 @@
+use uuid::Uuid;
+
+use std::collections::HashMap;
+
 use crate::actors::*;
 use crate::messages::*;
 use crate::system_config::SystemConfig;
@@ -22,11 +26,23 @@ use crate::system_config::SystemConfig;
 /// step 5: create a context from system? (pros: we can make a registry for that to query quickly)
 /// step 6: actor start or init with ctx
 ///
-#[derive(Default)]
+#[derive(Debug)]
 pub struct System {
     name: String,
     actors: Option<Vec<Actor>>,
+    actor_registry: HashMap<Uuid, Actor>,
 }
+
+impl Default for System {
+    fn default() -> Self {
+        System {
+            name: String::from("Raptor System"),
+            actors: None,
+            actor_registry: HashMap::new(),
+        }
+    }
+}
+
 // TODO(max): make return type as Result<(Actor/Vec<Actor>), Err> to meld ErrMsg
 impl System {
     pub fn new(name: &str) -> Self {
@@ -81,6 +97,24 @@ impl System {
                 Ok(())
             }
         }
+    }
+
+    pub fn register_actor_to_map(&mut self, actor: Actor) -> Result<(), String> {
+        self.actor_registry.insert(actor.id(), actor);
+        Ok(())
+    }
+
+    pub fn register_actors_to_map(&mut self, mut actors: Vec<Actor>) -> Result<(), String> {
+        // println!("before register {:?}", self.actor_registry);
+        actors
+            .into_iter()
+            .map(|actor| {
+                self.actor_registry.insert(actor.id(), actor);
+            })
+            .collect::<()>();
+        // TODO use more elegant way to logging, such as auto-enable/config for methods logging
+        // println!("after register {:?}", self.actor_registry);
+        Ok(())
     }
 
     fn register_actors(&mut self, mut actors: Vec<Actor>) -> Result<(), String> {
@@ -146,6 +180,10 @@ impl System {
         self.actors.as_ref()
     }
 
+    pub fn actor_registry(&self) -> &HashMap<Uuid, Actor> {
+        &self.actor_registry
+    }
+
     pub fn name(&self) -> String {
         self.name.clone()
     }
@@ -206,6 +244,20 @@ mod tests {
     }
 
     #[test]
+    fn system_create_register_then_query_actor_from_map_test() {
+        let mut syst = System::new("raptor system");
+
+        // register
+        let actor = syst.create_actor("raptor");
+        let status = syst.register_actor_to_map(actor);
+
+        // check result
+        assert!(status.is_ok());
+        let mactor = syst.actor_registry();
+        assert_eq!(mactor.len(), 1);
+    }
+
+    #[test]
     #[ignore]
     fn register_actor_fail_test() {
         let mut syst = System::new("raptor system");
@@ -240,5 +292,21 @@ mod tests {
         assert_eq!(query_actors.len(), 2);
         assert_eq!(query_actors[0].name(), "raptor #0".to_string());
         assert_eq!(query_actors[1].name(), "raptor #1".to_string());
+    }
+
+    #[test]
+    fn system_create_then_register_multiple_actors_to_map_test() {
+        let mut syst = System::new("raptor system");
+
+        // register
+        let actors = syst.create_actors(2, "raptor");
+        let status = syst.register_actors_to_map(actors);
+
+        // check result
+        assert_eq!(status.is_ok(), true);
+        let query_actors = syst.actor_registry();
+        assert_eq!(query_actors.len(), 2);
+        // assert_eq!(query_actors[0].name(), "raptor #0".to_string());
+        // assert_eq!(query_actors[1].name(), "raptor #1".to_string());
     }
 }

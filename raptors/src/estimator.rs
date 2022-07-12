@@ -1,8 +1,7 @@
 // LICENSE PLACEHOLDER
+use std::collections::HashMap;
 
 use crate::messages::{OpCode, Workload};
-
-use std::collections::HashMap;
 
 /// Definition: The estimator helps to compute the estimated cost for different ops.
 ///
@@ -12,6 +11,23 @@ pub struct WorkloadEstimator {
     cost_model: HashMap<OpCode, usize>,
 }
 
+impl Default for WorkloadEstimator {
+    fn default() -> Self {
+        let mut cost_model = HashMap::new();
+        cost_model.insert(OpCode::DummyOp, 4);
+        cost_model.insert(OpCode::AddOp, 2);
+        cost_model.insert(OpCode::ConvOp, 8);
+        cost_model.insert(OpCode::ExpOp, 1);
+        cost_model.insert(OpCode::MatmulOp, 10);
+        cost_model.insert(OpCode::SinOp, 1);
+        cost_model.insert(OpCode::SubOp, 2);
+        return Self {
+            cost_model: cost_model,
+        };
+    }
+}
+
+/// TODO set a helper to build the estimator
 /// TODO estimator read files, like json, to update the cost model
 //
 impl WorkloadEstimator {
@@ -44,22 +60,6 @@ impl WorkloadEstimator {
                 self.cost_model.insert(op, new_cost);
             }
         }
-    }
-}
-
-impl Default for WorkloadEstimator {
-    fn default() -> Self {
-        let mut cost_model = HashMap::new();
-        cost_model.insert(OpCode::DummyOp, 4);
-        cost_model.insert(OpCode::AddOp, 2);
-        cost_model.insert(OpCode::ConvOp, 8);
-        cost_model.insert(OpCode::ExpOp, 1);
-        cost_model.insert(OpCode::MatmulOp, 10);
-        cost_model.insert(OpCode::SinOp, 1);
-        cost_model.insert(OpCode::SubOp, 2);
-        return Self {
-            cost_model: cost_model,
-        };
     }
 }
 
