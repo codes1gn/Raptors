@@ -125,7 +125,6 @@ impl Default for OpCode {
 
 // unit tests
 #[cfg(test)]
-
 mod tests {
     use super::*;
 
@@ -167,6 +166,9 @@ mod tests {
     fn workload_message_test() {
         let load = Workload::new(16, OpCode::ExpOp);
         let wlmsg = TypedMessage::WorkloadMsg(load);
-        assert_eq!(wlmsg, TypedMessage::WorkloadMsg(Workload::new(16, OpCode::ExpOp)));
+        assert_eq!(
+            wlmsg,
+            TypedMessage::WorkloadMsg(Workload::new(16, OpCode::ExpOp))
+        );
     }
 }

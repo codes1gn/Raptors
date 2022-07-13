@@ -11,16 +11,14 @@ use std::collections::HashMap;
 pub struct WorkloadEstimator {
     cost_model: HashMap<OpCode, usize>,
 }
-/// TODO set a helper to build the estimator
-/// TODO estimator read files, like json, to update the cost model
+
+/// TODO estimator writes the current model into files, like json
+/// TODO estimator reads files, like json, to update the cost model
+/// TODO whether estimator reads files to update model, or the helper
+///      reads the files to set up a new estimator
 //
 impl WorkloadEstimator {
-    pub fn new() -> Self {
-        WorkloadEstimator::default()
-    }
-
-    // TODO support load cost model from deserialize from proto files
-    pub fn set_model(cost_model: HashMap<OpCode, usize>) -> Self {
+    pub fn new(cost_model: HashMap<OpCode, usize>) -> Self {
         return Self {
             cost_model: cost_model,
         };
@@ -47,66 +45,35 @@ impl WorkloadEstimator {
     }
 }
 
-impl Default for WorkloadEstimator {
-    fn default() -> Self {
-        let mut cost_model = HashMap::new();
-        cost_model.insert(OpCode::DummyOp, 4);
-        cost_model.insert(OpCode::AddOp, 2);
-        cost_model.insert(OpCode::ConvOp, 8);
-        cost_model.insert(OpCode::ExpOp, 1);
-        cost_model.insert(OpCode::MatmulOp, 10);
-        cost_model.insert(OpCode::SinOp, 1);
-        cost_model.insert(OpCode::SubOp, 2);
-        return Self {
-            cost_model: cost_model,
-        };
-    }
-}
-
 // tests
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn create_estimator_wtihout_model_test() {
-        let est = WorkloadEstimator::new();
-        let model = est.cost_model();
-        assert_eq!(
-            model.get_key_value(&OpCode::AddOp),
-            Some((&OpCode::AddOp, &2))
-        );
-        assert_eq!(
-            model.get_key_value(&OpCode::ConvOp),
-            Some((&OpCode::ConvOp, &8))
-        );
-        assert_eq!(
-            model.get_key_value(&OpCode::MatmulOp),
-            Some((&OpCode::MatmulOp, &10))
-        );
-    }
-
-    #[test]
-    fn create_estimator_with_model_test() {
+    fn estimator_new_test() {
         let mut model = HashMap::new();
         model.insert(OpCode::DummyOp, 4);
-        model.insert(OpCode::AddOp, 2);
 
-        let est = WorkloadEstimator::set_model(model);
-        let model = est.cost_model();
+        let est = WorkloadEstimator::new(model.clone());
+
         assert_eq!(
-            model.get_key_value(&OpCode::AddOp),
-            Some((&OpCode::AddOp, &2))
+            est.cost_model.get_key_value(&OpCode::DummyOp),
+            Some((&OpCode::DummyOp, &4))
         );
         assert_eq!(
-            model.get_key_value(&OpCode::DummyOp),
-            Some((&OpCode::DummyOp, &4))
+            est.cost_model.get_key_value(&OpCode::DummyOp),
+            model.get_key_value(&OpCode::DummyOp)
         );
     }
 
     #[test]
     fn estimate_computation_cost_test() {
-        let est = WorkloadEstimator::new();
+        let mut model = HashMap::new();
+        model.insert(OpCode::DummyOp, 4);
+        model.insert(OpCode::AddOp, 2);
+
+        let est = WorkloadEstimator::new(model.clone());
 
         let load_1 = Workload::new(16, OpCode::AddOp);
         let cost_1 = est.estimate(load_1);
@@ -122,13 +89,14 @@ mod tests {
         let mut model = HashMap::new();
         model.insert(OpCode::DummyOp, 4);
 
-        let mut est = WorkloadEstimator::set_model(model);
+        let mut est = WorkloadEstimator::new(model.clone());
 
         assert!(est.cost_model.contains_key(&OpCode::DummyOp));
         assert_eq!(
             est.cost_model.get_key_value(&OpCode::DummyOp),
             Some((&OpCode::DummyOp, &4))
         );
+
         est.update_model(OpCode::DummyOp, 8);
         assert_eq!(
             est.cost_model.get_key_value(&OpCode::DummyOp),
@@ -136,6 +104,7 @@ mod tests {
         );
 
         assert_eq!(est.cost_model.contains_key(&OpCode::ConvOp), false);
+
         est.update_model(OpCode::ConvOp, 100);
         assert!(est.cost_model.contains_key(&OpCode::ConvOp));
         assert_eq!(

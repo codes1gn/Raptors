@@ -64,9 +64,7 @@ impl System {
                 v.clear();
                 Ok(())
             }
-            None => {
-                Ok(())
-            }
+            None => Ok(()),
         }
     }
 
@@ -136,9 +134,7 @@ impl System {
                             Err(_e) => Err("Fail to register the actor".to_string()),
                         }
                     }
-                    SystemCommand::DestroyAllActors => {
-                        self.destroy_all_actors()
-                    }
+                    SystemCommand::DestroyAllActors => self.destroy_all_actors(),
                     _ => Err("not implemented".to_string()),
                 }
             }
