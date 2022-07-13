@@ -12,18 +12,21 @@ use crate::messages::*;
 #[derive(Clone, Debug, PartialEq)]
 pub struct WrkMsgBuilder {
     payload: usize,
-    op: OpCode,
+    op: messages::OpCode,
 }
 
 impl WrkMsgBuilder {
     pub fn new(payload: usize, op: OpCode) -> Self {
-        Self { payload, op } 
+        return Self { 
+            payload: payload, 
+            op: op,
+        };
     }
 
     pub fn set_payload(&mut self, payload: usize) {
         self.payload = payload;
     }
-
+ 
     pub fn set_OpCode(&mut self, op: OpCode) {
         self.op = op;
     }
@@ -71,11 +74,11 @@ pub enum MessageBuilder {
 }
 
 trait BuildMsg {
-    fn build();
+    fn build() -> TypedMessage;
 }
 
 impl BuildMsg for MessageBuilder {
-    fn build_msg(&self) {
+    fn build_msg(&self) -> TypedMessage {
         match self {
             WrkMsgBuilder => {
                 return WrkMsgBuilder::build_msg();
@@ -90,7 +93,7 @@ impl BuildMsg for MessageBuilder {
             },
         }
     }
-}
+} 
 
 // unit tests
 #[cfg(test)]
