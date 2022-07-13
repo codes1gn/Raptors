@@ -7,12 +7,14 @@ use crate::messages::*;
 // Build from Bottom to Up
 // TODO Idiomatic Build Pattern, we should call Workload::new() -> Builder
 //      currently we directly define the builder with new() -> Self
-//
+// TODO In the future, do we want to expose the trait for the enum of builder,
+//      Once we impl this trait, we could generate the corresponding msg
+//      But the drawback is: it will be complex
 /// WrkMsgBuilder
 #[derive(Clone, Debug, PartialEq)]
 pub struct WrkMsgBuilder {
     payload: usize,
-    op: messages::OpCode,
+    op: OpCode, // messages::
 }
 
 impl WrkMsgBuilder {
@@ -27,17 +29,25 @@ impl WrkMsgBuilder {
         self.payload = payload;
     }
  
-    pub fn set_OpCode(&mut self, op: OpCode) {
+    pub fn set_op(&mut self, op: OpCode) {
         self.op = op;
     }
 
+    pub fn payload(&self) -> usize {
+        self.payload.clone()
+    }
+
+    pub fn op(&self) -> OpCode {
+        self.op.clone()
+    }
+
     pub fn build_workload(&self) -> Workload {
-        return Workload (self.payload.clone(), self.op.clone());
+        return Workload ( self::payload(), self::op() );
     }
 
     pub fn build_msg(&self) -> WorkloadMsg {
         return WorkloadMsg (
-            Workload (self.payload.clone(), self.op.clone())
+            Workload ( self::payload(), self::op() )
         );
     }
 }
@@ -57,6 +67,10 @@ impl SysMsgBuilder {
         self.cmd = cmd;
     }
 
+    fn cmd(&self) -> SystemCommand {
+        self.cmd.clone()
+    }
+
     fn build_cmd(&self) -> SystemCommand {
         self.cmd.clone()
     }
@@ -66,6 +80,7 @@ impl SysMsgBuilder {
     }
 }
 
+// TODOs: complete AcrMsgBuilder part in the future
 #[derive(Clone, Debug, PartialEq)]
 pub enum MessageBuilder {
     SysMsgBuilder,
@@ -97,7 +112,7 @@ impl BuildMsg for MessageBuilder {
 
 // unit tests
 #[cfg(test)]
-mod tests {
+mod WrkMsgBuilder_tests {
     use super::*;
 
     #[test]
@@ -106,5 +121,86 @@ mod tests {
 
         assert_eq!(builder.payload, 1);
         assert_eq!(builder.op, OpCode::DummyOp);
+    }
+
+    #[test]
+    fn set_payload_test() {
+        let mut builder = WrkMsgBuilder::new(1, OpCode::DummyOp);
+        builder::set_payload(20);
+
+        assert_eq!(builder::payload(), 20);
+    }
+
+    #[test]
+    fn set_op_test() {
+        let mut builder = WrkMsgBuilder::new(1, OpCode::DummyOp);
+        builder::set_op(OpCode::AddOp);
+        
+        assert_eq!(builder::payload(), OpCode::AddOp);
+    }
+    
+    #[test]
+    fn build_workload_test() {
+        let mut builder = WrkMsgBuilder::new(1, OpCode::DummyOp);
+        let workload_built = builder::build_workload();
+        
+        assert_eq!(
+            workload_built,
+            Workload ( builder::payload(), builder::op() )
+        );
+    }
+    
+    #[test]
+    fn build_msg_test() {
+        let mut builder = WrkMsgBuilder::new(1, OpCode::DummyOp);
+        let msg_build = builder::build_msg();
+        
+        assert_eq!(
+            msg_built,
+            WorkloadMsg (
+                Workload ( builder::payload(), builder::op() )
+            )
+        );
+    }
+}
+
+mod SysMsgBuilder_tests {
+    use super::*;
+
+    #[test]
+    fn create_builder_test() {
+        let builder = SysMsgBuilder::new();
+
+        assert_eq!(builder, SysMsgBuilder::default());
+    }
+
+    #[test]
+    fn set_cmd_test() {
+        let mut builder = SysMsgBuilder::new();
+        builder::set_cmd(SystemCommand::DestroyAllActors);
+
+        assert_eq!(builder::cmd(), SystemCommand::DestroyAllActors);
+    }
+    
+    #[test]
+    fn build_cmd_test() {
+        let mut builder = SysMsgBuilder::new();
+        builder::set_cmd(SystemCommand::DestroyAllActors);
+
+        assert_eq!(
+            builder::build_cmd(),
+            SystemCommand::DestroyAllActors
+        );
+    }
+    
+    #[test]
+    fn build_msg_test() {
+        let mut builder = SysMsgBuilder::new();
+        builder::set_cmd(SystemCommand::DestroyAllActors);
+        
+        assert_eq!(
+            builder::build_msg(),
+            SystemMsg ( SystemCommand::DestroyAllActors )
+        );
     }
 }
