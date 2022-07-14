@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use std::cmp::Ordering;
 
+use crate::mailbox::*;
 use crate::messages;
 
 // placehold for actors
@@ -12,6 +13,7 @@ pub struct Actor {
     // TODO(long-term) use v5 uuid, and give a hardcoded namespace, for removing randomness, also to allow
     // testing
     id: Uuid,
+    pub mailbox: Mailbox,
 }
 
 impl Actor {
@@ -20,6 +22,7 @@ impl Actor {
         return Self {
             name: String::from(name),
             id: new_uuid,
+            mailbox: Mailbox::new(),
         };
     }
 
@@ -35,6 +38,25 @@ impl Actor {
     // TODO: gradually support higher granularity parallelism
     pub fn receive(&self, msg: messages::Workload) -> () {
         self.on_compute(msg);
+    }
+
+    /// TODO Error Handling
+    /// ```
+    /// use raptors::prelude::*;
+    ///
+    /// let mut actor = Actor::new("raptor");
+    /// let msg = TypedMessage::WorkloadMsg(Workload::new(16, OpCode::AddOp));
+    /// actor.receive_msg(msg.into());
+    /// assert_eq!(actor.mailbox.len(), 1);
+    /// ```
+    pub fn receive_msg(&mut self, msg: messages::TypedMessage) -> Result<(), String> {
+        match msg {
+            messages::TypedMessage::WorkloadMsg(ref workload) => {
+                self.mailbox.enqueue(msg.into());
+                Ok(())
+            }
+            _ => Err("Unknown message received by actor".to_string()),
+        }
     }
 
     fn on_compute(&self, workload: messages::Workload) -> () {

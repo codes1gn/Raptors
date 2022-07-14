@@ -1,4 +1,8 @@
 extern crate raptors;
+extern crate uuid;
+
+use uuid::Uuid;
+
 use raptors::prelude::*;
 
 /// Routine of this example
@@ -28,7 +32,7 @@ fn main() {
     syst.on_receive(msg.into());
     let actor_reg = syst.actor_registry();
     assert_eq!(actor_reg.len(), 4);
-    println!("{:?}", actor_reg);
+    // println!("{:?}", actor_reg);
 
     // create a list of workload
     // TODO we need workload builder later
@@ -43,9 +47,15 @@ fn main() {
     )));
     workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::AddOp)));
     workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::ExpOp)));
-    println!("{:?}", workloads);
+    // println!("{:?}", workloads);
 
-    // send workload vector to system then system pass to scheduler
+    // send workload vector to system then system dispatch to actors
+    syst.on_dispatch(workloads);
+
+    let actor_reg = syst.actor_registry();
+    assert_eq!(actor_reg.len(), 4);
+    let actors: Vec<&Actor> = actor_reg.values().collect();
+    println!("{:?}", actors[0].mailbox);
 
     // destroy all actors
     // TODO we need msg builder

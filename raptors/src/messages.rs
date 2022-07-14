@@ -35,14 +35,14 @@ type Message = Box<dyn Any + Send>;
 /// }
 /// assert!(test_msg_type(msg.into()));
 ///```
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypedMessage {
     SystemMsg(SystemCommand),
     ActorMsg,
     WorkloadMsg(Workload),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SystemCommand {
     DummySysCmd,
     CreateActor(usize, String),
@@ -75,7 +75,7 @@ impl Default for SystemCommand {
 // each actor
 //
 //
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq, Default, Eq)]
 pub struct Workload {
     payload: usize,
     op: OpCode,
