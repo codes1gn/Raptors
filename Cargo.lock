@@ -60,6 +60,7 @@ name = "raptors-examples"
 version = "0.1.0"
 dependencies = [
  "raptors",
+ "uuid",
 ]
 
 [[package]]

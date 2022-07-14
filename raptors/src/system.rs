@@ -3,6 +3,7 @@ use uuid::Uuid;
 use std::collections::HashMap;
 
 use crate::actors::*;
+use crate::mailbox::*;
 use crate::messages::*;
 use crate::system_config::SystemConfig;
 
@@ -72,7 +73,7 @@ impl System {
         akts
     }
 
-    pub fn destroy_all_actors(&mut self) -> Result<(), String> {
+    pub fn destroy_actors(&mut self) -> Result<(), String> {
         self.actor_registry.clear();
         Ok(())
     }
@@ -131,11 +132,23 @@ impl System {
     #[allow(unreachable_patterns)]
     pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
         match msg {
+            TypedMessage::WorkloadMsg(ref workload) => {
+                // TODO dispatch it to actors
+                // use a tmp queue to manage it and later switch to mailbox
+                // TODO need a envelope object in message types, later
+                let mut actors: Vec<&mut Actor> = self
+                    .actor_registry
+                    .values_mut()
+                    .collect::<Vec<&mut Actor>>();
+                // TODO replace this hardcode logic, with envelope with uuid, or add addr for
+                // contain msgs, and actors to receive by themself once started.
+                actors[0].receive_msg(msg)
+            }
             TypedMessage::SystemMsg(cmd) => {
                 match cmd {
                     SystemCommand::CreateActor(cnt, base_name) => {
                         // let actor = self.create_actor("raptor");
-                        let mut actors = self.create_actors(cnt, &base_name);
+                        let actors = self.create_actors(cnt, &base_name);
                         let status = self.register_actors(actors);
                         // return usize currently
                         match status {
@@ -143,12 +156,20 @@ impl System {
                             Err(_e) => Err("Fail to register the actor".to_string()),
                         }
                     }
-                    SystemCommand::DestroyAllActors => self.destroy_all_actors(),
+                    SystemCommand::DestroyAllActors => self.destroy_actors(),
                     _ => Err("not implemented".to_string()),
                 }
             }
             _ => Err("not implemented".to_string()),
         }
+    }
+
+    pub fn on_dispatch(&mut self, workloads: Vec<TypedMessage>) -> Result<(), String> {
+        let status = workloads
+            .into_iter()
+            .map(|msg| -> Result<(), String> { self.on_receive(msg) })
+            .collect::<Result<(), String>>();
+        status
     }
 
     pub fn actor_registry(&self) -> &HashMap<Uuid, Actor> {
@@ -233,5 +254,29 @@ mod tests {
             query_actors.get(&query_id[1]).unwrap().name(),
             "raptor #1".to_string()
         );
+    }
+
+    #[test]
+    fn system_dispatch_workloadmsg_to_actors_test() {
+        let mut syst = System::new("system #1");
+
+        // create two actors
+        let msg = SystemCommand::CreateActor(2, String::from("raptor"));
+        syst.on_receive(msg.into());
+
+        // create two workload msg
+        let mut workloads: Vec<TypedMessage> = vec![];
+
+        workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::AddOp)));
+        workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::SinOp)));
+        syst.on_dispatch(workloads);
+
+        // check if take effects
+        let actor_reg = syst.actor_registry();
+        assert_eq!(actor_reg.len(), 2);
+        let actors: Vec<&Actor> = actor_reg.values().collect();
+        // panic!("{:?}", actors[0]);
+        // panic!("{:?}", actors[1]);
+        assert_eq!(actors[0].mailbox.len(), 2);
     }
 }
