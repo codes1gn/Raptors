@@ -1,54 +1,39 @@
 // LICENSE PLACEHOLDER
 
 use crate::messages::*;
+use crate::syscmd_builder::*;
+use crate::workload_builder::*;
 
-/// Messages Builder helps to create workload and messages
+/// Messages Builder helps create messages
 //
 // Build from Bottom to Up
-// TODO Idiomatic Build Pattern, we should call Workload::new() -> Builder
-//      currently we directly define the builder with new() -> Self
 // TODO In the future, do we want to expose the trait for the enum of builder,
 //      Once we impl this trait, we could generate the corresponding msg
 //      But the drawback is: it will be complex
-/// WrkMsgBuilder
-#[derive(Clone, Debug, PartialEq)]
+/// WrkMsgBuilder to create WorkloadMsg
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct WrkMsgBuilder {
-    payload: usize,
-    op: OpCode, // messages::
+    workload: Workload,
 }
 
 impl WrkMsgBuilder {
-    pub fn new(payload: usize, op: OpCode) -> Self {
-        return Self { 
-            payload: payload, 
-            op: op,
+    // make it Default in the future
+    pub fn new() -> Self {
+        return Self {
+            workload: Workload ( 0, OpCode::default() ),
         };
     }
 
-    pub fn set_payload(&mut self, payload: usize) {
-        self.payload = payload;
+    pub fn set_workload(&mut self, workload: Workload) {
+        self.workload = workload;
     }
  
-    pub fn set_op(&mut self, op: OpCode) {
-        self.op = op;
-    }
-
-    pub fn payload(&self) -> usize {
-        self.payload.clone()
-    }
-
-    pub fn op(&self) -> OpCode {
-        self.op.clone()
-    }
-
-    pub fn build_workload(&self) -> Workload {
-        return Workload ( self::payload(), self::op() );
+    pub fn workload(&self) -> Workload {
+        self.workload.clone()
     }
 
     pub fn build_msg(&self) -> WorkloadMsg {
-        return WorkloadMsg (
-            Workload ( self::payload(), self::op() )
-        );
+        return WorkloadMsg ( self.workload.clone() );
     }
 }
 
@@ -60,7 +45,9 @@ pub struct SysMsgBuilder {
 
 impl SysMsgBuilder {
     fn new() -> Self {
-        SysMsgBuilder::default()
+        return Self {
+            cmd: SystemCommand::default(),
+        }
     }
 
     fn set_cmd(&mut self, cmd: SystemCommand) {
@@ -71,12 +58,8 @@ impl SysMsgBuilder {
         self.cmd.clone()
     }
 
-    fn build_cmd(&self) -> SystemCommand {
-        self.cmd.clone()
-    }
-
     fn build_msg(&self) -> SystemMsg {
-        SystemMsg( self.cmd.clone )
+        SystemMsg ( self.cmd.clone() )
     }
 }
 
@@ -96,12 +79,12 @@ impl BuildMsg for MessageBuilder {
     fn build_msg(&self) -> TypedMessage {
         match self {
             WrkMsgBuilder => {
-                return WrkMsgBuilder::build_msg();
+                return WrkMsgBuilder::build_msg(&self);
             },
 
             SysMsgBuilder => {
-                return SysMsgBuilder::build_msg();
-            }
+                return SysMsgBuilder::build_msg(&self);
+            },
 
             AcrMsgBuilder => {
                 return 0;
@@ -117,53 +100,41 @@ mod WrkMsgBuilder_tests {
 
     #[test]
     fn create_builder_test() {
-        let builder = WrkMsgBuilder::new(1, OpCode::DummyOp);
+        let builder = WrkMsgBuilder::new();
 
-        assert_eq!(builder.payload, 1);
-        assert_eq!(builder.op, OpCode::DummyOp);
-    }
-
-    #[test]
-    fn set_payload_test() {
-        let mut builder = WrkMsgBuilder::new(1, OpCode::DummyOp);
-        builder::set_payload(20);
-
-        assert_eq!(builder::payload(), 20);
-    }
-
-    #[test]
-    fn set_op_test() {
-        let mut builder = WrkMsgBuilder::new(1, OpCode::DummyOp);
-        builder::set_op(OpCode::AddOp);
-        
-        assert_eq!(builder::payload(), OpCode::AddOp);
-    }
-    
-    #[test]
-    fn build_workload_test() {
-        let mut builder = WrkMsgBuilder::new(1, OpCode::DummyOp);
-        let workload_built = builder::build_workload();
-        
         assert_eq!(
-            workload_built,
-            Workload ( builder::payload(), builder::op() )
+            builder.workload, 
+            Workload ( 0, OpCode::default() )
         );
     }
-    
+
+    #[test]
+    fn set_workload_test() {
+        let mut builder = WrkMsgBuilder::new();
+        builder::set_workload(Workload ( 20, OpCode::AddOp ));
+
+        assert_eq!(
+            builder::payload(), 
+            Workload ( 20, OpCode::AddOp )
+        );
+    }
+
     #[test]
     fn build_msg_test() {
-        let mut builder = WrkMsgBuilder::new(1, OpCode::DummyOp);
+        let mut builder = WrkMsgBuilder::new();
         let msg_build = builder::build_msg();
         
         assert_eq!(
             msg_built,
             WorkloadMsg (
-                Workload ( builder::payload(), builder::op() )
+                Workload ( 0, OpCode::DummyOp )
             )
         );
     }
 }
 
+// u
+#[cfg(test)]
 mod SysMsgBuilder_tests {
     use super::*;
 
@@ -171,7 +142,7 @@ mod SysMsgBuilder_tests {
     fn create_builder_test() {
         let builder = SysMsgBuilder::new();
 
-        assert_eq!(builder, SysMsgBuilder::default());
+        assert_eq!(builder.cmd, SystemCommand::default());
     }
 
     #[test]
@@ -183,24 +154,12 @@ mod SysMsgBuilder_tests {
     }
     
     #[test]
-    fn build_cmd_test() {
-        let mut builder = SysMsgBuilder::new();
-        builder::set_cmd(SystemCommand::DestroyAllActors);
-
-        assert_eq!(
-            builder::build_cmd(),
-            SystemCommand::DestroyAllActors
-        );
-    }
-    
-    #[test]
     fn build_msg_test() {
         let mut builder = SysMsgBuilder::new();
-        builder::set_cmd(SystemCommand::DestroyAllActors);
         
         assert_eq!(
             builder::build_msg(),
-            SystemMsg ( SystemCommand::DestroyAllActors )
+            SystemMsg ( SystemCommand::default() )
         );
     }
 }

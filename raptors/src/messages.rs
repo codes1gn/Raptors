@@ -3,6 +3,8 @@
 use std::any::Any;
 use std::{thread, time};
 
+use crate::system::System;
+
 // message trait is the definition of behaviours that the concept
 // `message` shall obey, in other words, two properties referred.
 // 1. sendable via mailboxes
@@ -42,6 +44,7 @@ pub enum TypedMessage {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum SystemCommand {
+    DummySysCmd,
     CreateActor(usize, String),
     DestroyAllActors, // add more accurate destroy control msg when needed
 }
@@ -49,6 +52,12 @@ pub enum SystemCommand {
 impl Into<TypedMessage> for SystemCommand {
     fn into(self) -> TypedMessage {
         TypedMessage::SystemMsg(self)
+    }
+}
+
+impl Default for SystemCommand {
+    fn default() -> Self {
+        SystemCommand::DummySysCmd
     }
 }
 
