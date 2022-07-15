@@ -3,26 +3,15 @@
 use crate::messages::{OpCode, Workload};
 
 /// Workload Builder helps create the workload.
-/// ```
-/// use crate::messages::*;
-/// 
-/// let builder = WorkloadBuilder::new(1, OpCode::DummyOp);
-/// 
-/// assert_eq!(builder::payload(), 1);
-/// assert_eq!(builder::op(), OpCode::DummyOp);
-/// ```
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Default)]
 pub struct WorkloadBuilder {
     payload: usize,
     op: OpCode,
 }
 
 impl WorkloadBuilder {
-    pub fn new(payload: usize, op: OpCode) -> Self {
-        return Self {
-            payload: payload,
-            op: op,
-        };
+    pub fn new() -> Self {
+        WorkloadBuilder::default()
     }
 
     pub fn payload(&self) -> usize {
@@ -36,24 +25,23 @@ impl WorkloadBuilder {
     pub fn set_payload(&mut self, payload: usize) {
         self.payload = payload;
     }
- 
+
     pub fn set_op(&mut self, op: OpCode) {
         self.op = op;
     }
 
+    pub fn build_with_workload(payload: usize, op: OpCode) -> Self {
+        return Self { 
+            payload: payload, 
+            op: op
+        };
+    }
+
     pub fn build_workload(&self) -> Workload {
-        return Workload ( self::payload(), self::op() );
+        return Workload::new(self.payload(), self.op());
     }
 }
 
-impl Default for WorkloadBuilder {
-    fn default() -> Self {
-        return Self {
-            payload: 0,
-            op: OpCode::DummyOp,
-        };
-    }
-}
 // unit tests
 #[cfg(test)]
 mod WorkloadBuilder_tests {
@@ -61,7 +49,7 @@ mod WorkloadBuilder_tests {
 
     #[test]
     fn create_builder_test() {
-        let builder = WorkloadBuilder::new(1, OpCode::DummyOp);
+        let builder = WorkloadBuilder::build_with_workload(1, OpCode::DummyOp);
 
         assert_eq!(builder.payload, 1);
         assert_eq!(builder.op, OpCode::DummyOp);
@@ -69,28 +57,28 @@ mod WorkloadBuilder_tests {
 
     #[test]
     fn set_payload_test() {
-        let mut builder = WorkloadBuilder::new(1, OpCode::DummyOp);
-        builder::set_payload(20);
+        let mut builder = WorkloadBuilder::new();
+        builder.set_payload(20);
 
-        assert_eq!(builder::payload(), 20);
+        assert_eq!(builder.payload(), 20);
     }
 
     #[test]
     fn set_op_test() {
-        let mut builder = WorkloadBuilder::new(1, OpCode::DummyOp);
-        builder::set_op(OpCode::AddOp);
-        
-        assert_eq!(builder::payload(), OpCode::AddOp);
+        let mut builder = WorkloadBuilder::new();
+        builder.set_op(OpCode::AddOp);
+
+        assert_eq!(builder.op(), OpCode::AddOp);
     }
-    
+
     #[test]
     fn build_workload_test() {
-        let mut builder = WorkloadBuilder::new(1, OpCode::DummyOp);
-        let workload_built = builder::build_workload();
-        
+        let mut builder = WorkloadBuilder::build_with_workload(1, OpCode::DummyOp);
+        let workload_built = builder.build_workload();
+
         assert_eq!(
             workload_built,
-            Workload ( builder::payload(), builder::op() )
+            Workload::new(1, OpCode::DummyOp)
         );
     }
 }

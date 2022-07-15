@@ -4,16 +4,14 @@ use crate::messages::SystemCommand;
 
 /// SystemCommand Builder (SysCmdBuilder) helps to create system command.
 //
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Default)]
 pub struct SysCmdBuilder {
     cmd: SystemCommand,
 }
 
 impl SysCmdBuilder {
-    pub fn new(cmd: SystemCommand) -> Self {
-        return Self {
-            cmd: cmd,
-        };
+    pub fn new() -> Self {
+        SysCmdBuilder::default()
     }
 
     pub fn set_cmd(&mut self, cmd: SystemCommand) {
@@ -23,13 +21,11 @@ impl SysCmdBuilder {
     pub fn cmd(&self) -> SystemCommand {
         self.cmd.clone()
     }
-}
 
-impl Default for SysCmdBuilder {
-    fn default() -> Self {
-        return Self {
-            cmd: SystemCommand::default(),
-        }
+    pub fn build_with_cmd(cmd: SystemCommand) -> Self {
+        return Self { 
+            cmd: cmd,
+        };
     }
 }
 
@@ -40,18 +36,20 @@ mod SysCmdBuilder_tests {
 
     #[test]
     fn create_builder() {
-        let builder = SysCmdBuilder::new(SystemCommand::DestroyAllActors);
+        let builder = SysCmdBuilder::build_with_cmd(SystemCommand::DestroyAllActors);
 
         assert_eq!(builder.cmd, SystemCommand::DestroyAllActors);
     }
 
     #[test]
     fn set_cmd_test() {
-        let builder = SysCmdBuilder::new(SystemCommand::DestroyAllActors);
-        assert_eq!(builder::cmd(), SystemCommand::DestroyAllActors);
+        let mut builder = SysCmdBuilder::new();
+        assert_eq!(builder.cmd(), SystemCommand::DummySysCmd);
 
-        builder::set_cmd(SystemCommand::CreateActor(1, "actor".to_owned()));
-        assert_eq!(builder::cmd(), SystemCommand::CreateActor(1, "actor".to_owned()));
+        builder.set_cmd(SystemCommand::CreateActor(1, "actor".to_owned()));
+        assert_eq!(
+            builder.cmd(),
+            SystemCommand::CreateActor(1, "actor".to_owned())
+        );
     }
 }
-

@@ -106,6 +106,30 @@ impl Workload {
     }
 }
 
+/// WorkloadMsg indicates the workload to be taken.
+#[derive(Clone, Debug, PartialEq)]
+pub struct WorkloadMsg {
+    workload: Workload,
+}
+
+impl WorkloadMsg {
+    pub fn new(workload: Workload) -> Self {
+        return Self { workload: workload };
+    }
+}
+
+/// SystemMsg indicates the message of the system.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SystemMsg {
+    cmd: SystemCommand,
+}
+
+impl SystemMsg {
+    pub fn new(cmd: SystemCommand) -> Self {
+        return Self { cmd: cmd };
+    }
+}
+
 // Definition for Opcode
 /// ```
 /// # // Test default function for OpCode
