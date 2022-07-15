@@ -23,9 +23,7 @@ impl SysCmdBuilder {
     }
 
     pub fn build_with_cmd(cmd: SystemCommand) -> Self {
-        return Self { 
-            cmd: cmd,
-        };
+        return Self { cmd: cmd };
     }
 }
 

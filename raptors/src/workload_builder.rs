@@ -31,9 +31,9 @@ impl WorkloadBuilder {
     }
 
     pub fn build_with_workload(payload: usize, op: OpCode) -> Self {
-        return Self { 
-            payload: payload, 
-            op: op
+        return Self {
+            payload: payload,
+            op: op,
         };
     }
 
@@ -76,9 +76,6 @@ mod WorkloadBuilder_tests {
         let mut builder = WorkloadBuilder::build_with_workload(1, OpCode::DummyOp);
         let workload_built = builder.build_workload();
 
-        assert_eq!(
-            workload_built,
-            Workload::new(1, OpCode::DummyOp)
-        );
+        assert_eq!(workload_built, Workload::new(1, OpCode::DummyOp));
     }
 }

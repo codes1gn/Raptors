@@ -75,7 +75,7 @@ impl Default for SystemCommand {
 // each actor
 //
 //
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct Workload {
     payload: usize,
     op: OpCode,

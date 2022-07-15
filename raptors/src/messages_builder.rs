@@ -11,7 +11,11 @@ use crate::messages::*;
 
 //===--------------------------------------------------------------------===//
 /// WrkMsgBuilder to create WorkloadMsg
+<<<<<<< HEAD
 #[derive(Clone, Debug, Default, PartialEq)]
+=======
+#[derive(Clone, Debug, PartialEq, Default)]
+>>>>>>> e776add... fmt checked, tests passed
 pub struct WrkMsgBuilder {
     workload: Workload,
 }
@@ -19,6 +23,7 @@ pub struct WrkMsgBuilder {
 impl WrkMsgBuilder {
     // make it Default in the future
     pub fn new() -> Self {
+<<<<<<< HEAD
         return Self {
 <<<<<<< HEAD
             workload: Workload ( 0, OpCode::default() ),
@@ -26,16 +31,23 @@ impl WrkMsgBuilder {
             workload: Workload::new(0, OpCode::DummyOp),
 >>>>>>> 00414d0... Add builder
         };
+=======
+        WrkMsgBuilder::default()
     }
-    
+
+    pub fn build_with_workload(workload: Workload) -> Self {
+        return Self { workload: workload };
+>>>>>>> e776add... fmt checked, tests passed
+    }
+
     pub fn set_workload(&mut self, workload: Workload) {
         self.workload = workload;
     }
-    
+
     pub fn workload(&self) -> Workload {
         self.workload.clone()
     }
-    
+
     pub fn build_msg(&self) -> WorkloadMsg {
 <<<<<<< HEAD
         return WorkloadMsg ( self.workload.clone() );
@@ -54,24 +66,30 @@ pub struct SysMsgBuilder {
 
 impl SysMsgBuilder {
     pub fn new() -> Self {
-        return Self {
-            cmd: SystemCommand::default(),
-        };
+        SysMsgBuilder::default()
     }
-    
+
+    pub fn build_with_cmd(cmd: SystemCommand) -> Self {
+        return Self { cmd: cmd };
+    }
+
     pub fn set_cmd(&mut self, cmd: SystemCommand) {
         self.cmd = cmd;
     }
-    
+
     pub fn cmd(&self) -> SystemCommand {
         self.cmd.clone()
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
 
     fn build_msg(&self) -> SystemMsg {
         SystemMsg ( self.cmd.clone() )
 =======
     
+=======
+
+>>>>>>> e776add... fmt checked, tests passed
     pub fn build_msg(&self) -> SystemMsg {
         return SystemMsg::new(self.cmd());
 >>>>>>> 00414d0... Add builder
@@ -121,8 +139,10 @@ mod WrkMsgBuilder_tests {
     #[test]
     fn create_builder_test() {
         let builder = WrkMsgBuilder::new();
-
         assert_eq!(builder.workload, Workload::new(0, OpCode::DummyOp));
+
+        let builder = WrkMsgBuilder::build_with_workload(Workload::new(2, OpCode::AddOp));
+        assert_eq!(builder.workload, Workload::new(2, OpCode::AddOp));
     }
 
     #[test]
@@ -153,8 +173,10 @@ mod SysMsgBuilder_tests {
     #[test]
     fn create_builder_test() {
         let builder = SysMsgBuilder::new();
-
         assert_eq!(builder.cmd, SystemCommand::default());
+
+        let builder = SysMsgBuilder::build_with_cmd(SystemCommand::DestroyAllActors);
+        assert_eq!(builder.cmd, SystemCommand::DestroyAllActors);
     }
 
     #[test]
