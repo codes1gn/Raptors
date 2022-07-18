@@ -90,11 +90,11 @@ impl Workload {
     }
 
     pub fn payload(&self) -> usize {
-        self.payload
+        self.payload.clone()
     }
 
     pub fn op(&self) -> OpCode {
-        self.op
+        self.op.clone()
     }
 
     // mock function that will fakely run for that period long
