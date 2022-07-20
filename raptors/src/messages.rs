@@ -16,7 +16,7 @@ use crate::system::System;
 // 3. support Se/Des in future
 // 4. consider stream processing and compression designs
 #[allow(dead_code)]
-type Message = Box<dyn Any + Send>;
+type Message = dyn Any + Send + Sync;
 
 // TODO(albert, short-term) complete the family of MessageTypes
 // test with simple design at first

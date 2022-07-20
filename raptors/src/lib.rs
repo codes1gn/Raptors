@@ -1,6 +1,7 @@
 pub mod actors;
 pub mod estimator;
 pub mod executor;
+pub mod mailbox;
 pub mod messages;
 pub mod syscmd_builder;
 pub mod system;
@@ -17,6 +18,7 @@ pub mod prelude {
     pub use crate::actors::Actor;
     pub use crate::estimator::WorkloadEstimator;
     pub use crate::executor::Executor;
+    pub use crate::mailbox::{Len, Mailbox};
     pub use crate::messages::{
         OpCode, SystemCommand, SystemMsg, TypedMessage, Workload, WorkloadMsg,
     };
