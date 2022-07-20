@@ -1,11 +1,11 @@
 // LICENSE PLACEHOLDER
 //
+use tokio::sync::mpsc::{Receiver, Sender};
 use uuid::Uuid;
-use tokio::sync::mpsc::{Sender, Receiver};
 
-use crate::messages;
 use crate::mailbox::*;
-use crate::messages::{TypedMessage, SystemCommand};
+use crate::messages;
+use crate::messages::{SystemCommand, TypedMessage};
 
 // placehold for actors
 #[derive(Debug)]
