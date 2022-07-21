@@ -11,7 +11,7 @@ use std::collections::HashMap;
 pub struct WorkloadEstimator {
     cost_model: HashMap<OpCode, usize>,
 }
-/// TODO set a helper to build the estimator
+
 /// TODO estimator read files, like json, to update the cost model
 //
 impl WorkloadEstimator {

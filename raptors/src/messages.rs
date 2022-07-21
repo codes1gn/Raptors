@@ -3,6 +3,8 @@
 use std::any::Any;
 use std::{thread, time};
 
+use crate::system::System;
+
 // message trait is the definition of behaviours that the concept
 // `message` shall obey, in other words, two properties referred.
 // 1. sendable via mailboxes
@@ -42,6 +44,7 @@ pub enum TypedMessage {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum SystemCommand {
+    DummySysCmd,
     CreateActor(usize, String),
     DestroyAllActors, // add more accurate destroy control msg when needed
 }
@@ -49,6 +52,12 @@ pub enum SystemCommand {
 impl Into<TypedMessage> for SystemCommand {
     fn into(self) -> TypedMessage {
         TypedMessage::SystemMsg(self)
+    }
+}
+
+impl Default for SystemCommand {
+    fn default() -> Self {
+        SystemCommand::DummySysCmd
     }
 }
 
@@ -66,7 +75,7 @@ impl Into<TypedMessage> for SystemCommand {
 // each actor
 //
 //
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct Workload {
     payload: usize,
     op: OpCode,
@@ -81,11 +90,11 @@ impl Workload {
     }
 
     pub fn payload(&self) -> usize {
-        self.payload
+        self.payload.clone()
     }
 
     pub fn op(&self) -> OpCode {
-        self.op
+        self.op.clone()
     }
 
     // mock function that will fakely run for that period long
@@ -94,6 +103,36 @@ impl Workload {
     // 2. values may use a value type that defined include possible results
     pub fn mock_run(&self) -> () {
         thread::sleep(time::Duration::from_millis(self.payload as u64));
+    }
+}
+
+impl Into<TypedMessage> for Workload {
+    fn into(self) -> TypedMessage {
+        TypedMessage::WorkloadMsg(self)
+    }
+}
+
+/// WorkloadMsg indicates the workload to be taken.
+#[derive(Clone, Debug, PartialEq)]
+pub struct WorkloadMsg {
+    workload: Workload,
+}
+
+impl WorkloadMsg {
+    pub fn new(workload: Workload) -> Self {
+        return Self { workload: workload };
+    }
+}
+
+/// SystemMsg indicates the message of the system.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SystemMsg {
+    cmd: SystemCommand,
+}
+
+impl SystemMsg {
+    pub fn new(cmd: SystemCommand) -> Self {
+        return Self { cmd: cmd };
     }
 }
 
@@ -125,7 +164,6 @@ impl Default for OpCode {
 
 // unit tests
 #[cfg(test)]
-
 mod tests {
     use super::*;
 
@@ -167,6 +205,9 @@ mod tests {
     fn workload_message_test() {
         let load = Workload::new(16, OpCode::ExpOp);
         let wlmsg = TypedMessage::WorkloadMsg(load);
-        assert_eq!(wlmsg, TypedMessage::WorkloadMsg(Workload::new(16, OpCode::ExpOp)));
+        assert_eq!(
+            wlmsg,
+            TypedMessage::WorkloadMsg(Workload::new(16, OpCode::ExpOp))
+        );
     }
 }
