@@ -47,9 +47,8 @@ impl SystemCmdBuilder {
         cmd: &str,
         numeric_args: Option<Vec<usize>>,
         literal_args: Option<Vec<String>>,
-    ) -> SystemMsg {
-        let systemcommand = self.build(cmd, numeric_args, literal_args);
-        SystemMsg::new(systemcommand)
+    ) -> TypedMessage {
+        self.build(cmd, numeric_args, literal_args).into()
     }
 }
 
@@ -72,14 +71,16 @@ mod syscmd_builder_tests {
     #[test]
     fn msg_build_test() {
         let builder = SystemCmdBuilder::new();
+        let cmd = builder.build(
+            "create-actor",
+            Some(vec![1]),
+            Some(vec!["Raptor".to_owned()]),
+        );
         let msg = builder.build_msg(
             "create-actor",
             Some(vec![1]),
             Some(vec!["Raptor".to_owned()]),
         );
-        assert_eq!(
-            msg,
-            SystemMsg::new(SystemCommand::CreateActor(1, "Raptor".to_owned()))
-        );
+        assert_eq!(msg, TypedMessage::SystemMsg(cmd));
     }
 }

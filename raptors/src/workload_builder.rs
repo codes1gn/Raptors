@@ -1,6 +1,6 @@
 // LICENSE PLACEHOLDER
 
-use crate::messages::{OpCode, Workload, WorkloadMsg};
+use crate::messages::{OpCode, TypedMessage, Workload, WorkloadMsg};
 
 /// Workload Builder helps create the workload.
 #[derive(Default)]
@@ -19,8 +19,8 @@ impl WorkloadBuilder {
         );
     }
 
-    pub fn build_msg(&self, payload: Option<usize>, op: Option<OpCode>) -> WorkloadMsg {
-        return WorkloadMsg::new(self.build(payload, op));
+    pub fn build_msg(&self, payload: Option<usize>, op: Option<OpCode>) -> TypedMessage {
+        self.build(payload, op).into()
     }
 }
 
@@ -43,6 +43,6 @@ mod tests {
         let builder = WorkloadBuilder::new();
         let msg = builder.build_msg(Some(2), Some(OpCode::AddOp));
         let workload = builder.build(Some(2), Some(OpCode::AddOp));
-        assert_eq!(msg, WorkloadMsg::new(workload));
+        assert_eq!(msg, TypedMessage::WorkloadMsg(workload));
     }
 }
