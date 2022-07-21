@@ -2,9 +2,9 @@ pub mod actors;
 pub mod estimator;
 pub mod executor;
 pub mod messages;
-pub mod syscmd_builder;
 pub mod system;
 pub mod system_builder;
+pub mod system_command_builder;
 pub mod system_config;
 pub mod workload_builder;
 
