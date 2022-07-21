@@ -1,10 +1,10 @@
 // LICENSE PLACEHOLDER
-use uuid::Uuid;
-
-use std::cmp::Ordering;
+use uuid::{Urn, Uuid};
 
 use crate::mailbox::*;
 use crate::messages;
+use std::cmp::Ordering;
+use std::str::Bytes;
 
 // placehold for actors
 #[derive(Debug, Eq)]
@@ -13,16 +13,19 @@ pub struct Actor {
     // TODO(long-term) use v5 uuid, and give a hardcoded namespace, for removing randomness, also to allow
     // testing
     id: Uuid,
-    pub mailbox: Mailbox,
+    pub addr: Address,
+    // TODO(albert), how to access mailboxes from actor if mailboxes are owned by
+    // system/context/environment
 }
 
 impl Actor {
     pub fn new(name: &str) -> Actor {
         let new_uuid = Uuid::new_v4();
+        let _addr = new_uuid.clone().hyphenated().to_string();
         return Self {
             name: String::from(name),
             id: new_uuid,
-            mailbox: Mailbox::new(),
+            addr: Address::new(_addr),
         };
     }
 
@@ -34,9 +37,17 @@ impl Actor {
         self.name.clone()
     }
 
+    pub fn addr(&self) -> Address {
+        self.addr.clone()
+    }
+
+    // pub fn mbx(&self) -> &Mailbox {
+    //     &self.mailbox
+    // }
+
     // TODO: make it message passing, test with inter-threads
     // TODO: gradually support higher granularity parallelism
-    pub fn receive(&self, msg: messages::Workload) -> () {
+    pub fn receive_workload(&self, msg: messages::Workload) -> () {
         self.on_compute(msg);
     }
 
@@ -47,12 +58,12 @@ impl Actor {
     /// let mut actor = Actor::new("raptor");
     /// let msg = TypedMessage::WorkloadMsg(Workload::new(16, OpCode::AddOp));
     /// actor.receive_msg(msg.into());
-    /// assert_eq!(actor.mailbox.len(), 1);
+    /// // assert_eq!(actor.mailbox.len(), 1);
     /// ```
     pub fn receive_msg(&mut self, msg: messages::TypedMessage) -> Result<(), String> {
         match msg {
             messages::TypedMessage::WorkloadMsg(ref workload) => {
-                self.mailbox.enqueue(msg.into());
+                // self.mailbox.enqueue(msg.into());
                 Ok(())
             }
             _ => Err("Unknown message received by actor".to_string()),
@@ -116,7 +127,7 @@ mod tests {
         let actor = Actor::new("A");
         let load = messages::Workload::new(16, messages::OpCode::AddOp);
         let now = time::Instant::now();
-        actor.receive(load);
+        actor.receive_workload(load);
         assert!(now.elapsed() >= time::Duration::from_millis(16));
     }
 }

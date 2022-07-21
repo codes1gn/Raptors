@@ -18,7 +18,7 @@ pub mod prelude {
     pub use crate::actors::Actor;
     pub use crate::estimator::WorkloadEstimator;
     pub use crate::executor::Executor;
-    pub use crate::mailbox::{Len, Mailbox};
+    pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
     pub use crate::messages::{
         OpCode, SystemCommand, SystemMsg, TypedMessage, Workload, WorkloadMsg,
     };
