@@ -1,6 +1,22 @@
 // LICENSE PLACEHOLDER
 use crate::messages::*;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Address(String);
+
+impl Address {
+    pub fn new(str: String) -> Address {
+        Address(str)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Envelope {
+    msg: TypedMessage,
+    sender: Address,
+    receiver: Address,
+}
+
 // wrap a dedicated executor module that only consider how to do computations
 //
 // TODO(long-term):

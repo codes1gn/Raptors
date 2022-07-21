@@ -55,7 +55,7 @@ fn main() {
     let actor_reg = syst.actor_registry();
     assert_eq!(actor_reg.len(), 4);
     let actors: Vec<&Actor> = actor_reg.values().collect();
-    println!("{:?}", actors[0].mailbox);
+    // println!("{:?}", actors[0].mailbox);
 
     // destroy all actors
     // TODO we need msg builder

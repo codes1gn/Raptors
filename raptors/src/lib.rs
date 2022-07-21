@@ -15,7 +15,7 @@ pub mod system_config;
 pub mod prelude {
     pub use crate::actors::Actor;
     pub use crate::executor::Executor;
-    pub use crate::mailbox::{Len, Mailbox};
+    pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
     pub use crate::messages::{OpCode, Workload};
     pub use crate::messages::{SystemCommand, TypedMessage};
     pub use crate::system::System;
