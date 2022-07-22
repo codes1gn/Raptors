@@ -106,6 +106,12 @@ impl Workload {
     }
 }
 
+impl Into<TypedMessage> for Workload {
+    fn into(self) -> TypedMessage {
+        TypedMessage::WorkloadMsg(self)
+    }
+}
+
 /// WorkloadMsg indicates the workload to be taken.
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorkloadMsg {
