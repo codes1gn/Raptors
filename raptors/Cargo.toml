@@ -9,3 +9,5 @@ workspace = ".."
 [dependencies]
 uuid = { version = "0.6", features = ["serde", "v4"] }
 tokio = { version = "1", features =["full"] }
+fnv = "1.0.3"
+# fnv is a faster hashmap for short and less inputs

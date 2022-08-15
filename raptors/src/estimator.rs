@@ -12,14 +12,14 @@ pub struct WorkloadEstimator {
     cost_model: HashMap<OpCode, usize>,
 }
 
-/// TODO estimator read files, like json, to update the cost model
+/// TODO: estimator read files, like json, to update the cost model
 //
 impl WorkloadEstimator {
     pub fn new() -> Self {
         WorkloadEstimator::default()
     }
 
-    // TODO support load cost model from deserialize from proto files
+    // TODO: support load cost model from deserialize from proto files
     pub fn set_model(cost_model: HashMap<OpCode, usize>) -> Self {
         return Self {
             cost_model: cost_model,
@@ -63,7 +63,6 @@ impl Default for WorkloadEstimator {
     }
 }
 
-// tests
 #[cfg(test)]
 mod tests {
     use super::*;

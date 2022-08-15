@@ -16,6 +16,7 @@ pub struct Mailbox {
     // *** ringbuffer
     // *** ringbuf
     // *** ring_queue
+    // Target: a lock-free ring buffer, supports to skip the message
     mails: Vec<TypedMessage>,
     tx: Sender<TypedMessage>,
     rx: Receiver<TypedMessage>,

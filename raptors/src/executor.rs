@@ -13,6 +13,7 @@ impl Executor {
     pub fn new() -> Self {
         return Self {};
     }
+
     pub fn compute(&self, workload: messages::Workload) -> () {
         workload.mock_run();
     }

@@ -55,7 +55,10 @@ impl SystemCmdBuilder {
 // unit tests
 #[cfg(test)]
 mod syscmd_builder_tests {
+    use crate::build_msg;
+
     use super::*;
+    use core::panic;
 
     #[test]
     fn command_build_test() {
@@ -82,5 +85,15 @@ mod syscmd_builder_tests {
             Some(vec!["Raptor".to_owned()]),
         );
         assert_eq!(msg, TypedMessage::SystemMsg(cmd));
+    }
+
+    #[test]
+    //#[should_panic]
+    fn macro_build_msg_test() {
+        let destroy_cmd_macro: TypedMessage = build_msg!("destroy-actor");
+        assert_eq!(destroy_cmd_macro, SystemCommand::DestroyAllActors.into());
+
+        let dummy_cmd_macro: TypedMessage = build_msg!("dummy");
+        assert_eq!(dummy_cmd_macro, SystemCommand::DummySysCmd.into());
     }
 }
