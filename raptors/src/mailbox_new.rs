@@ -22,7 +22,7 @@ pub struct Mailbox {
     // *** ringbuffer
     // *** ringbuf
     // *** ring_queue
-    mails: Vec<TypedMessage>, // TODO: a lock-free ring buffer, supports to skip the message, for Mails
+    mails: Vec<TypedMessage>, 
     rx: Receiver<TypedMessage>,
 }
 
