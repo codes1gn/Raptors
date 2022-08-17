@@ -38,11 +38,11 @@ impl Actor {
 
     // TODO: make it message passing, test with inter-threads
     // TODO: gradually support higher granularity parallelism
-    pub fn receive(&self, msg: messages::Workload) -> () {
+    pub fn receive(&self, msg: messages::Workload) {
         self.on_compute(msg);
     }
 
-    fn on_compute(&self, workload: messages::Workload) -> () {
+    fn on_compute(&self, workload: messages::Workload) {
         workload.mock_run();
     }
 

@@ -22,7 +22,7 @@ use crate::system_config::SystemConfig;
 /// step 5: create a context from system? (pros: we can make a registry for that to query quickly)
 /// step 6: actor start or init with ctx
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct System {
     name: String,
     actors: Option<Vec<Actor>>,

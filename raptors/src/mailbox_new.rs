@@ -22,7 +22,7 @@ pub struct Mailbox {
     // *** ringbuffer
     // *** ringbuf
     // *** ring_queue
-    mails: Vec<TypedMessage>, 
+    mails: Vec<TypedMessage>,
     rx: Receiver<TypedMessage>,
 }
 

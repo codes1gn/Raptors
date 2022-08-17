@@ -7,7 +7,7 @@ workspace = ".."
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uuid = { version = "0.6", features = ["serde", "v4"] }
-tokio = { version = "1", features =["full"] }
-fnv = "1.0.3"
-# fnv is a faster hashmap for short and less inputs
+uuid = { version = "1.1.2", features = ["serde", "v4"] }
+tokio = { version = "1.20.1", features = ["full"] }
+fnv = "1.0.7" # fnv is a faster hashmap for short and less inputs
+polars = { version = "0.23.2", features = ["dtype-full"] }

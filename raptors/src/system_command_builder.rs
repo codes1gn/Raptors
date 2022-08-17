@@ -1,15 +1,14 @@
 // LICENSE PLACEHOLDER
 
-use core::panic;
-
 use crate::{
     messages::{SystemCommand, TypedMessage},
     prelude::SystemMsg,
 };
+use core::panic;
 
 /// SystemCommand Builder (SysCmdBuilder) helps to create system command.
 //
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SystemCmdBuilder;
 
 // TODO: we need to derive a Macro to wrap the arguments for build function

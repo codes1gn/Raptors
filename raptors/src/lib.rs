@@ -6,6 +6,7 @@ pub mod executor;
 pub mod mailbox;
 pub mod mailbox_new;
 pub mod messages;
+pub mod profiler;
 // pub mod ring_buffer;
 pub mod system;
 pub mod system_builder;
