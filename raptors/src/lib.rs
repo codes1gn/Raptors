@@ -3,6 +3,7 @@ pub mod actors;
 pub mod context;
 pub mod estimator;
 pub mod executor;
+pub mod logger;
 pub mod mailbox;
 pub mod mailbox_new;
 pub mod messages;

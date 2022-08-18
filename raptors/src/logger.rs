@@ -7,42 +7,37 @@ use uuid::Uuid;
 use chrono::{DateTime, Utc}; // use chrono for nano-precision time
 use std::fs::File;
 
-use crate::messages::{SystemCommand, SystemMsg, TypedMessage, WorkloadMsg};
+use crate::messages::{SystemCommand, TypedMessage};
 
-// The reason why I choose Polars, since we need to sort based on timestamp, it is much eaiser with this library
+// TODO(short-term): we need to construct a new TypedMessage - LogMsg
 
-// TODO(short-term): we need to construct a new TypedMessage - ProfileMsg
-// TODO(long-term): maintain a cost model and update the cost model
-
-// Profiler, a dedicated actor to record the performance of computation
-pub struct Profiler {
+// Logger, a dedicated actor to record actions of system and actors
+pub struct Logger {
     id: Uuid,
     mbx: Vec<TypedMessage>,
     tx: Sender<TypedMessage>,
     rx: Receiver<TypedMessage>,
     table: polars::frame::DataFrame,
-    start_time: DateTime<Utc>,
 }
 
 // Profiler should access its own mbx to retrieve msg
-impl Profiler {
-    pub fn new() -> Profiler {
+impl Logger {
+    pub fn new() -> Logger {
         let uuid = Uuid::new_v4();
         let mbx = vec![];
         let (tx, rx) = mpsc::channel::<TypedMessage>(16);
         let start = Utc::now();
-        let formatted = Profiler::format_time(start);
+        let formatted = Logger::format_time(start);
         // TODO(maybe): convert to chunkedarry/series in Polaris to contruct the dataframe
         let df = df!("Time" => vec![formatted], "ActorId" => vec![uuid.to_string()], "Type" => vec!["System Operation"],
-            "Operation" => vec!["Start Profiler"], "Info" => vec![""])
-        .expect("Fail to create Profiler's table");
+            "Operation" => vec!["Start Logger"], "Info" => vec![""])
+        .expect("Fail to create Logger's table");
         return Self {
             id: uuid,
             mbx: mbx,
             tx: tx,
             rx: rx,
             table: df,
-            start_time: start,
         };
     }
 
@@ -50,8 +45,8 @@ impl Profiler {
         format!("{}", timestamp.format("%Y/%m/%d-%H:%M:%S%.3f"))
     }
 
-    pub fn time_duration(&self, timestamp: DateTime<Utc>) -> i64 {
-        (timestamp - self.start_time).num_microseconds().expect("Fail to compute the time duration")
+    pub fn time_duration(start: DateTime<Utc>, end: DateTime<Utc>) -> i64 {
+        (end - start).num_microseconds().expect("Fail to compute the time duration")
     }
 
     pub fn send(&mut self, msg: TypedMessage, sender: Option<Sender<TypedMessage>>) {
@@ -71,7 +66,7 @@ impl Profiler {
     // TODO: currently each time we could only receive one message
     //       we could combine 'receive' and 'profiling' into one single function which keeps running
     pub fn profiling(&mut self) {
-        // Using 'loop' here, since we want Profiler keeping working
+        // Using 'loop' here, since we want Logger keeping working
         'start_profiling: loop {
             if self.mbx.len() > 0 { // not a good 'if condition'
                 let msg = self.mbx.remove(0);
@@ -87,9 +82,9 @@ impl Profiler {
         match msg {
             TypedMessage::SystemMsg(cmd) => match cmd {
                 SystemCommand::DummySysCmd => {
-                    let data = df!("Time" => vec![Profiler::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["SystemMsg"],
+                    let data = df!("Time" => vec![Logger::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["SystemMsg"],
                     "Operation" => vec!["SystemCommand"], "Info" => vec!["DummySysCmd"])
-                    .expect("Fail to profile SystemMsg");
+                    .expect("Fail to log SystemMsg");
                     // TODO: FIX here, no idea why 'vstack_mut' not work
                     if self.table.vstack_mut(&data).is_err() {
                         panic!("Fail to cancatenate dataframes with SystemMsg(DummySysCmd)");
@@ -97,17 +92,17 @@ impl Profiler {
                 }
                 SystemCommand::CreateActor(num, liter ) => {
                     let info = format!("CreateActor-{}-{}", num.to_string(), liter);
-                    let data = df!("Time" => vec![Profiler::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["SystemMsg"],
+                    let data = df!("Time" => vec![Logger::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["SystemMsg"],
                     "Operation" => vec!["SystemCommand"], "Info" => vec![&info[..]])
-                    .expect("Fail to profile SystemMsg");
+                    .expect("Fail to log SystemMsg");
                     if self.table.vstack_mut(&data).is_err() {
                         panic!("Fail to cancatenate dataframes with SystemMsg(CreateActor)");
                     }
                 }
                 SystemCommand::DestroyAllActors => {
-                    let data = df!("Time" => vec![Profiler::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["SystemMsg"],
+                    let data = df!("Time" => vec![Logger::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["SystemMsg"],
                     "Operation" => vec!["SystemCommand"], "Info" => vec!["DestroyAllActors"])
-                    .expect("Fail to profile SystemMsg");
+                    .expect("Fail to log SystemMsg");
                     self.table.vstack_mut(&data);
                     if self.table.vstack_mut(&data).is_err() {
                         panic!("Fail to cancatenate dataframes with SystemMsg(DestroyAllActors)");
@@ -118,9 +113,9 @@ impl Profiler {
                 }
             },
             TypedMessage::ActorMsg => {
-                let data = df!("Time" => vec![Profiler::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["ActorMsg"],
+                let data = df!("Time" => vec![Logger::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["ActorMsg"],
                         "Operation" => vec!["No op"], "Info" => vec!["No info"])
-                        .expect("Fail to profile ActorMsg");
+                        .expect("Fail to log ActorMsg");
                         if self.table.vstack_mut(&data).is_err() {
                             panic!("Fail to cancatenate dataframes with ActorMsg");
                         }
@@ -128,9 +123,9 @@ impl Profiler {
             TypedMessage::WorkloadMsg(workload) => {
                 let op = workload.op().to_string();
                 let payload = &(workload.payload().to_string())[..];
-                let data = df!("Time" => vec![Profiler::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["WorkloadMsg"],
+                let data = df!("Time" => vec![Logger::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["WorkloadMsg"],
                     "Operation" => vec![op], "Info" => vec![payload])
-                    .expect("Fail to profile WorkloadMsg");
+                    .expect("Fail to log WorkloadMsg");
                     if self.table.vstack_mut(&data).is_err() {
                         panic!("Fail to cancatenate dataframes with WorkloadMsg({}-{})", workload.op(), workload.payload());
                     }
@@ -158,10 +153,10 @@ mod tests {
     use crate::messages::{Workload, OpCode};
 
     use super::*;
-
+    
     #[test]
     fn create_profielr_test() {
-        let mut profiler = Profiler::new();
+        let mut profiler = Logger::new();
         assert_eq!(profiler.mbx.len(), 0);
         profiler.send(SystemCommand::default().into(), None);
         profiler.receive();
@@ -170,24 +165,24 @@ mod tests {
 
     #[test]
     fn write_table_test() {
-        let mut profiler = Profiler::new();
-        assert_eq!(profiler.mbx.len(), 0);
+        let mut logger = Logger::new();
+        assert_eq!(logger.mbx.len(), 0);
         // send different messages
-        profiler.send(SystemCommand::default().into(), None);
-        profiler.send(TypedMessage::ActorMsg, None);
-        profiler.send(SystemCommand::DestroyAllActors.into(), None);
-        profiler.send(SystemCommand::CreateActor(4, String::from("raptor")).into(), None);
-        profiler.send(Workload::new(4, OpCode::AddOp).into(), None);
+        logger.send(SystemCommand::default().into(), None);
+        logger.send(TypedMessage::ActorMsg, None);
+        logger.send(SystemCommand::DestroyAllActors.into(), None);
+        logger.send(SystemCommand::CreateActor(4, String::from("raptor")).into(), None);
+        logger.send(Workload::new(4, OpCode::AddOp).into(), None);
         // start receiving
-        profiler.receive();
-        profiler.receive();
-        profiler.receive();
-        profiler.receive();
-        profiler.receive();
-        assert_eq!(profiler.mbx.len(), 5);
+        logger.receive();
+        logger.receive();
+        logger.receive();
+        logger.receive();
+        logger.receive();
+        assert_eq!(logger.mbx.len(), 5);
         // start profiling
-        profiler.profiling();
-        profiler.write("profiling/profiling_test.csv");
-        assert_eq!(profiler.mbx.len(), 0);
+        logger.profiling();
+        logger.write("logging/logging_test.csv");
+        assert_eq!(logger.mbx.len(), 0);
     }
 }

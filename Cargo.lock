@@ -825,6 +825,7 @@ dependencies = [
 name = "raptors"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "fnv",
  "polars",
  "tokio",
@@ -835,6 +836,7 @@ dependencies = [
 name = "raptors-examples"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "raptors",
 ]
 

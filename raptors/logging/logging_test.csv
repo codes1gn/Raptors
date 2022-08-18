@@ -1,0 +1,8 @@
+Time,ActorId,Type,Operation,Info
+2022/08/18-07:32:11.702,16a216c7-fcae-4c9c-8047-b09b3598a04a,System Operation,Start Logger,""
+2022/08/18-07:32:11.703,100,SystemMsg,SystemCommand,DummySysCmd
+2022/08/18-07:32:11.703,100,ActorMsg,No op,No info
+2022/08/18-07:32:11.703,100,SystemMsg,SystemCommand,DestroyAllActors
+2022/08/18-07:32:11.703,100,SystemMsg,SystemCommand,DestroyAllActors
+2022/08/18-07:32:11.703,100,SystemMsg,SystemCommand,CreateActor-4-raptor
+2022/08/18-07:32:11.703,100,WorkloadMsg,AddOp,4

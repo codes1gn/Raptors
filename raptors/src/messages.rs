@@ -1,5 +1,6 @@
 // LICENSE PLACEHOLDER
 
+use core::fmt;
 use std::any::Any;
 use std::{thread, time};
 
@@ -158,6 +159,12 @@ pub enum OpCode {
 impl Default for OpCode {
     fn default() -> Self {
         OpCode::DummyOp
+    }
+}
+
+impl fmt::Display for OpCode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 // TODO: More Ops to add; Other way to implement Opcode
