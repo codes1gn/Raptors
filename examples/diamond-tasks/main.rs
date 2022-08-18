@@ -1,7 +1,7 @@
 extern crate raptors;
-use raptors::prelude::*;
-use chrono::{DateTime, Utc, NaiveDateTime};
 use chrono::prelude::*;
+use chrono::{DateTime, NaiveDateTime, Utc};
+use raptors::prelude::*;
 /// Routine of this example
 ///
 /// new a system SystemBuilder
@@ -19,8 +19,8 @@ fn main() {
 
     let start = Utc::now();
     let formatted = format!("{}", start.format("%Y/%m/%d-%H:%M:%S%.3f"));
-    println!("System starts at {:?}",formatted);
-    
+    println!("System starts at {:?}", formatted);
+
     // init system
     let sys_builder = SystemBuilder::new();
     let mut sys_config = SystemConfig::new();
@@ -66,5 +66,8 @@ fn main() {
     let formatted = format!("{}", end.format("%Y/%m/%d-%H:%M:%S%.3f"));
     println!("System stops at {:?}", formatted);
     let diff = end - start;
-    println!("Total duration is {:?} microseconds", diff.num_microseconds().unwrap());
+    println!(
+        "Total duration is {:?} microseconds",
+        diff.num_microseconds().unwrap()
+    );
 }

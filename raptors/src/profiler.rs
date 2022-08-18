@@ -1,11 +1,11 @@
 // LICENSE PLACEHOLDER
 //
+use chrono::{DateTime, Utc}; // use chrono for nano-precision time
 use polars::df;
 use polars::prelude::*;
+use std::fs::File;
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use uuid::Uuid;
-use chrono::{DateTime, Utc}; // use chrono for nano-precision time
-use std::fs::File;
 
 use crate::messages::{SystemCommand, SystemMsg, TypedMessage, WorkloadMsg};
 
@@ -51,7 +51,9 @@ impl Profiler {
     }
 
     pub fn time_duration(&self, timestamp: DateTime<Utc>) -> i64 {
-        (timestamp - self.start_time).num_microseconds().expect("Fail to compute the time duration")
+        (timestamp - self.start_time)
+            .num_microseconds()
+            .expect("Fail to compute the time duration")
     }
 
     pub fn send(&mut self, msg: TypedMessage, sender: Option<Sender<TypedMessage>>) {
@@ -73,7 +75,8 @@ impl Profiler {
     pub fn profiling(&mut self) {
         // Using 'loop' here, since we want Profiler keeping working
         'start_profiling: loop {
-            if self.mbx.len() > 0 { // not a good 'if condition'
+            if self.mbx.len() > 0 {
+                // not a good 'if condition'
                 let msg = self.mbx.remove(0);
                 self.recording(msg);
             } else {
@@ -95,7 +98,7 @@ impl Profiler {
                         panic!("Fail to cancatenate dataframes with SystemMsg(DummySysCmd)");
                     }
                 }
-                SystemCommand::CreateActor(num, liter ) => {
+                SystemCommand::CreateActor(num, liter) => {
                     let info = format!("CreateActor-{}-{}", num.to_string(), liter);
                     let data = df!("Time" => vec![Profiler::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["SystemMsg"],
                     "Operation" => vec!["SystemCommand"], "Info" => vec![&info[..]])
@@ -121,20 +124,24 @@ impl Profiler {
                 let data = df!("Time" => vec![Profiler::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["ActorMsg"],
                         "Operation" => vec!["No op"], "Info" => vec!["No info"])
                         .expect("Fail to profile ActorMsg");
-                        if self.table.vstack_mut(&data).is_err() {
-                            panic!("Fail to cancatenate dataframes with ActorMsg");
-                        }
-            },
+                if self.table.vstack_mut(&data).is_err() {
+                    panic!("Fail to cancatenate dataframes with ActorMsg");
+                }
+            }
             TypedMessage::WorkloadMsg(workload) => {
                 let op = workload.op().to_string();
                 let payload = &(workload.payload().to_string())[..];
                 let data = df!("Time" => vec![Profiler::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["WorkloadMsg"],
                     "Operation" => vec![op], "Info" => vec![payload])
                     .expect("Fail to profile WorkloadMsg");
-                    if self.table.vstack_mut(&data).is_err() {
-                        panic!("Fail to cancatenate dataframes with WorkloadMsg({}-{})", workload.op(), workload.payload());
-                    }
-            },
+                if self.table.vstack_mut(&data).is_err() {
+                    panic!(
+                        "Fail to cancatenate dataframes with WorkloadMsg({}-{})",
+                        workload.op(),
+                        workload.payload()
+                    );
+                }
+            }
             _ => {
                 panic!("Not a TypedMessage sent to Profiler")
             }
@@ -152,10 +159,9 @@ impl Profiler {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::messages::{Workload, OpCode};
+    use crate::messages::{OpCode, Workload};
 
     use super::*;
 
@@ -176,7 +182,10 @@ mod tests {
         profiler.send(SystemCommand::default().into(), None);
         profiler.send(TypedMessage::ActorMsg, None);
         profiler.send(SystemCommand::DestroyAllActors.into(), None);
-        profiler.send(SystemCommand::CreateActor(4, String::from("raptor")).into(), None);
+        profiler.send(
+            SystemCommand::CreateActor(4, String::from("raptor")).into(),
+            None,
+        );
         profiler.send(Workload::new(4, OpCode::AddOp).into(), None);
         // start receiving
         profiler.receive();
