@@ -9,6 +9,8 @@
 ####   - pip install mkdocs
 #### then:
 ####   - pip install mkdocs-material
+#### run:
+####   - mkdocs serve
 
 ![](/docs/img/enflame_logo.png) ![](/docs/img/era_logo.png)
 

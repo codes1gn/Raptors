@@ -20,7 +20,7 @@ pub struct Logger {
     table: polars::frame::DataFrame,
 }
 
-// Profiler should access its own mbx to retrieve msg
+// Logger should access its own mbx to retrieve msg
 impl Logger {
     pub fn new() -> Logger {
         let uuid = Uuid::new_v4();
@@ -66,7 +66,7 @@ impl Logger {
 
     // TODO: later we need to control the 'loop': add break and jump-in control
     // TODO: currently each time we could only receive one message
-    //       we could combine 'receive' and 'profiling' into one single function which keeps running
+    //       we could combine 'receive' and 'logging' into one single function which keeps running
     pub fn profiling(&mut self) {
         // Using 'loop' here, since we want Logger keeping working
         'start_profiling: loop {
@@ -88,7 +88,6 @@ impl Logger {
                     let data = df!("Time" => vec![Logger::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["SystemMsg"],
                     "Operation" => vec!["SystemCommand"], "Info" => vec!["DummySysCmd"])
                     .expect("Fail to log SystemMsg");
-                    // TODO: FIX here, no idea why 'vstack_mut' not work
                     if self.table.vstack_mut(&data).is_err() {
                         panic!("Fail to cancatenate dataframes with SystemMsg(DummySysCmd)");
                     }
@@ -189,7 +188,7 @@ mod tests {
         logger.receive();
         logger.receive();
         assert_eq!(logger.mbx.len(), 5);
-        // start profiling
+        // start logging
         logger.profiling();
         logger.write("logging/logging_test.csv");
         assert_eq!(logger.mbx.len(), 0);

@@ -93,7 +93,6 @@ impl Profiler {
                     let data = df!("Time" => vec![Profiler::format_time(curr_time)], "ActorId" => vec!["100".to_string()], "Type" => vec!["SystemMsg"],
                     "Operation" => vec!["SystemCommand"], "Info" => vec!["DummySysCmd"])
                     .expect("Fail to profile SystemMsg");
-                    // TODO: FIX here, no idea why 'vstack_mut' not work
                     if self.table.vstack_mut(&data).is_err() {
                         panic!("Fail to cancatenate dataframes with SystemMsg(DummySysCmd)");
                     }
