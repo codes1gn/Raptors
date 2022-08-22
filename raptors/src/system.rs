@@ -31,7 +31,6 @@ use crate::system_config::SystemConfig;
 pub struct System {
     name: String,
     actor_registry: HashMap<Uuid, Actor>,
-    mailbox_registry: HashMap<Address, Mailbox>,
 }
 
 impl Default for System {
@@ -39,7 +38,6 @@ impl Default for System {
         System {
             name: String::from("Raptor System"),
             actor_registry: HashMap::new(),
-            mailbox_registry: HashMap::new(),
         }
     }
 }
@@ -80,15 +78,11 @@ impl System {
         Ok(())
     }
 
-    pub fn destroy_mailboxes(&mut self) -> Result<(), String> {
-        self.mailbox_registry.clear();
-        Ok(())
-    }
-
-    pub fn register_actor(&mut self, actor: Actor) -> Result<(), String> {
-        let mailbox = Mailbox::new();
-        self.mailbox_registry.insert(actor.addr(), mailbox);
+    pub fn register_actor(&mut self, mut actor: Actor) -> Result<(), String> {
+        // self.mailbox_registry.insert(actor.addr(), Mailbox::new());
         self.actor_registry.insert(actor.id(), actor);
+        // actor.set_mbx(self.mailbox_registry.get(&actor.addr()).unwrap());
+        // actor.set_mbx(&self.mailbox_registry);
         Ok(())
     }
 
@@ -141,7 +135,7 @@ impl System {
     #[allow(unreachable_patterns)]
     pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
         match msg {
-            TypedMessage::WorkloadMsg(ref workload) => {
+            TypedMessage::WorkloadMsg(ref _workload) => {
                 // TODO dispatch it to actors
                 // use a tmp queue to manage it and later switch to mailbox
                 // TODO need a envelope object in message types, later

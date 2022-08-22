@@ -1,6 +1,8 @@
 // LICENSE PLACEHOLDER
 use uuid::{Urn, Uuid};
 
+use std::collections::HashMap;
+
 use crate::mailbox::*;
 use crate::messages;
 use std::cmp::Ordering;
@@ -16,6 +18,7 @@ pub struct Actor {
     pub addr: Address,
     // TODO(albert), how to access mailboxes from actor if mailboxes are owned by
     // system/context/environment
+    pub mbx: Mailbox,
 }
 
 impl Actor {
@@ -26,6 +29,7 @@ impl Actor {
             name: String::from(name),
             id: new_uuid,
             addr: Address::new(_addr),
+            mbx: Mailbox::new(),
         };
     }
 
@@ -40,6 +44,24 @@ impl Actor {
     pub fn addr(&self) -> Address {
         self.addr.clone()
     }
+
+    pub fn mailbox(&self) -> &Mailbox {
+        &self.mbx
+    }
+
+    /// ```
+    /// use raptors::prelude::*;
+    ///
+    /// let mut actor = Actor::new("A");
+    /// let mbx = Mailbox::new();
+    /// //actor.set_mbx(&mbx);
+    /// ```
+    // pub fn set_mbx(&mut self, registry: &'a HashMap<Address, Mailbox>) -> () {
+    // pub fn set_mbx(&mut self, mbx: &'a Mailbox) -> () {
+        //self.mbx = Some(registry.get(&self.addr()).unwrap());
+    //    self.mbx = Some(mbx);
+    //    ()
+    //}
 
     // pub fn mbx(&self) -> &Mailbox {
     //     &self.mailbox
