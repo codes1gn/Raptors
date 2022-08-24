@@ -23,7 +23,7 @@ fn main() {
     // STEP 1 create builders
     // create all builders
     let sys_builder = SystemBuilder::new();
-    let msg_builder = CommandBuilder::new();
+    let cmd_builder = CommandBuilder::new();
     let wld_builder = WorkloadBuilder::new();
 
     // STEP 2 system init
@@ -35,26 +35,23 @@ fn main() {
 
     // STEP 3 build actors with cmds
     // create 4 actors
-    let msg = msg_builder.build(
+    let cmd = cmd_builder.build(
         "create-actor",
         Some(vec![4]),
         Some(vec![String::from("raptor")]),
     );
-    syst.on_receive(msg.into());
+    syst.on_receive(cmd);
 
     // STEP 4 build workloads and dispatch
     // create a list of workload
-    let mut workloads: Vec<TypedMessage> = wld_builder.build_many_msg(
-        vec![1, 1, 1, 1, 1, 1],
-        vec![
-            OpCode::AddOp,
-            OpCode::SinOp,
-            OpCode::ConvOp,
-            OpCode::MatmulOp,
-            OpCode::AddOp,
-            OpCode::ExpOp,
-        ],
-    );
+    let mut workloads: Vec<TypedMessage> = wld_builder.build(vec![
+        OpCode::AddOp,
+        OpCode::SinOp,
+        OpCode::ConvOp,
+        OpCode::MatmulOp,
+        OpCode::AddOp,
+        OpCode::ExpOp,
+    ]);
     // send workload vector to system then system dispatch to actors
     syst.on_dispatch(workloads);
 
@@ -63,6 +60,6 @@ fn main() {
     // STEP 6 destroy context and finish
     // destroy all actors
     // TODO we need msg builder
-    let msg = msg_builder.build("destroy-actor", None, None);
-    syst.on_receive(msg.into());
+    let cmd = cmd_builder.build("destroy-actor", None, None);
+    syst.on_receive(cmd);
 }

@@ -20,7 +20,7 @@ impl CommandBuilder {
     }
 
     // Builder fns
-    pub fn build(
+    pub fn build_command(
         &self,
         cmd: &str,
         numeric_args: Option<Vec<usize>>,
@@ -40,13 +40,13 @@ impl CommandBuilder {
         }
     }
 
-    pub fn build_msg(
+    pub fn build(
         &self,
         cmd: &str,
         numeric_args: Option<Vec<usize>>,
         literal_args: Option<Vec<String>>,
     ) -> TypedMessage {
-        self.build(cmd, numeric_args, literal_args).into()
+        self.build_command(cmd, numeric_args, literal_args).into()
     }
 }
 
@@ -58,7 +58,7 @@ mod syscmd_builder_tests {
     #[test]
     fn command_build_test() {
         let builder = CommandBuilder::new();
-        let cmd = builder.build(
+        let cmd = builder.build_command(
             "create-actor",
             Some(vec![1]),
             Some(vec!["Raptor".to_owned()]),
@@ -68,14 +68,14 @@ mod syscmd_builder_tests {
     }
 
     #[test]
-    fn msg_build_test() {
+    fn message_build_test() {
         let builder = CommandBuilder::new();
-        let cmd = builder.build(
+        let cmd = builder.build_command(
             "create-actor",
             Some(vec![1]),
             Some(vec!["Raptor".to_owned()]),
         );
-        let msg = builder.build_msg(
+        let msg = builder.build(
             "create-actor",
             Some(vec![1]),
             Some(vec!["Raptor".to_owned()]),
