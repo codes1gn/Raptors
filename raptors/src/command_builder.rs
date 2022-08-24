@@ -63,6 +63,7 @@ mod syscmd_builder_tests {
             Some(vec![1]),
             Some(vec!["Raptor".to_owned()]),
         );
+        // TODO this usage is still ugly, make it better
         assert_eq!(cmd, SystemCommand::CreateActor(1, "Raptor".to_owned()));
     }
 

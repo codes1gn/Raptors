@@ -26,4 +26,5 @@ pub mod prelude {
     pub use crate::system::System;
     pub use crate::system_builder::SystemBuilder;
     pub use crate::system_config::SystemConfig;
+    pub use crate::workload_builder::WorkloadBuilder;
 }
