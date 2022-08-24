@@ -58,7 +58,7 @@ impl Actor {
     /// ```
     // pub fn set_mbx(&mut self, registry: &'a HashMap<Address, Mailbox>) -> () {
     // pub fn set_mbx(&mut self, mbx: &'a Mailbox) -> () {
-        //self.mbx = Some(registry.get(&self.addr()).unwrap());
+    //self.mbx = Some(registry.get(&self.addr()).unwrap());
     //    self.mbx = Some(mbx);
     //    ()
     //}
@@ -112,7 +112,7 @@ impl Ord for Actor {
 // TODO fix duplicate with uuid add to name
 impl PartialEq for Actor {
     fn eq(&self, other: &Self) -> bool {
-        self.name == self.name
+        self.name == other.name
     }
 }
 
