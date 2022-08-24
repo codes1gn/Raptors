@@ -22,13 +22,18 @@ fn main() {
 
     // init system
     let sys_builder = SystemBuilder::new();
+    let msg_builder = CommandBuilder::new();
     let mut sys_config = SystemConfig::new();
     sys_config.set_amount_of_actors(4 as usize);
     let mut syst = sys_builder.build_with_config("mock system", sys_config);
     assert_eq!(syst.name(), "mock system".to_string());
 
     // create 4 actors
-    let msg = SystemCommand::CreateActor(4, String::from("raptor"));
+    let msg = msg_builder.build(
+        "create-actor",
+        Some(vec![4]),
+        Some(vec![String::from("raptor")]),
+    );
     syst.on_receive(msg.into());
     let actor_reg = syst.actor_registry();
     assert_eq!(actor_reg.len(), 4);
@@ -59,7 +64,7 @@ fn main() {
 
     // destroy all actors
     // TODO we need msg builder
-    let msg = SystemCommand::DestroyAllActors;
+    let msg = msg_builder.build("destroy-actor", None, None);
     syst.on_receive(msg.into());
     let actor_reg = syst.actor_registry();
     assert_eq!(actor_reg.len(), 0);

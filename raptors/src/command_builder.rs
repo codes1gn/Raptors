@@ -10,13 +10,13 @@ use crate::{
 /// SystemCommand Builder (SysCmdBuilder) helps to create system command.
 //
 #[derive(Default)]
-pub struct SystemCmdBuilder;
+pub struct CommandBuilder;
 
 // TODO: we need to derive a Macro to wrap the arguments for build function
-impl SystemCmdBuilder {
+impl CommandBuilder {
     // Definer fns
     pub fn new() -> Self {
-        SystemCmdBuilder::default()
+        CommandBuilder::default()
     }
 
     // Builder fns
@@ -36,9 +36,7 @@ impl SystemCmdBuilder {
                 )
             }
             "destroy-actor" => SystemCommand::DestroyAllActors,
-            _ => {
-                panic!("Not implemented")
-            }
+            _ => panic!("Unknown builder command"),
         }
     }
 
@@ -59,7 +57,7 @@ mod syscmd_builder_tests {
 
     #[test]
     fn command_build_test() {
-        let builder = SystemCmdBuilder::new();
+        let builder = CommandBuilder::new();
         let cmd = builder.build(
             "create-actor",
             Some(vec![1]),
@@ -70,7 +68,7 @@ mod syscmd_builder_tests {
 
     #[test]
     fn msg_build_test() {
-        let builder = SystemCmdBuilder::new();
+        let builder = CommandBuilder::new();
         let cmd = builder.build(
             "create-actor",
             Some(vec![1]),
