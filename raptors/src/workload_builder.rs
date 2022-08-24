@@ -15,16 +15,13 @@ impl WorkloadBuilder {
 
     // TODO(albert) op can take vec or just op
     pub fn build(&self, payload: Option<usize>, op: Option<OpCode>) -> Workload {
-        return Workload::new(
-            payload.expect("No valid payload value"),
-            op.expect("No valid operation"),
-        );
+        return Workload::new(op.expect("No valid operation"));
     }
 
     pub fn build_many(&self, payload_list: Vec<usize>, op_list: Vec<OpCode>) -> Vec<Workload> {
         op_list
             .into_iter()
-            .map(|x| Workload::new(1, x))
+            .map(|x| Workload::new(x))
             .collect::<Vec<Workload>>()
     }
 
@@ -51,19 +48,19 @@ mod tests {
     fn workload_build_test() {
         let builder = WorkloadBuilder::new();
         let workload = builder.build(Some(2), Some(OpCode::DummyOp));
-        assert_eq!(workload, Workload::new(2, OpCode::DummyOp));
+        assert_eq!(workload, Workload::new(OpCode::DummyOp));
     }
 
     #[test]
     fn workload_build_many_test() {
         let builder = WorkloadBuilder::new();
         let workloads = builder.build_many(vec![1, 1], vec![OpCode::DummyOp, OpCode::DummyOp]);
-        assert_eq!(workloads[0], Workload::new(1, OpCode::DummyOp));
+        assert_eq!(workloads[0], Workload::new(OpCode::DummyOp));
         assert_eq!(
             workloads,
             vec![
-                Workload::new(1, OpCode::DummyOp),
-                Workload::new(1, OpCode::DummyOp)
+                Workload::new(OpCode::DummyOp),
+                Workload::new(OpCode::DummyOp)
             ]
         );
     }
@@ -71,12 +68,12 @@ mod tests {
     fn msg_build_many_test() {
         let builder = WorkloadBuilder::new();
         let messages = builder.build_many_msg(vec![1, 1], vec![OpCode::DummyOp, OpCode::DummyOp]);
-        assert_eq!(messages[0], Workload::new(1, OpCode::DummyOp).into());
+        assert_eq!(messages[0], Workload::new(OpCode::DummyOp).into());
         assert_eq!(
             messages,
             vec![
-                Workload::new(1, OpCode::DummyOp).into(),
-                Workload::new(1, OpCode::DummyOp).into(),
+                Workload::new(OpCode::DummyOp).into(),
+                Workload::new(OpCode::DummyOp).into(),
             ]
         );
     }

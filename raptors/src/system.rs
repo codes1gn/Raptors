@@ -271,8 +271,8 @@ mod tests {
         // create two workload msg
         let mut workloads: Vec<TypedMessage> = vec![];
 
-        workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::AddOp)));
-        workloads.push(TypedMessage::WorkloadMsg(Workload::new(16, OpCode::SinOp)));
+        workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp)));
+        workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::SinOp)));
         syst.on_dispatch(workloads);
 
         // check if take effects

@@ -79,7 +79,7 @@ impl Actor {
     /// use raptors::prelude::*;
     ///
     /// let mut actor = Actor::new("raptor");
-    /// let msg = TypedMessage::WorkloadMsg(Workload::new(16, OpCode::AddOp));
+    /// let msg = TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp));
     /// actor.receive_msg(msg.into());
     /// // assert_eq!(actor.mailbox.len(), 1);
     /// ```
@@ -127,16 +127,16 @@ mod tests {
     // test visibility
     #[test]
     fn create_dummy_workload_test() {
-        let load = Workload::new(16, OpCode::AddOp);
-        assert_eq!(load.payload(), 16 as usize);
+        let load = Workload::new(OpCode::AddOp);
+        assert_eq!(load.payload(), 11 as usize);
     }
 
     #[test]
     fn workload_mock_run_test() {
-        let load = Workload::new(16, OpCode::AddOp);
+        let load = Workload::new(OpCode::AddOp);
         let now = time::Instant::now();
         load.mock_run();
-        assert!(now.elapsed() >= time::Duration::from_millis(16));
+        assert!(now.elapsed() >= time::Duration::from_millis(11));
     }
 
     #[test]
@@ -148,9 +148,9 @@ mod tests {
     #[test]
     fn receive_workload() {
         let actor = Actor::new("A");
-        let load = Workload::new(16, OpCode::AddOp);
+        let load = Workload::new(OpCode::AddOp);
         let now = time::Instant::now();
         actor.receive_workload(load);
-        assert!(now.elapsed() >= time::Duration::from_millis(16));
+        assert!(now.elapsed() >= time::Duration::from_millis(11));
     }
 }

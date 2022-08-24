@@ -28,9 +28,9 @@ mod tests {
     #[test]
     fn compute_workload() {
         let exec = Executor::new();
-        let load = Workload::new(16, OpCode::AddOp);
+        let load = Workload::new(OpCode::AddOp);
         let now = time::Instant::now();
         exec.compute(load);
-        assert!(now.elapsed() >= time::Duration::from_millis(16));
+        assert!(now.elapsed() >= time::Duration::from_millis(11));
     }
 }

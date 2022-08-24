@@ -3,6 +3,7 @@
 use std::any::Any;
 use std::{thread, time};
 
+use crate::estimator::WorkloadEstimator;
 use crate::messages::TypedMessage;
 use crate::system::System;
 
@@ -22,20 +23,16 @@ use crate::system::System;
 //
 #[derive(Clone, Debug, PartialEq, Default, Eq)]
 pub struct Workload {
-    payload: usize,
     op: OpCode,
 }
 
 impl Workload {
-    pub fn new(payload: usize, op: OpCode) -> Workload {
-        return Self {
-            payload: payload,
-            op: op,
-        };
+    pub fn new(op: OpCode) -> Workload {
+        return Self { op: op };
     }
 
     pub fn payload(&self) -> usize {
-        self.payload.clone()
+        WorkloadEstimator::new().estimate(self)
     }
 
     pub fn op(&self) -> OpCode {
@@ -47,7 +44,7 @@ impl Workload {
     // 1. change signiture to return values
     // 2. values may use a value type that defined include possible results
     pub fn mock_run(&self) -> () {
-        thread::sleep(time::Duration::from_millis(self.payload as u64));
+        thread::sleep(time::Duration::from_millis(self.payload() as u64));
     }
 }
 
@@ -102,45 +99,46 @@ mod tests {
 
     #[test]
     fn create_dummy_workload_test() {
-        let load = Workload::new(16, OpCode::AddOp);
-        assert_eq!(load.payload(), 16 as usize);
+        let load = Workload::new(OpCode::AddOp);
+        assert_eq!(load.payload(), 11 as usize);
         assert_eq!(load.op(), OpCode::AddOp);
     }
 
     #[test]
     fn worklaod_mock_run_test() {
-        let load = Workload::new(16, OpCode::ConvOp);
+        let load = Workload::new(OpCode::ConvOp);
         let now = time::Instant::now();
         load.mock_run();
-        assert!(now.elapsed() >= time::Duration::from_millis(16));
+        assert!(now.elapsed() >= time::Duration::from_millis(106));
+        assert!(now.elapsed() <= time::Duration::from_millis(108));
         assert_eq!(load.op(), OpCode::ConvOp);
     }
 
     #[test]
     fn workload_ops_default_test() {
-        let load = Workload::new(16, OpCode::default());
+        let load = Workload::new(OpCode::default());
         assert_eq!(load.op(), OpCode::DummyOp);
     }
 
     #[test]
     fn workload_ops_matmul_test() {
-        let load = Workload::new(16, OpCode::MatmulOp);
+        let load = Workload::new(OpCode::MatmulOp);
         assert_eq!(load.op(), OpCode::MatmulOp);
     }
 
     #[test]
     fn workload_ops_exp_test() {
-        let load = Workload::new(16, OpCode::ExpOp);
+        let load = Workload::new(OpCode::ExpOp);
         assert_eq!(load.op(), OpCode::ExpOp);
     }
 
     #[test]
     fn workload_message_test() {
-        let load = Workload::new(16, OpCode::ExpOp);
+        let load = Workload::new(OpCode::ExpOp);
         let wlmsg = TypedMessage::WorkloadMsg(load);
         assert_eq!(
             wlmsg,
-            TypedMessage::WorkloadMsg(Workload::new(16, OpCode::ExpOp))
+            TypedMessage::WorkloadMsg(Workload::new(OpCode::ExpOp))
         );
     }
 }

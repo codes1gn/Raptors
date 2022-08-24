@@ -46,7 +46,7 @@ impl WorkloadEstimator {
         self.cost_model.clone()
     }
 
-    pub fn estimate(&self, workload: Workload) -> usize {
+    pub fn estimate(&self, workload: &Workload) -> usize {
         *self.cost_model.get(&workload.op()).unwrap()
     }
 
@@ -108,12 +108,12 @@ mod tests {
     fn estimate_computation_cost_test() {
         let est = WorkloadEstimator::new();
 
-        let load_1 = Workload::new(16, OpCode::AddOp);
-        let cost_1 = est.estimate(load_1);
+        let load_1 = Workload::new(OpCode::AddOp);
+        let cost_1 = est.estimate(&load_1);
         assert_eq!(cost_1, 11);
 
-        let load_2 = Workload::new(4, OpCode::ConvOp);
-        let cost_2 = est.estimate(load_2);
+        let load_2 = Workload::new(OpCode::ConvOp);
+        let cost_2 = est.estimate(&load_2);
         assert_eq!(cost_2, 107);
     }
 
