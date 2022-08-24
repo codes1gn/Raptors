@@ -1,10 +1,30 @@
 extern crate raptors;
 extern crate uuid;
 
+use rand::distributions::{Distribution, Uniform};
+use rand::Rng;
 use uuid::Uuid;
 
 use raptors::prelude::*;
 
+// Util function that randomly allocates an executor to each workloads
+// Take vector of workloads, produce vector of envelope
+fn fixed_executor_allocation(system: &System, workloads: Vec<TypedMessage>) -> Vec<Envelope> {
+    let mut actor_ids = Vec::from_iter(system.actor_registry().keys());
+    let mut rng = rand::thread_rng();
+    let die = Uniform::from(0..system.actor_registry().keys().len());
+    workloads
+        .into_iter()
+        .map(|wkl| -> Envelope {
+            let index = die.sample(&mut rng);
+            println!("index = {:?}", index);
+            Envelope {
+                msg: wkl,
+                receiver: Address::new(*actor_ids[index]),
+            }
+        })
+        .collect::<Vec<Envelope>>()
+}
 /// Routine of this example
 ///
 /// new a system SystemBuilder
@@ -51,9 +71,26 @@ fn main() {
         OpCode::MatmulOp,
         OpCode::AddOp,
         OpCode::ExpOp,
+        OpCode::ConvOp,
+        OpCode::SinOp,
+        OpCode::ConvOp,
+        OpCode::MatmulOp,
+        OpCode::MatmulOp,
+        OpCode::AddOp,
+        OpCode::ExpOp,
+        OpCode::ConvOp,
+        OpCode::SinOp,
+        OpCode::ConvOp,
+        OpCode::MatmulOp,
+        OpCode::MatmulOp,
+        OpCode::AddOp,
     ]);
-    // send workload vector to system then system dispatch to actors
-    syst.on_dispatch(workloads);
+    let envelopes: Vec<Envelope> = fixed_executor_allocation(&syst, workloads);
+    // println!("{:?}", envelopes);
+    // syst.on_dispatch_workloads(workloads);
+    syst.on_dispatch_envelopes(envelopes);
+    // TODO(albert): pretty fmt debug display
+    println!("{:?}", syst.actor_registry().values());
 
     // STEP 5 start all actors and perform
 

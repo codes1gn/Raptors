@@ -25,11 +25,12 @@ pub struct Actor {
 impl Actor {
     pub fn new(name: &str) -> Actor {
         let new_uuid = Uuid::new_v4();
-        let _addr = new_uuid.clone().hyphenated().to_string();
+        // TODO addr use uuid instead of string
+        // let _addr = new_uuid.clone().hyphenated().to_string();
         return Self {
             name: String::from(name),
             id: new_uuid,
-            addr: Address::new(_addr),
+            addr: Address::new(new_uuid),
             mbx: Mailbox::new(),
         };
     }
@@ -48,6 +49,10 @@ impl Actor {
 
     pub fn mailbox(&self) -> &Mailbox {
         &self.mbx
+    }
+
+    pub fn mailbox_mut(&mut self) -> &mut Mailbox {
+        &mut self.mbx
     }
 
     /// ```

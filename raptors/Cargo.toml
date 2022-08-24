@@ -8,3 +8,4 @@ workspace = ".."
 
 [dependencies]
 uuid = { version = "0.6", features = ["serde", "v4"] }
+rand = { version = "0.8.5" }

@@ -168,10 +168,29 @@ impl System {
         }
     }
 
-    pub fn on_dispatch(&mut self, workloads: Vec<TypedMessage>) -> Result<(), String> {
+    #[allow(unreachable_patterns)]
+    pub fn on_deliver(&mut self, evlp: Envelope) -> Result<(), String> {
+        let status = self
+            .actor_registry
+            .get_mut(&evlp.receiver.into_aid())
+            .unwrap()
+            .mailbox_mut()
+            .enqueue(evlp.msg.clone());
+        status
+    }
+
+    pub fn on_dispatch_workloads(&mut self, workloads: Vec<TypedMessage>) -> Result<(), String> {
         let status = workloads
             .into_iter()
             .map(|msg| -> Result<(), String> { self.on_receive(msg) })
+            .collect::<Result<(), String>>();
+        status
+    }
+
+    pub fn on_dispatch_envelopes(&mut self, envelopes: Vec<Envelope>) -> Result<(), String> {
+        let status = envelopes
+            .into_iter()
+            .map(|envelope| -> Result<(), String> { self.on_deliver(envelope) })
             .collect::<Result<(), String>>();
         status
     }
@@ -273,7 +292,7 @@ mod tests {
 
         workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp)));
         workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::SinOp)));
-        syst.on_dispatch(workloads);
+        syst.on_dispatch_workloads(workloads);
 
         // check if take effects
         let actor_reg = syst.actor_registry();

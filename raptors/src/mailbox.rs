@@ -1,20 +1,26 @@
 // LICENSE PLACEHOLDER
+use uuid::Uuid;
+
 use crate::messages::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Address(String);
+pub struct Address(Uuid);
 
 impl Address {
-    pub fn new(str: String) -> Address {
-        Address(str)
+    pub fn new(uuid: Uuid) -> Address {
+        Address(uuid)
+    }
+
+    pub fn into_aid(&self) -> Uuid {
+        self.0
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Envelope {
-    msg: TypedMessage,
-    sender: Address,
-    receiver: Address,
+    pub msg: TypedMessage,
+    // sender: Address,
+    pub receiver: Address,
 }
 
 // wrap a dedicated executor module that only consider how to do computations
