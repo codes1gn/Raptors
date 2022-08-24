@@ -1,6 +1,6 @@
 // LICENSE PLACEHOLDER
 //
-use crate::messages;
+use crate::workloads::{OpCode, Workload};
 
 // wrap a dedicated executor module that only consider how to do computations
 //
@@ -13,7 +13,7 @@ impl Executor {
     pub fn new() -> Self {
         return Self {};
     }
-    pub fn compute(&self, workload: messages::Workload) -> () {
+    pub fn compute(&self, workload: Workload) -> () {
         workload.mock_run();
     }
 }
@@ -28,7 +28,7 @@ mod tests {
     #[test]
     fn compute_workload() {
         let exec = Executor::new();
-        let load = messages::Workload::new(16, messages::OpCode::AddOp);
+        let load = Workload::new(16, OpCode::AddOp);
         let now = time::Instant::now();
         exec.compute(load);
         assert!(now.elapsed() >= time::Duration::from_millis(16));

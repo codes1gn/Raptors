@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 use crate::mailbox::*;
 use crate::messages;
+use crate::workloads::{OpCode, Workload};
 use std::cmp::Ordering;
 use std::str::Bytes;
 
@@ -69,7 +70,7 @@ impl Actor {
 
     // TODO: make it message passing, test with inter-threads
     // TODO: gradually support higher granularity parallelism
-    pub fn receive_workload(&self, msg: messages::Workload) -> () {
+    pub fn receive_workload(&self, msg: Workload) -> () {
         self.on_compute(msg);
     }
 
@@ -92,7 +93,7 @@ impl Actor {
         }
     }
 
-    fn on_compute(&self, workload: messages::Workload) -> () {
+    fn on_compute(&self, workload: Workload) -> () {
         workload.mock_run();
     }
 }
@@ -126,13 +127,13 @@ mod tests {
     // test visibility
     #[test]
     fn create_dummy_workload_test() {
-        let load = messages::Workload::new(16, messages::OpCode::AddOp);
+        let load = Workload::new(16, OpCode::AddOp);
         assert_eq!(load.payload(), 16 as usize);
     }
 
     #[test]
     fn workload_mock_run_test() {
-        let load = messages::Workload::new(16, messages::OpCode::AddOp);
+        let load = Workload::new(16, OpCode::AddOp);
         let now = time::Instant::now();
         load.mock_run();
         assert!(now.elapsed() >= time::Duration::from_millis(16));
@@ -147,7 +148,7 @@ mod tests {
     #[test]
     fn receive_workload() {
         let actor = Actor::new("A");
-        let load = messages::Workload::new(16, messages::OpCode::AddOp);
+        let load = Workload::new(16, OpCode::AddOp);
         let now = time::Instant::now();
         actor.receive_workload(load);
         assert!(now.elapsed() >= time::Duration::from_millis(16));

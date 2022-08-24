@@ -20,17 +20,20 @@ use raptors::prelude::*;
 fn main() {
     println!("================ Running raptors::diamond-tasks example ================");
 
+    // STEP 1 create builders
     // create all builders
     let sys_builder = SystemBuilder::new();
     let msg_builder = CommandBuilder::new();
     let wld_builder = WorkloadBuilder::new();
 
+    // STEP 2 system init
     // init system
     let mut sys_config = SystemConfig::new();
     sys_config.set_amount_of_actors(4 as usize);
     let mut syst = sys_builder.build_with_config("mock system", sys_config);
     assert_eq!(syst.name(), "mock system".to_string());
 
+    // STEP 3 build actors with cmds
     // create 4 actors
     let msg = msg_builder.build(
         "create-actor",
@@ -39,11 +42,7 @@ fn main() {
     );
     syst.on_receive(msg.into());
 
-    // check
-    // let actor_reg = syst.actor_registry();
-    // assert_eq!(actor_reg.len(), 4);
-    // println!("{:?}", actor_reg);
-
+    // STEP 4 build workloads and dispatch
     // create a list of workload
     let mut workloads: Vec<TypedMessage> = wld_builder.build_many_msg(
         vec![1, 1, 1, 1, 1, 1],
@@ -56,20 +55,14 @@ fn main() {
             OpCode::ExpOp,
         ],
     );
-    println!("{:?}", workloads);
-
     // send workload vector to system then system dispatch to actors
     syst.on_dispatch(workloads);
 
-    let actor_reg = syst.actor_registry();
-    assert_eq!(actor_reg.len(), 4);
-    let actors: Vec<&Actor> = actor_reg.values().collect();
-    // println!("{:?}", actors[0].mailbox);
+    // STEP 5 start all actors and perform
 
+    // STEP 6 destroy context and finish
     // destroy all actors
     // TODO we need msg builder
     let msg = msg_builder.build("destroy-actor", None, None);
     syst.on_receive(msg.into());
-    let actor_reg = syst.actor_registry();
-    assert_eq!(actor_reg.len(), 0);
 }

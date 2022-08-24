@@ -1,7 +1,7 @@
 // LICENSE PLACEHOLDER
 use std::collections::HashMap;
 
-use crate::messages::{OpCode, Workload};
+use crate::workloads::{OpCode, Workload};
 
 /// Definition: The estimator helps to compute the estimated cost for different ops.
 ///
@@ -14,13 +14,13 @@ pub struct WorkloadEstimator {
 impl Default for WorkloadEstimator {
     fn default() -> Self {
         let mut cost_model = HashMap::new();
-        cost_model.insert(OpCode::DummyOp, 4);
-        cost_model.insert(OpCode::AddOp, 2);
-        cost_model.insert(OpCode::ConvOp, 8);
-        cost_model.insert(OpCode::ExpOp, 1);
-        cost_model.insert(OpCode::MatmulOp, 10);
-        cost_model.insert(OpCode::SinOp, 1);
-        cost_model.insert(OpCode::SubOp, 2);
+        cost_model.insert(OpCode::DummyOp, 2);
+        cost_model.insert(OpCode::AddOp, 11);
+        cost_model.insert(OpCode::ConvOp, 107);
+        cost_model.insert(OpCode::ExpOp, 173);
+        cost_model.insert(OpCode::MatmulOp, 57);
+        cost_model.insert(OpCode::SinOp, 127);
+        cost_model.insert(OpCode::SubOp, 17);
         return Self {
             cost_model: cost_model,
         };
@@ -47,7 +47,7 @@ impl WorkloadEstimator {
     }
 
     pub fn estimate(&self, workload: Workload) -> usize {
-        *self.cost_model.get(&workload.op()).unwrap() * workload.payload()
+        *self.cost_model.get(&workload.op()).unwrap()
     }
 
     // TODO support update with moving average strategy
@@ -74,15 +74,15 @@ mod tests {
         let model = est.cost_model();
         assert_eq!(
             model.get_key_value(&OpCode::AddOp),
-            Some((&OpCode::AddOp, &2))
+            Some((&OpCode::AddOp, &11))
         );
         assert_eq!(
             model.get_key_value(&OpCode::ConvOp),
-            Some((&OpCode::ConvOp, &8))
+            Some((&OpCode::ConvOp, &107))
         );
         assert_eq!(
             model.get_key_value(&OpCode::MatmulOp),
-            Some((&OpCode::MatmulOp, &10))
+            Some((&OpCode::MatmulOp, &57))
         );
     }
 
@@ -110,11 +110,11 @@ mod tests {
 
         let load_1 = Workload::new(16, OpCode::AddOp);
         let cost_1 = est.estimate(load_1);
-        assert_eq!(cost_1, 32);
+        assert_eq!(cost_1, 11);
 
-        let load_2 = Workload::new(4, OpCode::DummyOp);
+        let load_2 = Workload::new(4, OpCode::ConvOp);
         let cost_2 = est.estimate(load_2);
-        assert_eq!(cost_2, 16);
+        assert_eq!(cost_2, 107);
     }
 
     #[test]

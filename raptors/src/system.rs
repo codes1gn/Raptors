@@ -6,6 +6,7 @@ use crate::actors::*;
 use crate::mailbox::*;
 use crate::messages::*;
 use crate::system_config::SystemConfig;
+use crate::workloads::*;
 
 /// System is the actor system that manages all the actors, supervisors and message channels
 ///

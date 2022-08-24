@@ -8,6 +8,7 @@ pub mod system;
 pub mod system_builder;
 pub mod system_config;
 pub mod workload_builder;
+pub mod workloads;
 
 /// Prelude module for users to import
 ///
@@ -20,11 +21,10 @@ pub mod prelude {
     pub use crate::estimator::WorkloadEstimator;
     pub use crate::executor::Executor;
     pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
-    pub use crate::messages::{
-        OpCode, SystemCommand, SystemMsg, TypedMessage, Workload, WorkloadMsg,
-    };
+    pub use crate::messages::{SystemCommand, SystemMsg, TypedMessage};
     pub use crate::system::System;
     pub use crate::system_builder::SystemBuilder;
     pub use crate::system_config::SystemConfig;
     pub use crate::workload_builder::WorkloadBuilder;
+    pub use crate::workloads::{OpCode, Workload, WorkloadMsg};
 }

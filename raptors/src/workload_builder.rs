@@ -1,6 +1,7 @@
 // LICENSE PLACEHOLDER
 
-use crate::messages::{OpCode, TypedMessage, Workload, WorkloadMsg};
+use crate::messages::TypedMessage;
+use crate::workloads::{OpCode, Workload, WorkloadMsg};
 
 /// Workload Builder helps create the workload.
 #[derive(Default)]
