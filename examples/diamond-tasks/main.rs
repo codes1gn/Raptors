@@ -17,7 +17,7 @@ fn fixed_executor_allocation(system: &System, workloads: Vec<TypedMessage>) -> V
         .into_iter()
         .map(|wkl| -> Envelope {
             let index = die.sample(&mut rng);
-            println!("index = {:?}", index);
+            println!("index = {:#?}", index);
             Envelope {
                 msg: wkl,
                 receiver: Address::new(*actor_ids[index]),
@@ -90,9 +90,11 @@ fn main() {
     // syst.on_dispatch_workloads(workloads);
     syst.on_dispatch_envelopes(envelopes);
     // TODO(albert): pretty fmt debug display
-    println!("{:?}", syst.actor_registry().values());
+    println!("{:#?}", syst.actor_registry().values());
 
     // STEP 5 start all actors and perform
+    let cmd = cmd_builder.build("start-execution", None, None);
+    syst.on_receive(cmd);
 
     // STEP 6 destroy context and finish
     // destroy all actors

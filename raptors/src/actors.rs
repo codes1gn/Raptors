@@ -4,7 +4,7 @@ use uuid::{Urn, Uuid};
 use std::collections::HashMap;
 
 use crate::mailbox::*;
-use crate::messages;
+use crate::messages::TypedMessage;
 use crate::workloads::{OpCode, Workload};
 use std::cmp::Ordering;
 use std::str::Bytes;
@@ -55,47 +55,25 @@ impl Actor {
         &mut self.mbx
     }
 
-    /// ```
-    /// use raptors::prelude::*;
-    ///
-    /// let mut actor = Actor::new("A");
-    /// let mbx = Mailbox::new();
-    /// //actor.set_mbx(&mbx);
-    /// ```
-    // pub fn set_mbx(&mut self, registry: &'a HashMap<Address, Mailbox>) -> () {
-    // pub fn set_mbx(&mut self, mbx: &'a Mailbox) -> () {
-    //self.mbx = Some(registry.get(&self.addr()).unwrap());
-    //    self.mbx = Some(mbx);
-    //    ()
-    //}
-
-    // pub fn mbx(&self) -> &Mailbox {
-    //     &self.mailbox
-    // }
-
-    // TODO: make it message passing, test with inter-threads
-    // TODO: gradually support higher granularity parallelism
-    pub fn receive_workload(&self, msg: Workload) -> () {
-        self.on_compute(msg);
-    }
-
-    /// TODO Error Handling
-    /// ```
-    /// use raptors::prelude::*;
-    ///
-    /// let mut actor = Actor::new("raptor");
-    /// let msg = TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp));
-    /// actor.receive_msg(msg.into());
-    /// // assert_eq!(actor.mailbox.len(), 1);
-    /// ```
-    pub fn receive_msg(&mut self, msg: messages::TypedMessage) -> Result<(), String> {
-        match msg {
-            messages::TypedMessage::WorkloadMsg(ref workload) => {
-                // self.mailbox.enqueue(msg.into());
-                Ok(())
+    pub fn start(&mut self) -> Result<(), String> {
+        println!("Actor {:#?} is start running >>>", self.name);
+        let status = loop {
+            let msg = self.mbx.dequeue();
+            match msg {
+                Some(TypedMessage::WorkloadMsg(_wkl)) => {
+                    println!("on processing {:#?}", _wkl);
+                    self.on_compute(_wkl);
+                }
+                None => {
+                    println!("Actor {:#?} is finish running >>>", self.name);
+                    break Ok(());
+                }
+                _ => {
+                    break Err(String::from("Unknown msg type for actor to process"));
+                }
             }
-            _ => Err("Unknown message received by actor".to_string()),
-        }
+        };
+        status
     }
 
     fn on_compute(&self, workload: Workload) -> () {
@@ -155,7 +133,7 @@ mod tests {
         let actor = Actor::new("A");
         let load = Workload::new(OpCode::AddOp);
         let now = time::Instant::now();
-        actor.receive_workload(load);
+        actor.on_compute(load);
         assert!(now.elapsed() >= time::Duration::from_millis(11));
     }
 }

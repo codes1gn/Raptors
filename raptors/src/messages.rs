@@ -48,6 +48,7 @@ pub enum TypedMessage {
 pub enum SystemCommand {
     DummySysCmd,
     CreateActor(usize, String),
+    StartExecution,
     DestroyAllActors, // add more accurate destroy control msg when needed
 }
 

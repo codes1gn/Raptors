@@ -36,6 +36,7 @@ impl CommandBuilder {
                 )
             }
             "destroy-actor" => SystemCommand::DestroyAllActors,
+            "start-execution" => SystemCommand::StartExecution,
             _ => panic!("Unknown builder command"),
         }
     }
@@ -65,6 +66,14 @@ mod syscmd_builder_tests {
         );
         // TODO this usage is still ugly, make it better
         assert_eq!(cmd, SystemCommand::CreateActor(1, "Raptor".to_owned()));
+    }
+
+    #[test]
+    fn actor_start_msg_test() {
+        let builder = CommandBuilder::new();
+        let cmd = builder.build_command("start-execution", None, None);
+        // TODO this usage is still ugly, make it better
+        assert_eq!(cmd, SystemCommand::StartExecution);
     }
 
     #[test]

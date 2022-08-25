@@ -136,18 +136,6 @@ impl System {
     #[allow(unreachable_patterns)]
     pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
         match msg {
-            TypedMessage::WorkloadMsg(ref _workload) => {
-                // TODO dispatch it to actors
-                // use a tmp queue to manage it and later switch to mailbox
-                // TODO need a envelope object in message types, later
-                let mut actors: Vec<&mut Actor> = self
-                    .actor_registry
-                    .values_mut()
-                    .collect::<Vec<&mut Actor>>();
-                // TODO replace this hardcode logic, with envelope with uuid, or add addr for
-                // contain msgs, and actors to receive by themself once started.
-                actors[0].receive_msg(msg)
-            }
             TypedMessage::SystemMsg(cmd) => {
                 match cmd {
                     SystemCommand::CreateActor(cnt, base_name) => {
@@ -159,6 +147,19 @@ impl System {
                             Ok(_) => Ok(()),
                             Err(_e) => Err("Fail to register the actor".to_string()),
                         }
+                    }
+                    SystemCommand::StartExecution => {
+                        println!(">>>>>> Raptors System Start Exec <<<<<<");
+                        let mut actors: Vec<&mut Actor> = self
+                            .actor_registry
+                            .values_mut()
+                            .collect::<Vec<&mut Actor>>();
+                        let status = actors
+                            .into_iter()
+                            .map(|x| x.start())
+                            .collect::<Result<(), String>>();
+                        println!(">>>>>> Raptors System Stop Exec <<<<<<");
+                        status
                     }
                     SystemCommand::DestroyAllActors => self.destroy_actors(),
                     _ => Err("not implemented".to_string()),
