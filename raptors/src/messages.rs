@@ -1,5 +1,6 @@
 // LICENSE PLACEHOLDER
 
+use core::fmt;
 use std::any::Any;
 use std::{thread, time};
 
@@ -16,7 +17,7 @@ use crate::system::System;
 // 3. support Se/Des in future
 // 4. consider stream processing and compression designs
 #[allow(dead_code)]
-type Message = Box<dyn Any + Send>;
+type Message = dyn Any + Send + Sync;
 
 // TODO(albert, short-term) complete the family of MessageTypes
 // test with simple design at first
@@ -158,6 +159,12 @@ pub enum OpCode {
 impl Default for OpCode {
     fn default() -> Self {
         OpCode::DummyOp
+    }
+}
+
+impl fmt::Display for OpCode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 // TODO: More Ops to add; Other way to implement Opcode

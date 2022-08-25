@@ -1,0 +1,18 @@
+site_name: AI并行语义与执行模型研究
+theme: 
+  name: readthedocs
+nav:
+  - 背景调研: 'index.md'
+  - Raptors原型系统: 'raptors.md'
+  - Docker环境搭建: 'setup-docker.md'
+  - 项目配置: 'setup-repo.md'
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+
+# Check the documentation of 'Material for MkDocs' for better layout.
+# first:
+#   - pip install mkdocs
+# then:
+#   - pip install mkdocs-material

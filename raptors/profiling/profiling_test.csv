@@ -1,0 +1,8 @@
+Time,ActorId,Type,Operation,Info
+2022/08/18-08:02:51.112,367911f8-95ce-4bf3-ae89-2293a908f683,System Operation,Start Profiler,""
+2022/08/18-08:02:51.113,100,SystemMsg,SystemCommand,DummySysCmd
+2022/08/18-08:02:51.113,100,ActorMsg,No op,No info
+2022/08/18-08:02:51.114,100,SystemMsg,SystemCommand,DestroyAllActors
+2022/08/18-08:02:51.114,100,SystemMsg,SystemCommand,DestroyAllActors
+2022/08/18-08:02:51.114,100,SystemMsg,SystemCommand,CreateActor-4-raptor
+2022/08/18-08:02:51.114,100,WorkloadMsg,AddOp,4

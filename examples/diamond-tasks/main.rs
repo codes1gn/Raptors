@@ -1,6 +1,7 @@
 extern crate raptors;
+use chrono::prelude::*;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use raptors::prelude::*;
-
 /// Routine of this example
 ///
 /// new a system SystemBuilder
@@ -15,6 +16,10 @@ use raptors::prelude::*;
 ///
 fn main() {
     println!("================ Running raptors::diamond-tasks example ================");
+
+    let start = Utc::now();
+    let formatted = format!("{}", start.format("%Y/%m/%d-%H:%M:%S%.3f"));
+    println!("System starts at {:?}", formatted);
 
     // init system
     let sys_builder = SystemBuilder::new();
@@ -56,4 +61,13 @@ fn main() {
     syst.on_receive(msg.into());
     let query_actors = syst.actors().expect("None of actors in system");
     assert_eq!(query_actors.len(), 0);
+
+    let end = Utc::now();
+    let formatted = format!("{}", end.format("%Y/%m/%d-%H:%M:%S%.3f"));
+    println!("System stops at {:?}", formatted);
+    let diff = end - start;
+    println!(
+        "Total duration is {:?} microseconds",
+        diff.num_microseconds().unwrap()
+    );
 }
