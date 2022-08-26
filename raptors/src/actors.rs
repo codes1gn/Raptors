@@ -1,13 +1,14 @@
 // LICENSE PLACEHOLDER
+use log::{debug, info};
 use uuid::{Urn, Uuid};
 
+use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::str::Bytes;
 
 use crate::mailbox::*;
 use crate::messages::TypedMessage;
 use crate::workloads::{OpCode, Workload};
-use std::cmp::Ordering;
-use std::str::Bytes;
 
 // placehold for actors
 #[derive(Debug, Eq)]
@@ -56,16 +57,16 @@ impl Actor {
     }
 
     pub fn start(&mut self) -> Result<(), String> {
-        println!("Actor {:#?} is start running >>>", self.name);
+        info!("Actor {:#?} is start running >>>", self.name);
         let status = loop {
             let msg = self.mbx.dequeue();
             match msg {
                 Some(TypedMessage::WorkloadMsg(_wkl)) => {
-                    println!("on processing {:#?}", _wkl);
+                    info!("on processing {:#?}", _wkl);
                     self.on_compute(_wkl);
                 }
                 None => {
-                    println!("Actor {:#?} is finish running >>>", self.name);
+                    info!("Actor {:#?} is finish running >>>", self.name);
                     break Ok(());
                 }
                 _ => {

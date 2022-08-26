@@ -1,3 +1,4 @@
+use log::{debug, info};
 use uuid::Uuid;
 
 use std::collections::HashMap;
@@ -5,6 +6,7 @@ use std::collections::HashMap;
 use crate::actors::*;
 use crate::mailbox::*;
 use crate::messages::*;
+use crate::prelude::*;
 use crate::system_config::SystemConfig;
 use crate::workloads::*;
 
@@ -88,7 +90,7 @@ impl System {
     }
 
     pub fn register_actors(&mut self, mut actors: Vec<Actor>) -> Result<(), String> {
-        // println!("before register {:?}", self.actor_registry);
+        debug!("before register {:?}", self.actor_registry);
         actors
             .into_iter()
             .map(|actor| {
@@ -96,7 +98,7 @@ impl System {
             })
             .collect::<()>();
         // TODO use more elegant way to logging, such as auto-enable/config for methods logging
-        // println!("after register {:?}", self.actor_registry);
+        debug!("after register {:?}", self.actor_registry);
         Ok(())
     }
 
@@ -149,7 +151,7 @@ impl System {
                         }
                     }
                     SystemCommand::StartExecution => {
-                        println!(">>>>>> Raptors System Start Exec <<<<<<");
+                        info!(">>>>>> Raptors System Start Exec <<<<<<");
                         let mut actors: Vec<&mut Actor> = self
                             .actor_registry
                             .values_mut()
@@ -158,7 +160,7 @@ impl System {
                             .into_iter()
                             .map(|x| x.start())
                             .collect::<Result<(), String>>();
-                        println!(">>>>>> Raptors System Stop Exec <<<<<<");
+                        info!(">>>>>> Raptors System Stop Exec <<<<<<");
                         status
                     }
                     SystemCommand::DestroyAllActors => self.destroy_actors(),

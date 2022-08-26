@@ -1,3 +1,5 @@
+use log::{debug, info};
+
 use crate::actors::*;
 use crate::messages::*;
 use crate::system::System;
@@ -25,7 +27,7 @@ pub struct SystemBuilder {
 
 impl SystemBuilder {
     pub fn new() -> Self {
-        println!("SystemBuilder::new");
+        info!("SystemBuilder::new");
         SystemBuilder::default()
     }
 
@@ -34,15 +36,15 @@ impl SystemBuilder {
     }
 
     pub fn build_with_config(&self, name: &str, config: SystemConfig) -> System {
-        println!("SystemBuilder::build_with_config {:?}", config);
+        info!("SystemBuilder::build_with_config {:?}", config);
         let amount_of_actors = config.amount_of_actors().unwrap_or_default();
-        println!("actor cnts = {:?}", amount_of_actors);
+        debug!("actor cnts = {:?}", amount_of_actors);
         System::new(name)
     }
 
     pub fn build(&self, name: &str) -> System {
         let config = self.cfg.as_ref().expect("failed to unwrap config");
-        println!("{:?}", config);
+        debug!("config = {:?}", config);
         // TODO build system with configs
         System::new(name)
     }

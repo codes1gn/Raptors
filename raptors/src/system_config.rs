@@ -1,3 +1,5 @@
+use log::{debug, info};
+
 /// TODO(short-term) make dedicated mod and move it to there, maybe name it system_config.rs
 /// test SystemConfig creation and get
 ///
@@ -22,7 +24,7 @@ pub struct SystemConfig {
 
 impl SystemConfig {
     pub fn new() -> Self {
-        println!("SystemConfig::new");
+        debug!("SystemConfig::new");
         SystemConfig::default()
     }
 

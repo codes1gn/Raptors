@@ -1,6 +1,7 @@
 extern crate raptors;
 extern crate uuid;
 
+use log::{debug, info};
 use rand::distributions::{Distribution, Uniform};
 use rand::Rng;
 use uuid::Uuid;
@@ -17,7 +18,7 @@ fn fixed_executor_allocation(system: &System, workloads: Vec<TypedMessage>) -> V
         .into_iter()
         .map(|wkl| -> Envelope {
             let index = die.sample(&mut rng);
-            println!("index = {:#?}", index);
+            debug!("receiver's actor index = {:#?}", index);
             Envelope {
                 msg: wkl,
                 receiver: Address::new(*actor_ids[index]),
@@ -38,7 +39,8 @@ fn fixed_executor_allocation(system: &System, workloads: Vec<TypedMessage>) -> V
 /// destroy 4 actors with msg after all finished
 ///
 fn main() {
-    println!("================ Running raptors::diamond-tasks example ================");
+    env_logger::init();
+    info!("================ Running raptors::diamond-tasks example ================");
 
     // STEP 1 create builders
     // create all builders
@@ -86,11 +88,10 @@ fn main() {
         OpCode::AddOp,
     ]);
     let envelopes: Vec<Envelope> = fixed_executor_allocation(&syst, workloads);
-    // println!("{:?}", envelopes);
     // syst.on_dispatch_workloads(workloads);
     syst.on_dispatch_envelopes(envelopes);
     // TODO(albert): pretty fmt debug display
-    println!("{:#?}", syst.actor_registry().values());
+    debug!("{:#?}", syst.actor_registry().values());
 
     // STEP 5 start all actors and perform
     let cmd = cmd_builder.build("start-execution", None, None);
