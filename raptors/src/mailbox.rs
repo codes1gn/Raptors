@@ -69,7 +69,7 @@ impl Mailbox {
     /// use raptors::prelude::*;
     ///
     /// let mut mbx = Mailbox::new();
-    /// let msg = SystemCommand::CreateActor(4, String::from("raptor"));
+    /// let msg = SystemCommand::CreateActors(4, String::from("raptor"));
     /// mbx.enqueue(msg.into());
     /// assert_eq!(mbx.len(), 1);
     /// ```
@@ -82,14 +82,14 @@ impl Mailbox {
     /// use raptors::prelude::*;
     ///
     /// let mut mbx = Mailbox::new();
-    /// let msg1 = SystemCommand::CreateActor(4, String::from("raptor"));
-    /// let msg2 = SystemCommand::CreateActor(2, String::from("raptor"));
+    /// let msg1 = SystemCommand::CreateActors(4, String::from("raptor"));
+    /// let msg2 = SystemCommand::CreateActors(2, String::from("raptor"));
     /// mbx.enqueue(msg1.into());
     /// mbx.enqueue(msg2.into());
     /// let msg = mbx.dequeue();
     /// assert_eq!(mbx.len(), 1);
     /// assert_eq!(msg.is_some(), true);
-    /// assert_eq!(msg.unwrap(), SystemCommand::CreateActor(4, String::from("raptor")).into());
+    /// assert_eq!(msg.unwrap(), SystemCommand::CreateActors(4, String::from("raptor")).into());
     /// ```
     ///
     /// test dequeue from empty message queue

@@ -7,8 +7,86 @@ use crate::actors::*;
 use crate::mailbox::*;
 use crate::messages::*;
 use crate::prelude::*;
-use crate::system_config::SystemConfig;
 use crate::workloads::*;
+
+/// TODO(short-term) make dedicated mod and move it to there, maybe name it system_config.rs
+/// test SystemConfig creation and get
+///
+/// Definition: SystemConfig contains the static data to describe the actor system
+/// and used for builder to build the system.
+/// It also contains the strategies, hardware/software environment info used for
+/// query purpose.
+///
+/// ```
+/// use raptors::prelude::*;
+///
+/// let sys_config = SystemConfig::new("named");
+/// let num_actor = sys_config.ranks().unwrap_or_default();
+/// assert_eq!(num_actor, 0);
+///
+/// ```
+///
+#[derive(Default, Debug)]
+pub struct SystemConfig {
+    name: String,
+    ranks: Option<usize>,
+}
+
+impl SystemConfig {
+    pub fn new(name: &str) -> Self {
+        debug!("SystemConfig::new");
+        SystemConfig {
+            name: name.to_string(),
+            ranks: Default::default(),
+        }
+    }
+
+    pub fn set_ranks(&mut self, ranks: usize) -> () {
+        self.ranks = Some(ranks);
+    }
+
+    pub fn ranks(&self) -> Option<usize> {
+        self.ranks
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+}
+
+/// Definition: The helper that provide helper functions for system creation
+/// this class wraps all the complex logic used to build elements in;
+/// actor system, for convenient.
+///
+/// backdoors for mocking tests are also provided by this helper
+///
+/// ```
+/// use raptors::prelude::*;
+///
+/// let syst = build_system!("mock system", 2);
+/// assert_eq!(syst.name(), "mock system".to_string());
+/// ```
+///
+#[derive(Default)]
+pub struct SystemBuilder {
+    cfg: Option<SystemConfig>,
+}
+
+impl SystemBuilder {
+    pub fn new() -> Self {
+        info!("SystemBuilder::new");
+        SystemBuilder::default()
+    }
+
+    pub fn build_with_config(&mut self, config: SystemConfig) -> System {
+        self.cfg = Some(config);
+        System::new(&self.config().name().to_owned())
+    }
+
+    fn config(&self) -> &SystemConfig {
+        &self.cfg.as_ref().unwrap()
+    }
+}
 
 /// System is the actor system that manages all the actors, supervisors and message channels
 ///
@@ -113,7 +191,7 @@ impl System {
     /// use raptors::prelude::*;
     ///
     /// let mut syst = System::new("system #1");
-    /// let msg = SystemCommand::CreateActor(1, String::from("raptor"));
+    /// let msg = SystemCommand::CreateActors(1, String::from("raptor"));
     /// syst.on_receive(msg.into());
     /// let actor_reg = syst.actor_registry();
     /// assert_eq!(actor_reg.len(), 1);
@@ -125,7 +203,7 @@ impl System {
     /// use raptors::prelude::*;
     ///
     /// let mut syst = System::new("system #1");
-    /// let msg = SystemCommand::CreateActor(2, String::from("raptor"));
+    /// let msg = SystemCommand::CreateActors(2, String::from("raptor"));
     /// syst.on_receive(msg.into());
     /// let actor_reg = syst.actor_registry();
     /// assert_eq!(actor_reg.len(), 2);
@@ -140,7 +218,7 @@ impl System {
         match msg {
             TypedMessage::SystemMsg(cmd) => {
                 match cmd {
-                    SystemCommand::CreateActor(cnt, base_name) => {
+                    SystemCommand::CreateActors(cnt, base_name) => {
                         // let actor = self.create_actor("raptor");
                         let actors = self.create_actors(cnt, &base_name);
                         let status = self.register_actors(actors);
@@ -163,7 +241,7 @@ impl System {
                         info!(">>>>>> Raptors System Stop Exec <<<<<<");
                         status
                     }
-                    SystemCommand::DestroyAllActors => self.destroy_actors(),
+                    SystemCommand::DestroyAll => self.destroy_actors(),
                     _ => Err("not implemented".to_string()),
                 }
             }
@@ -211,6 +289,13 @@ impl System {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn config_test() {
+        let sys_config = SystemConfig::new("raptors");
+        let na = sys_config.ranks().unwrap_or_default();
+        assert_eq!(na, 0);
+    }
 
     #[test]
     fn create_system() {
@@ -287,7 +372,7 @@ mod tests {
         let mut syst = System::new("system #1");
 
         // create two actors
-        let msg = SystemCommand::CreateActor(2, String::from("raptor"));
+        let msg = SystemCommand::CreateActors(2, String::from("raptor"));
         syst.on_receive(msg.into());
 
         // create two workload msg

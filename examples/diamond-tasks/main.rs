@@ -44,7 +44,6 @@ fn main() {
 
     // STEP 1 create builders
     // create all builders
-    let cmd_builder = CommandBuilder::new();
     let wld_builder = WorkloadBuilder::new();
 
     // STEP 2 system init
@@ -53,11 +52,7 @@ fn main() {
 
     // STEP 3 build actors with cmds
     // create 4 actors
-    let cmd = cmd_builder.build(
-        "create-actor",
-        Some(vec![4]),
-        Some(vec![String::from("raptor")]),
-    );
+    let cmd = build_msg!("create-actors", 4, "raptor");
     syst.on_receive(cmd);
 
     // STEP 4 build workloads and dispatch
@@ -90,12 +85,12 @@ fn main() {
     debug!("{:#?}", syst.actor_registry().values());
 
     // STEP 5 start all actors and perform
-    let cmd = cmd_builder.build("start-execution", None, None);
+    let cmd = build_msg!("start");
     syst.on_receive(cmd);
 
     // STEP 6 destroy context and finish
     // destroy all actors
     // TODO we need msg builder
-    let cmd = cmd_builder.build("destroy-actor", None, None);
+    let cmd = build_msg!("destroy-all");
     syst.on_receive(cmd);
 }

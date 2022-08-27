@@ -1,12 +1,10 @@
 pub mod actors;
-pub mod command_builder;
+pub mod builders;
 pub mod estimator;
 pub mod executor;
 pub mod mailbox;
 pub mod messages;
 pub mod system;
-pub mod system_builder;
-pub mod system_config;
 pub mod workload_builder;
 pub mod workloads;
 
@@ -17,17 +15,14 @@ pub mod workloads;
 /// ```
 pub mod prelude {
     pub use crate::actors::Actor;
-    pub use crate::command_builder::CommandBuilder;
     pub use crate::estimator::WorkloadEstimator;
     pub use crate::executor::Executor;
     pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
     pub use crate::messages::{SystemCommand, SystemMsg, TypedMessage};
-    pub use crate::system::System;
-    pub use crate::system_builder::SystemBuilder;
-    pub use crate::system_config::SystemConfig;
+    pub use crate::system::{System, SystemBuilder, SystemConfig};
     pub use crate::workload_builder::WorkloadBuilder;
     pub use crate::workloads::{OpCode, Workload, WorkloadMsg};
 
     // macros that simplifies the interfaces
-    pub use crate::build_system;
+    pub use crate::{build_msg, build_system};
 }

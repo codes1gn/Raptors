@@ -28,8 +28,8 @@ type Message = Box<dyn Any + Send>;
 /// let msg = TypedMessage::ActorMsg;
 /// assert_eq!(msg, TypedMessage::ActorMsg);
 ///
-/// let msg = SystemCommand::CreateActor(1, String::from("raptor"));
-/// assert_eq!(msg, SystemCommand::CreateActor(1, String::from("raptor")));
+/// let msg = SystemCommand::CreateActors(1, String::from("raptor"));
+/// assert_eq!(msg, SystemCommand::CreateActors(1, String::from("raptor")));
 ///
 /// # // define a test function for type check
 /// pub fn test_msg_type(msg: TypedMessage) -> bool {
@@ -47,9 +47,9 @@ pub enum TypedMessage {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SystemCommand {
     DummySysCmd,
-    CreateActor(usize, String),
+    CreateActors(usize, String),
     StartExecution,
-    DestroyAllActors, // add more accurate destroy control msg when needed
+    DestroyAll, // add more accurate destroy control msg when needed
 }
 
 impl Into<TypedMessage> for SystemCommand {
