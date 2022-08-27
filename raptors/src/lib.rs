@@ -27,4 +27,7 @@ pub mod prelude {
     pub use crate::system_config::SystemConfig;
     pub use crate::workload_builder::WorkloadBuilder;
     pub use crate::workloads::{OpCode, Workload, WorkloadMsg};
+
+    // macros that simplifies the interfaces
+    pub use crate::build_system;
 }

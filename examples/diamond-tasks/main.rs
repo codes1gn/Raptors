@@ -44,15 +44,11 @@ fn main() {
 
     // STEP 1 create builders
     // create all builders
-    let sys_builder = SystemBuilder::new();
     let cmd_builder = CommandBuilder::new();
     let wld_builder = WorkloadBuilder::new();
 
     // STEP 2 system init
-    // init system
-    let mut sys_config = SystemConfig::new();
-    sys_config.set_amount_of_actors(4 as usize);
-    let mut syst = sys_builder.build_with_config("mock system", sys_config);
+    let mut syst = build_system!("mock system", 4);
     assert_eq!(syst.name(), "mock system".to_string());
 
     // STEP 3 build actors with cmds

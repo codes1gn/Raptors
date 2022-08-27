@@ -11,29 +11,37 @@ use log::{debug, info};
 /// ```
 /// use raptors::prelude::*;
 ///
-/// let sys_config = SystemConfig::new();
-/// let num_actor = sys_config.amount_of_actors().unwrap_or_default();
+/// let sys_config = SystemConfig::new("named");
+/// let num_actor = sys_config.ranks().unwrap_or_default();
 /// assert_eq!(num_actor, 0);
 ///
 /// ```
 ///
 #[derive(Default, Debug)]
 pub struct SystemConfig {
-    amount_of_actors: Option<usize>,
+    name: String,
+    ranks: Option<usize>,
 }
 
 impl SystemConfig {
-    pub fn new() -> Self {
+    pub fn new(name: &str) -> Self {
         debug!("SystemConfig::new");
-        SystemConfig::default()
+        SystemConfig {
+            name: name.to_string(),
+            ranks: Default::default(),
+        }
     }
 
-    pub fn set_amount_of_actors(&mut self, num: usize) -> () {
-        self.amount_of_actors = Some(num);
+    pub fn set_ranks(&mut self, ranks: usize) -> () {
+        self.ranks = Some(ranks);
     }
 
-    pub fn amount_of_actors(&self) -> Option<usize> {
-        self.amount_of_actors
+    pub fn ranks(&self) -> Option<usize> {
+        self.ranks
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 }
 
@@ -45,8 +53,8 @@ mod tests {
 
     #[test]
     fn config_test() {
-        let sys_config = SystemConfig::new();
-        let na = sys_config.amount_of_actors().unwrap_or_default();
+        let sys_config = SystemConfig::new("raptors");
+        let na = sys_config.ranks().unwrap_or_default();
         assert_eq!(na, 0);
     }
 }

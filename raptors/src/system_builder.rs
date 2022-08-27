@@ -14,9 +14,7 @@ use crate::system_config::SystemConfig;
 /// ```
 /// use raptors::prelude::*;
 ///
-/// let sys_builder = SystemBuilder::new();
-/// let sys_config = SystemConfig::new();
-/// let syst = sys_builder.build_with_config("mock system", sys_config);
+/// let syst = build_system!("mock system", 2);
 /// assert_eq!(syst.name(), "mock system".to_string());
 /// ```
 ///
@@ -31,27 +29,44 @@ impl SystemBuilder {
         SystemBuilder::default()
     }
 
-    pub fn use_config(&mut self, config: SystemConfig) -> () {
+    pub fn build_with_config(&mut self, config: SystemConfig) -> System {
         self.cfg = Some(config);
+        System::new(&self.config().name().to_owned())
     }
 
-    pub fn build_with_config(&self, name: &str, config: SystemConfig) -> System {
-        info!("SystemBuilder::build_with_config {:?}", config);
-        let amount_of_actors = config.amount_of_actors().unwrap_or_default();
-        debug!("actor cnts = {:?}", amount_of_actors);
-        System::new(name)
+    fn config(&self) -> &SystemConfig {
+        &self.cfg.as_ref().unwrap()
     }
+}
 
-    pub fn build(&self, name: &str) -> System {
-        let config = self.cfg.as_ref().expect("failed to unwrap config");
-        debug!("config = {:?}", config);
-        // TODO build system with configs
-        System::new(name)
-    }
+#[macro_export]
+macro_rules! build_system {
+    ($name:expr) => {{
+        System::new($name)
+    }};
+    ($name:expr, $actor_cnt:expr) => {{
+        let mut sys_builder = SystemBuilder::new();
+        let mut sys_config = SystemConfig::new($name);
+        sys_config.set_ranks($actor_cnt as usize);
+        let system = sys_builder.build_with_config(sys_config);
+        system
+    }};
 }
 
 #[cfg(test)]
 
 mod tests {
     use super::*;
+
+    #[test]
+    fn build_system_using_macro_test() {
+        let system = build_system!("raptor");
+        assert_eq!(system.name(), "raptor");
+    }
+
+    #[test]
+    fn build_system_with_config_using_macro_test() {
+        let system = build_system!("raptor", 4);
+        assert_eq!(system.name(), "raptor");
+    }
 }
