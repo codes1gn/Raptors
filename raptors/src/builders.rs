@@ -3,6 +3,7 @@ use log::{debug, info};
 use crate::actors::*;
 use crate::messages::*;
 use crate::system::*;
+use crate::workloads::*;
 
 #[macro_export]
 macro_rules! build_system {
@@ -29,6 +30,15 @@ macro_rules! build_msg {
     ("start") => {
         TypedMessage::SystemMsg(SystemCommand::StartExecution)
     };
+}
+
+#[macro_export]
+macro_rules! build_workload {
+    ($x:expr) => {{
+        $x.into_iter()
+            .map(|x| Workload::new(x).into())
+            .collect::<Vec<TypedMessage>>()
+    }};
 }
 
 #[cfg(test)]
