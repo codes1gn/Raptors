@@ -140,7 +140,7 @@ Key Challenges:
 1. async message passing, with Futures, Polls and related rules
 2. communicating intra-dev, inter-dev.
 
-# Logger design DONE
+# Logger design
 purpose: to replace println macros
 use rust-lang/log as the crate/standard to dev with
 use a custom implementation as the backend, still selecting
@@ -151,17 +151,19 @@ the implementation of details
 more detail explaination on log github.com/rust-lang/log
 
 
-TODO
-
-
 # Builder module design
 system builder: to build the system and init it. with config provided
 command Builder: ...a dedicated builder to build all system command that consumed by the system or the supervisor
 workload builder: a dedicate builder that build actor messages for all types of workloads that processed by actors
 
-TODO: use procedual macros
+TODO
+
+# multithreaded and see its effect
+make asynchoronously with tokio runtime
+tokio.rs/tokio/tutorial
+
 
 # Profiler design
-use chrome::tracing for visualization
-still choosing the fmk to dev with
-currently prefer with gbench since it gives macro as convenient tool
+profiling with official tracing tools
+tracing + tracing-subscriber + tracing-chrome
+
