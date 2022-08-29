@@ -162,6 +162,8 @@ TODO
 make asynchoronously with tokio runtime
 tokio.rs/tokio/tutorial
 
+refer to ryhl.io/blog/actors-with-tokio/
+
 
 # Profiler design
 profiling with official tracing tools

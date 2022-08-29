@@ -18,7 +18,6 @@ use raptors::prelude::*;
 /// destroy 4 actors with msg after all finished
 ///
 fn main() {
-    env_logger::init();
     info!("================ Running raptors::diamond-tasks example ================");
     // STEP 1 system init
     let mut syst = build_system!("mock system", 4);
@@ -60,8 +59,7 @@ fn main() {
     debug!("{:#?}", syst.actor_registry().values());
 
     // STEP 5 start all actors and perform
-    let cmd = build_msg!("start");
-    syst.on_receive(cmd);
+    syst.start();
 
     // STEP 6 destroy context and finish
     // destroy all actors

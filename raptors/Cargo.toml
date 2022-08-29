@@ -11,6 +11,7 @@ uuid = { version = "0.6", features = ["serde", "v4"] }
 rand = { version = "0.8.5" }
 tokio = { version = "1", features = ["full"] }
 
+
 # deps for logging
 log = "0.4"
 env_logger = "0.8"

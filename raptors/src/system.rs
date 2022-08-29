@@ -2,6 +2,7 @@ use log::{debug, info};
 use uuid::Uuid;
 
 use std::collections::HashMap;
+use std::{thread, time};
 
 use crate::actors::*;
 use crate::mailbox::*;
@@ -34,6 +35,7 @@ pub struct SystemConfig {
 
 impl SystemConfig {
     pub fn new(name: &str) -> Self {
+        env_logger::init();
         debug!("SystemConfig::new");
         SystemConfig {
             name: name.to_string(),
@@ -276,6 +278,68 @@ impl System {
         status
     }
 
+    // pub async fn on_running(&mut self, msg: TypedMessage) -> Result<(), String> {
+    //     match msg {
+    //         TypedMessage::SystemMsg(SystemCommand::StartExecution) => {
+    //             info!(">>>>>> Raptors System Start Exec <<<<<<");
+    //             let mut actors: Vec<&mut Actor> = self
+    //                 .actor_registry
+    //                 .values_mut()
+    //                 .collect::<Vec<&mut Actor>>();
+    //             for actor in actors {
+    //                 tokio::spawn(async move {
+    //                     actor.start();
+    //                 });
+    //             }
+    //             Ok(())
+    //         }
+    //         _ => Err("not implemented".to_string()),
+    //     }
+    // }
+
+    async fn print(&self, i: u32) -> Result<(), String> {
+        thread::sleep(time::Duration::from_millis(1000 as u64));
+        info!("second 1 {}", i);
+        thread::sleep(time::Duration::from_millis(1000 as u64));
+        info!("second 2 {}", i);
+        thread::sleep(time::Duration::from_millis(1000 as u64));
+        info!("second 3 {}", i);
+        info!("hello world {}", i);
+        Ok(())
+    }
+
+    pub fn start(&mut self) {
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+        let mut handles = vec![];
+        async fn print(i: u32) -> u32 {
+            thread::sleep(time::Duration::from_millis(1000 as u64));
+            info!("second 1 {}", i);
+            thread::sleep(time::Duration::from_millis(1000 as u64));
+            info!("second 2 {}", i);
+            thread::sleep(time::Duration::from_millis(1000 as u64));
+            info!("second 3 {}", i);
+            info!("hello world {}", i);
+            i
+        }
+
+        for i in vec![1, 2, 3] {
+            handles.push(rt.spawn(print(i)));
+        }
+        for handle in handles {
+            let out = rt.block_on(handle).unwrap();
+            info!("Got {}", out);
+        }
+
+        // let msg = build_msg!("start");
+
+        // self.on_running(msg).await;
+        // TODO experiments
+    }
+
     pub fn actor_registry(&self) -> &HashMap<Uuid, Actor> {
         &self.actor_registry
     }
@@ -289,13 +353,6 @@ impl System {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn config_test() {
-        let sys_config = SystemConfig::new("raptors");
-        let na = sys_config.ranks().unwrap_or_default();
-        assert_eq!(na, 0);
-    }
 
     #[test]
     fn create_system() {
