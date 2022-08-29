@@ -1,4 +1,5 @@
 use log::{debug, info};
+use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
 use std::collections::HashMap;
@@ -114,6 +115,32 @@ impl SystemBuilder {
 pub struct System {
     name: String,
     actor_registry: HashMap<Uuid, Actor>,
+    // sender_to_actors: Vec<mpsc::Sender<TypedMessage>>,
+}
+
+#[derive(Debug)]
+pub struct AsyncSystem {
+    actors_mailbox: Vec<mpsc::Sender<TypedMessage>>,
+}
+
+impl AsyncSystem {
+    #[tokio::main]
+    pub async fn new(ranks: u32) -> Self {
+        env_logger::init();
+        let mut mailboxes: Vec<mpsc::Sender<TypedMessage>> = vec![];
+        for id in 0..ranks {
+            info!("creating actor with id = #{}", id);
+            let (sender, receiver) = mpsc::channel(16);
+            mailboxes.push(sender);
+            let mut actor = AsyncActor::new(id, receiver);
+            info!("on aspvr #{}", id);
+            tokio::spawn(async move { actor.run().await });
+        }
+        info!("creating done");
+        Self {
+            actors_mailbox: mailboxes,
+        }
+    }
 }
 
 impl Default for System {
@@ -130,7 +157,7 @@ impl System {
     pub fn new(name: &str) -> Self {
         return Self {
             name: String::from(name),
-            ..Default::default()
+            actor_registry: Default::default(),
         };
     }
 

@@ -3,6 +3,8 @@ extern crate uuid;
 
 use log::{debug, info};
 
+use std::{thread, time};
+
 use raptors::prelude::*;
 
 /// Routine of this example
@@ -18,52 +20,54 @@ use raptors::prelude::*;
 /// destroy 4 actors with msg after all finished
 ///
 fn main() {
-    info!("================ Running raptors::diamond-tasks example ================");
-    // STEP 1 system init
-    let mut syst = build_system!("mock system", 4);
-    assert_eq!(syst.name(), "mock system".to_string());
+    let mut system = AsyncSystem::new(4);
 
-    // STEP 3 build actors with cmds
-    // create 4 actors
-    let cmd = build_msg!("create-actors", 4, "raptor");
-    syst.on_receive(cmd);
+    // info!("================ Running raptors::diamond-tasks example ================");
+    // // STEP 1 system init
+    // let mut syst = build_system!("mock system", 4);
+    // assert_eq!(syst.name(), "mock system".to_string());
 
-    // STEP 4 build workloads and dispatch
-    // create a list of workload
-    let mut workloads = build_workload!(vec![
-        OpCode::AddOp,
-        OpCode::SinOp,
-        OpCode::ConvOp,
-        OpCode::MatmulOp,
-        OpCode::AddOp,
-        OpCode::ExpOp,
-        OpCode::ConvOp,
-        OpCode::SinOp,
-        OpCode::ConvOp,
-        OpCode::MatmulOp,
-        OpCode::MatmulOp,
-        OpCode::AddOp,
-        OpCode::ExpOp,
-        OpCode::ConvOp,
-        OpCode::SinOp,
-        OpCode::ConvOp,
-        OpCode::MatmulOp,
-        OpCode::MatmulOp,
-        OpCode::AddOp,
-    ]);
+    // // STEP 3 build actors with cmds
+    // // create 4 actors
+    // let cmd = build_msg!("create-actors", 4, "raptor");
+    // syst.on_receive(cmd);
 
-    let envelopes = pre_schedule(&syst, workloads);
-    // syst.on_dispatch_workloads(workloads);
-    syst.on_dispatch_envelopes(envelopes);
-    // TODO(albert): pretty fmt debug display
-    debug!("{:#?}", syst.actor_registry().values());
+    // // STEP 4 build workloads and dispatch
+    // // create a list of workload
+    // let mut workloads = build_workload!(vec![
+    //     OpCode::AddOp,
+    //     OpCode::SinOp,
+    //     OpCode::ConvOp,
+    //     OpCode::MatmulOp,
+    //     OpCode::AddOp,
+    //     OpCode::ExpOp,
+    //     OpCode::ConvOp,
+    //     OpCode::SinOp,
+    //     OpCode::ConvOp,
+    //     OpCode::MatmulOp,
+    //     OpCode::MatmulOp,
+    //     OpCode::AddOp,
+    //     OpCode::ExpOp,
+    //     OpCode::ConvOp,
+    //     OpCode::SinOp,
+    //     OpCode::ConvOp,
+    //     OpCode::MatmulOp,
+    //     OpCode::MatmulOp,
+    //     OpCode::AddOp,
+    // ]);
 
-    // STEP 5 start all actors and perform
-    syst.start();
+    // let envelopes = pre_schedule(&syst, workloads);
+    // // syst.on_dispatch_workloads(workloads);
+    // syst.on_dispatch_envelopes(envelopes);
+    // // TODO(albert): pretty fmt debug display
+    // debug!("{:#?}", syst.actor_registry().values());
 
-    // STEP 6 destroy context and finish
-    // destroy all actors
-    // TODO we need msg builder
-    let cmd = build_msg!("destroy-all");
-    syst.on_receive(cmd);
+    // // STEP 5 start all actors and perform
+    // syst.start();
+
+    // // STEP 6 destroy context and finish
+    // // destroy all actors
+    // // TODO we need msg builder
+    // let cmd = build_msg!("destroy-all");
+    // syst.on_receive(cmd);
 }

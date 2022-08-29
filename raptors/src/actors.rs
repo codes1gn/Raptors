@@ -1,14 +1,35 @@
 // LICENSE PLACEHOLDER
 use log::{debug, info};
+use tokio::sync::{mpsc, oneshot};
 use uuid::{Urn, Uuid};
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::str::Bytes;
+use std::{thread, time};
 
 use crate::mailbox::*;
 use crate::messages::TypedMessage;
 use crate::workloads::{OpCode, Workload};
+
+pub struct AsyncActor {
+    id: u32,
+    receiver: mpsc::Receiver<TypedMessage>,
+}
+
+impl AsyncActor {
+    pub fn new(id: u32, receiver: mpsc::Receiver<TypedMessage>) -> Self {
+        AsyncActor {
+            id: id,
+            receiver: receiver,
+        }
+    }
+
+    pub async fn run(&mut self) {
+        thread::sleep(time::Duration::from_millis(1000 as u64));
+        info!("on actor #{}", self.id);
+    }
+}
 
 // placehold for actors
 #[derive(Debug, Eq)]
