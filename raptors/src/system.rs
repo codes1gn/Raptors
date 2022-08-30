@@ -188,6 +188,11 @@ impl AsyncSystem {
         self.ranks += cnt;
     }
 
+    pub fn halt_actor(&mut self, index: usize) {
+        info!("triggering drop");
+        self.mails.remove(index);
+    }
+
     pub async fn deliver_to(&self, msg: TypedMessage, to: usize) {
         info!("WIP: deliver message to {}", to);
         self.mails[to].send(msg).await;

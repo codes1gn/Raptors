@@ -34,6 +34,8 @@ async fn main() {
     system.deliver_to(msg1.clone(), 0).await;
     system.deliver_to(msg0.clone(), 4).await;
 
+    system.halt_actor(3);
+
     system.broadcast(msg1.clone()).await;
     system.broadcast(msg0.clone()).await;
 
