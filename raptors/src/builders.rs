@@ -23,33 +23,39 @@ use crate::workloads::*;
 #[macro_export]
 macro_rules! build_system {
     ($name:expr) => {{
-        let mut sys_builder = SystemBuilder::new();
         let mut sys_config = SystemConfig::new($name, "info");
+        let mut sys_builder = SystemBuilder::new();
         sys_config.set_ranks(0 as usize);
         let system = sys_builder.build_with_config(sys_config);
         system
     }};
     ($name:expr, $cnt:expr) => {{
-        let mut sys_builder = SystemBuilder::new();
         let mut sys_config = SystemConfig::new($name, "info");
+        let mut sys_builder = SystemBuilder::new();
         sys_config.set_ranks($cnt as usize);
         let system = sys_builder.build_with_config(sys_config);
         system
     }};
-    ($name:expr, $log_level:expr) => {{
-        let mut sys_builder = SystemBuilder::new();
-        let mut sys_config = SystemConfig::new($name, $log_level);
-        sys_config.set_ranks(0 as usize);
-        let system = sys_builder.build_with_config(sys_config);
-        system
-    }};
-    ($name:expr, $log_level:expr, $cnt:expr) => {{
-        let mut sys_builder = SystemBuilder::new();
-        let mut sys_config = SystemConfig::new($name, $log_level);
-        sys_config.set_ranks($cnt usize);
-        let system = sys_builder.build_with_config(sys_config);
-        system
-    }};
+}
+
+#[macro_export]
+macro_rules! try_init_raptors {
+    ($log_level:expr) => {
+        std::env::set_var("RUST_LOG", $log_level);
+        // to make more precise timestamps
+        Builder::new()
+            .format(|buf, record| {
+                writeln!(
+                    buf,
+                    "{} {}: {}",
+                    record.level(),
+                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+                    record.args()
+                )
+            })
+            .filter(None, LevelFilter::Info)
+            .try_init();
+    };
 }
 
 #[macro_export]
@@ -84,14 +90,14 @@ macro_rules! build_workload {
 mod tests {
     use super::*;
 
-    // #[test]
-    // fn build_system_using_macro_test() {
-    //     let system = build_system!("raptor");
-    //     assert_eq!(system.name(), "raptor");
-    // }
+    #[test]
+    fn build_system_using_macro_test0() {
+        let system = build_system!("raptor");
+        assert_eq!(system.name(), "raptor");
+    }
 
     #[test]
-    fn build_system_with_config_using_macro_test() {
+    fn build_system_using_macro_test1() {
         let system = build_system!("raptor", 4);
         assert_eq!(system.name(), "raptor");
     }

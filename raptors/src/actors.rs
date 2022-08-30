@@ -130,20 +130,4 @@ impl Eq for Actor {}
 
 mod tests {
     use super::*;
-    use std::time;
-
-    // test visibility
-    // #[test]
-    // fn create_dummy_workload_test() {
-    //     let load = Workload::new(OpCode::AddOp);
-    //     assert_eq!(load.payload(), 11 as usize);
-    // }
-
-    // #[test]
-    // fn workload_mock_run_test() {
-    //     let load = Workload::new(OpCode::AddOp);
-    //     let now = time::Instant::now();
-    //     load.mock_run();
-    //     assert!(now.elapsed() >= time::Duration::from_millis(11));
-    // }
 }

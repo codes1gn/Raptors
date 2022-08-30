@@ -24,5 +24,5 @@ pub mod prelude {
     pub use crate::workloads::{OpCode, Workload, WorkloadMsg};
 
     // macros that simplifies the interfaces
-    pub use crate::{build_msg, build_system, build_workload};
+    pub use crate::{build_msg, build_system, build_workload, try_init_raptors};
 }

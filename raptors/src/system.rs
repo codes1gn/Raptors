@@ -27,29 +27,17 @@ use crate::workloads::*;
 #[derive(Default, Debug)]
 pub struct SystemConfig {
     name: String,
+    log_level: String,
     ranks: Option<usize>,
 }
 
 impl SystemConfig {
     pub fn new(name: &str, log_level: &str) -> Self {
-        std::env::set_var("RUST_LOG", log_level);
-        // to make more precise timestamps
-        Builder::new()
-            .format(|buf, record| {
-                writeln!(
-                    buf,
-                    "{} {}: {}",
-                    record.level(),
-                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                    record.args()
-                )
-            })
-            .filter(None, LevelFilter::Info)
-            .init();
-
+        try_init_raptors!(log_level);
         SystemConfig {
             name: name.to_string(),
             ranks: Default::default(),
+            log_level: log_level.to_owned(),
         }
     }
 
@@ -227,96 +215,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn create_system() {
-        let syst = ActorSystem::new("raptor system");
-        assert_eq!(syst.name(), "raptor system");
+    fn create_system_with_new_test_1() {
+        let system = ActorSystem::new("raptor system");
+        assert_eq!(system.name(), "raptor system");
     }
 
-    // #[test]
-    // fn system_create_actor_test() {
-    //     let syst = ActorSystem::new("raptor system");
-    //     let actor = syst.create_actor("raptor");
-    //     assert_eq!(actor.name(), "raptor");
-    // }
+    #[test]
+    fn create_system_with_macro_test_1() {
+        let mut system = build_system!("Raptors");
+        assert_eq!(system.name(), "Raptors");
+    }
 
-    // #[test]
-    // fn system_create_actors_test() {
-    //     let syst = ActorSystem::new("raptor system");
-    //     let actors = syst.create_actors(4, "raptor");
-    //     assert_eq!(actors.len(), 4);
-    //     // TODO add more asserts
-    // }
-
-    // #[test]
-    // fn system_create_register_then_query_actor_from_map_test() {
-    //     let mut syst = ActorSystem::new("raptor system");
-
-    //     // register
-    //     let actor = syst.create_actor("raptor");
-    //     let status = syst.register_actor(actor);
-
-    //     // check result
-    //     assert!(status.is_ok());
-    //     let mactor = syst.actor_registry();
-    //     assert_eq!(mactor.len(), 1);
-    // }
-
-    // #[test]
-    // fn on_receive_not_systemmsg_test() {
-    //     let mut syst = ActorSystem::new("system #1");
-    //     let msg = TypedMessage::ActorMsg;
-    //     let status = syst.on_receive(msg.into());
-    //     assert!(status.is_err());
-    //     assert_eq!(status.unwrap_err(), "not implemented".to_string());
-    // }
-
-    // #[test]
-    // fn system_create_then_register_multiple_actors_test() {
-    //     let mut syst = ActorSystem::new("raptor system");
-
-    //     // register
-    //     let actors = syst.create_actors(2, "raptor");
-    //     let query_id = actors
-    //         .iter()
-    //         .map(|actor| actor.id().clone())
-    //         .collect::<Vec<Uuid>>();
-    //     let status = syst.register_actors(actors);
-
-    //     // check result
-    //     assert_eq!(status.is_ok(), true);
-    //     let query_actors = syst.actor_registry();
-    //     assert_eq!(query_actors.len(), 2);
-    //     assert_eq!(
-    //         query_actors.get(&query_id[0]).unwrap().name(),
-    //         "raptor #0".to_string()
-    //     );
-    //     assert_eq!(
-    //         query_actors.get(&query_id[1]).unwrap().name(),
-    //         "raptor #1".to_string()
-    //     );
-    // }
-
-    // #[test]
-    // fn system_dispatch_workloadmsg_to_actors_test() {
-    //     let mut syst = ActorSystem::new("system #1");
-
-    //     // create two actors
-    //     let msg = SystemCommand::CreateActors(2, String::from("raptor"));
-    //     syst.on_receive(msg.into());
-
-    //     // create two workload msg
-    //     let mut workloads: Vec<TypedMessage> = vec![];
-
-    //     workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp)));
-    //     workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::SinOp)));
-    //     syst.on_dispatch_workloads(workloads);
-
-    //     // check if take effects
-    //     let actor_reg = syst.actor_registry();
-    //     assert_eq!(actor_reg.len(), 2);
-    //     let actors: Vec<&Actor> = actor_reg.values().collect();
-    //     // panic!("{:?}", actors[0]);
-    //     // panic!("{:?}", actors[1]);
-    //     // assert_eq!(actors[0].mailbox.len(), 2);
-    // }
+    #[test]
+    fn create_system_with_macro_test_2() {
+        let mut system = build_system!("Raptors", 2);
+        assert_eq!(system.name(), "Raptors");
+    }
 }
