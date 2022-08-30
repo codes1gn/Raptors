@@ -42,6 +42,8 @@ pub enum TypedMessage {
     SystemMsg(SystemCommand),
     ActorMsg,
     WorkloadMsg(Workload),
+    Testone,
+    Testzero,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

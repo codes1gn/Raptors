@@ -1,4 +1,8 @@
+use chrono::Local;
+use env_logger::Builder;
+use log::LevelFilter;
 use log::{debug, info};
+use std::io::Write;
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
@@ -36,8 +40,20 @@ pub struct SystemConfig {
 
 impl SystemConfig {
     pub fn new(name: &str) -> Self {
-        env_logger::init();
-        debug!("SystemConfig::new");
+        // to make more precise timestamps
+        Builder::new()
+            .format(|buf, record| {
+                writeln!(
+                    buf,
+                    "{} {}: {}",
+                    record.level(),
+                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+                    record.args()
+                )
+            })
+            .filter(None, LevelFilter::Info)
+            .init();
+
         SystemConfig {
             name: name.to_string(),
             ranks: Default::default(),
@@ -120,13 +136,31 @@ pub struct System {
 
 #[derive(Debug)]
 pub struct AsyncSystem {
-    actors_mailbox: Vec<mpsc::Sender<TypedMessage>>,
+    // TODO need a state machine that monitor actors
+    // and allow graceful shutdown
+    pub ranks: usize,
+    pub mails: Vec<mpsc::Sender<TypedMessage>>,
 }
 
 impl AsyncSystem {
-    #[tokio::main]
-    pub async fn new(ranks: u32) -> Self {
-        env_logger::init();
+    pub fn new(ranks: usize) -> Self {
+        // refer to stackoverflow.com/questions/48850403/change-timestamp-format-used-by-env-logger
+        // set default usage of info log level
+        std::env::set_var("RUST_LOG", "info");
+        // to make more precise timestamps
+        Builder::new()
+            .format(|buf, record| {
+                writeln!(
+                    buf,
+                    "{} {}: {}",
+                    record.level(),
+                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+                    record.args()
+                )
+            })
+            .filter(None, LevelFilter::Info)
+            .init();
+
         let mut mailboxes: Vec<mpsc::Sender<TypedMessage>> = vec![];
         for id in 0..ranks {
             info!("creating actor with id = #{}", id);
@@ -136,10 +170,36 @@ impl AsyncSystem {
             info!("on aspvr #{}", id);
             tokio::spawn(async move { actor.run().await });
         }
-        info!("creating done");
         Self {
-            actors_mailbox: mailboxes,
+            ranks: ranks,
+            mails: mailboxes,
         }
+    }
+
+    pub fn spawn_actors(&mut self, cnt: usize) {
+        for id in self.ranks..(self.ranks + cnt) {
+            info!("creating actor with id = #{}", id);
+            let (sender, receiver) = mpsc::channel(16);
+            self.mails.push(sender);
+            let mut actor = AsyncActor::new(id, receiver);
+            info!("on aspvr #{}", id);
+            tokio::spawn(async move { actor.run().await });
+        }
+        self.ranks += cnt;
+    }
+
+    pub async fn deliver_to(&self, msg: TypedMessage, to: usize) {
+        info!("WIP: deliver message to {}", to);
+        self.mails[to].send(msg).await;
+        info!("FINISH: deliver message to {}", to);
+    }
+
+    pub async fn broadcast(&self, msg: TypedMessage) {
+        info!("WIP: broadcast message");
+        for mail in &self.mails {
+            mail.send(msg.clone()).await;
+        }
+        info!("FINISH: broadcast message");
     }
 }
 
@@ -303,68 +363,6 @@ impl System {
             .map(|envelope| -> Result<(), String> { self.on_deliver(envelope) })
             .collect::<Result<(), String>>();
         status
-    }
-
-    // pub async fn on_running(&mut self, msg: TypedMessage) -> Result<(), String> {
-    //     match msg {
-    //         TypedMessage::SystemMsg(SystemCommand::StartExecution) => {
-    //             info!(">>>>>> Raptors System Start Exec <<<<<<");
-    //             let mut actors: Vec<&mut Actor> = self
-    //                 .actor_registry
-    //                 .values_mut()
-    //                 .collect::<Vec<&mut Actor>>();
-    //             for actor in actors {
-    //                 tokio::spawn(async move {
-    //                     actor.start();
-    //                 });
-    //             }
-    //             Ok(())
-    //         }
-    //         _ => Err("not implemented".to_string()),
-    //     }
-    // }
-
-    async fn print(&self, i: u32) -> Result<(), String> {
-        thread::sleep(time::Duration::from_millis(1000 as u64));
-        info!("second 1 {}", i);
-        thread::sleep(time::Duration::from_millis(1000 as u64));
-        info!("second 2 {}", i);
-        thread::sleep(time::Duration::from_millis(1000 as u64));
-        info!("second 3 {}", i);
-        info!("hello world {}", i);
-        Ok(())
-    }
-
-    pub fn start(&mut self) {
-        let rt = tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()
-            .unwrap();
-
-        let mut handles = vec![];
-        async fn print(i: u32) -> u32 {
-            thread::sleep(time::Duration::from_millis(1000 as u64));
-            info!("second 1 {}", i);
-            thread::sleep(time::Duration::from_millis(1000 as u64));
-            info!("second 2 {}", i);
-            thread::sleep(time::Duration::from_millis(1000 as u64));
-            info!("second 3 {}", i);
-            info!("hello world {}", i);
-            i
-        }
-
-        for i in vec![1, 2, 3] {
-            handles.push(rt.spawn(print(i)));
-        }
-        for handle in handles {
-            let out = rt.block_on(handle).unwrap();
-            info!("Got {}", out);
-        }
-
-        // let msg = build_msg!("start");
-
-        // self.on_running(msg).await;
-        // TODO experiments
     }
 
     pub fn actor_registry(&self) -> &HashMap<Uuid, Actor> {

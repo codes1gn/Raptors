@@ -31,6 +31,12 @@ macro_rules! build_msg {
     ("start") => {
         TypedMessage::SystemMsg(SystemCommand::StartExecution)
     };
+    ("test-one") => {
+        TypedMessage::Testone
+    };
+    ("test-zero") => {
+        TypedMessage::Testzero
+    };
 }
 
 #[macro_export]

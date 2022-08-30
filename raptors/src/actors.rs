@@ -13,21 +13,45 @@ use crate::messages::TypedMessage;
 use crate::workloads::{OpCode, Workload};
 
 pub struct AsyncActor {
-    id: u32,
+    id: usize,
     receiver: mpsc::Receiver<TypedMessage>,
 }
 
 impl AsyncActor {
-    pub fn new(id: u32, receiver: mpsc::Receiver<TypedMessage>) -> Self {
+    pub fn new(id: usize, receiver: mpsc::Receiver<TypedMessage>) -> Self {
         AsyncActor {
             id: id,
             receiver: receiver,
         }
     }
 
-    pub async fn run(&mut self) {
+    fn fetch_and_handle_message(&mut self, msg: TypedMessage) -> u32 {
         thread::sleep(time::Duration::from_millis(1000 as u64));
         info!("on actor #{}", self.id);
+        match msg {
+            TypedMessage::Testone => 1,
+            TypedMessage::Testzero => 0,
+            _ => panic!("message not implemented"),
+        }
+    }
+
+    pub async fn run(&mut self) -> u32 {
+        loop {
+            match self.receiver.recv().await {
+                Some(msg) => {
+                    let status = self.fetch_and_handle_message(msg);
+                    match status {
+                        0 => {
+                            info!("received 0, halt");
+                            break 0;
+                        }
+                        1 => info!("received 1, continue"),
+                        _ => panic!("not implemented #2424"),
+                    }
+                }
+                _ => (),
+            }
+        }
     }
 }
 

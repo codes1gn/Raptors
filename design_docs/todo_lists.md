@@ -4,9 +4,10 @@ Dones:
 * logger with log + env_logger
 * example for diamond tasks
 * builder with macro support, and modify example usage
+* make asynchonously with tokio runtime
 
 WIPs:
-* make asynchonously with tokio runtime
+* refactoring all the procedure
 * support profiling with tracing + tracing-subscriber + tracing-chrome
 
 Todos:

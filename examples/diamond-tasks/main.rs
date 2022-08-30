@@ -19,8 +19,23 @@ use raptors::prelude::*;
 /// actors send back msg of results
 /// destroy 4 actors with msg after all finished
 ///
-fn main() {
+// TODO make [tokio::main] a integrated annotation of raptors
+#[tokio::main]
+async fn main() {
     let mut system = AsyncSystem::new(4);
+    system.spawn_actors(2);
+    assert_eq!(system.mails.len(), 6);
+    let msg0 = build_msg!("test-zero");
+    let msg1 = build_msg!("test-one");
+
+    info!("{:#?}", msg0);
+    info!("{:#?}", msg1);
+
+    system.deliver_to(msg1.clone(), 0).await;
+    system.deliver_to(msg0.clone(), 4).await;
+
+    system.broadcast(msg1.clone()).await;
+    system.broadcast(msg0.clone()).await;
 
     // info!("================ Running raptors::diamond-tasks example ================");
     // // STEP 1 system init
