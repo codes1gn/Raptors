@@ -7,14 +7,14 @@ use crate::workloads::{OpCode, Workload};
 ///
 /// backdoors for mocking tests are also provided by this class.
 #[derive(Clone, Debug, PartialEq)]
-pub struct WorkloadEstimator {
+pub struct CostModel {
     cost_model: HashMap<OpCode, usize>,
 }
 
-impl Default for WorkloadEstimator {
+impl Default for CostModel {
     fn default() -> Self {
         let mut cost_model = HashMap::new();
-        cost_model.insert(OpCode::DummyOp, 2);
+        cost_model.insert(OpCode::IdentityOp, 2);
         cost_model.insert(OpCode::AddOp, 11);
         cost_model.insert(OpCode::ConvOp, 107);
         cost_model.insert(OpCode::ExpOp, 173);
@@ -30,9 +30,9 @@ impl Default for WorkloadEstimator {
 /// TODO set a helper to build the estimator
 /// TODO estimator read files, like json, to update the cost model
 //
-impl WorkloadEstimator {
+impl CostModel {
     pub fn new() -> Self {
-        WorkloadEstimator::default()
+        CostModel::default()
     }
 
     // TODO support load cost model from deserialize from proto files
@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn create_estimator_wtihout_model_test() {
-        let est = WorkloadEstimator::new();
+        let est = CostModel::new();
         let model = est.cost_model();
         assert_eq!(
             model.get_key_value(&OpCode::AddOp),
@@ -89,24 +89,24 @@ mod tests {
     #[test]
     fn create_estimator_with_model_test() {
         let mut model = HashMap::new();
-        model.insert(OpCode::DummyOp, 4);
+        model.insert(OpCode::IdentityOp, 4);
         model.insert(OpCode::AddOp, 2);
 
-        let est = WorkloadEstimator::set_model(model);
+        let est = CostModel::set_model(model);
         let model = est.cost_model();
         assert_eq!(
             model.get_key_value(&OpCode::AddOp),
             Some((&OpCode::AddOp, &2))
         );
         assert_eq!(
-            model.get_key_value(&OpCode::DummyOp),
-            Some((&OpCode::DummyOp, &4))
+            model.get_key_value(&OpCode::IdentityOp),
+            Some((&OpCode::IdentityOp, &4))
         );
     }
 
     #[test]
     fn estimate_computation_cost_test() {
-        let est = WorkloadEstimator::new();
+        let est = CostModel::new();
 
         let load_1 = Workload::new(OpCode::AddOp);
         let cost_1 = est.estimate(&load_1);
@@ -120,19 +120,19 @@ mod tests {
     #[test]
     fn update_model_test() {
         let mut model = HashMap::new();
-        model.insert(OpCode::DummyOp, 4);
+        model.insert(OpCode::IdentityOp, 4);
 
-        let mut est = WorkloadEstimator::set_model(model);
+        let mut est = CostModel::set_model(model);
 
-        assert!(est.cost_model.contains_key(&OpCode::DummyOp));
+        assert!(est.cost_model.contains_key(&OpCode::IdentityOp));
         assert_eq!(
-            est.cost_model.get_key_value(&OpCode::DummyOp),
-            Some((&OpCode::DummyOp, &4))
+            est.cost_model.get_key_value(&OpCode::IdentityOp),
+            Some((&OpCode::IdentityOp, &4))
         );
-        est.update_model(OpCode::DummyOp, 8);
+        est.update_model(OpCode::IdentityOp, 8);
         assert_eq!(
-            est.cost_model.get_key_value(&OpCode::DummyOp),
-            Some((&OpCode::DummyOp, &8))
+            est.cost_model.get_key_value(&OpCode::IdentityOp),
+            Some((&OpCode::IdentityOp, &8))
         );
 
         assert_eq!(est.cost_model.contains_key(&OpCode::ConvOp), false);

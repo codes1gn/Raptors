@@ -5,12 +5,14 @@ Dones:
 * example for diamond tasks
 * builder with macro support, and modify example usage
 * make asynchonously with tokio runtime
+* refactoring all the procedure
 
 WIPs:
-* refactoring all the procedure
-* support profiling with tracing + tracing-subscriber + tracing-chrome
+* optimize tokio runtime with tracing + tracing-subscriber + tracing-chrome
+* impl tensorview abstraction
+* bridge tensorview + op to form calculation.
+* a naive dynamic list scheduling = active_registry (state machine)
+* abstract out trait as pub interface = impl a simulator for paper (current executor is not integrated with workload) + adapt with chopper
 
 Todos:
-* mod scheduler to dispatch Vec<Msg>, dynamically ( + statically if assigned to someone)
-* trait as pub interface
 * perf tuning with RUST PERFORMANCE BOOK IN WEBSITES' BOOKMARK

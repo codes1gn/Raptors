@@ -180,42 +180,6 @@ impl ActorSystem {
     }
 
     // #[allow(unreachable_patterns)]
-    // pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
-    //     match msg {
-    //         TypedMessage::SystemMsg(cmd) => {
-    //             match cmd {
-    //                 SystemCommand::Spawn(cnt, base_name) => {
-    //                     // let actor = self.create_actor("raptor");
-    //                     let actors = self.create_actors(cnt, &base_name);
-    //                     let status = self.register_actors(actors);
-    //                     // return usize currently
-    //                     match status {
-    //                         Ok(_) => Ok(()),
-    //                         Err(_e) => Err("Fail to register the actor".to_string()),
-    //                     }
-    //                 }
-    //                 SystemCommand::StartExecution => {
-    //                     info!(">>>>>> Raptors System Start Exec <<<<<<");
-    //                     let mut actors: Vec<&mut Actor> = self
-    //                         .actor_registry
-    //                         .values_mut()
-    //                         .collect::<Vec<&mut Actor>>();
-    //                     let status = actors
-    //                         .into_iter()
-    //                         .map(|x| x.start())
-    //                         .collect::<Result<(), String>>();
-    //                     info!(">>>>>> Raptors System Stop Exec <<<<<<");
-    //                     status
-    //                 }
-    //                 SystemCommand::DestroyAll => self.destroy_actors(),
-    //                 _ => Err("not implemented".to_string()),
-    //             }
-    //         }
-    //         _ => Err("not implemented".to_string()),
-    //     }
-    // }
-
-    // #[allow(unreachable_patterns)]
     // pub fn on_deliver(&mut self, evlp: Envelope) -> Result<(), String> {
     //     let status = self
     //         .actor_registry

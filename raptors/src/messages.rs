@@ -24,9 +24,6 @@ type Message = Box<dyn Any + Send>;
 ///```
 /// use raptors::prelude::*;
 ///
-/// let msg = TypedMessage::ActorMsg;
-/// assert_eq!(msg, TypedMessage::ActorMsg);
-///
 /// let msg = SystemCommand::Spawn(1);
 /// assert_eq!(msg, SystemCommand::Spawn(1));
 ///
@@ -39,10 +36,19 @@ type Message = Box<dyn Any + Send>;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypedMessage {
     SystemMsg(SystemCommand),
-    ActorMsg,
+    ActorMsg(ActorCommand),
     WorkloadMsg(Workload),
-    Testone,
-    Testzero,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ActorCommand {
+    PLACEHOLDER,
+}
+
+impl Into<TypedMessage> for ActorCommand {
+    fn into(self) -> TypedMessage {
+        TypedMessage::ActorMsg(self)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -50,7 +56,6 @@ pub enum SystemCommand {
     HaltAll, // add more accurate destroy control msg when needed
     HaltOn(usize),
     Spawn(usize),
-    StartExecution,
 }
 
 impl Into<TypedMessage> for SystemCommand {

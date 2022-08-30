@@ -38,13 +38,18 @@ impl Actor {
         self.uuid
     }
 
-    fn fetch_and_handle_message(&mut self, msg: TypedMessage) -> u32 {
+    fn fetch_and_handle_message(&mut self, msg: TypedMessage) -> Result<(), String> {
         thread::sleep(time::Duration::from_millis(1000 as u64));
-        info!("actor #{} - HANDLE MSG", self.id);
         match msg {
-            TypedMessage::Testone => 1,
-            TypedMessage::Testzero => 0,
-            _ => panic!("message not implemented"),
+            TypedMessage::WorkloadMsg(_wkl) => {
+                info!("actor #{} - COMPUTE {:#?}", self.id, _wkl);
+                self.on_compute(_wkl)
+            }
+            TypedMessage::ActorMsg(_amsg) => {
+                info!("actor #{} - HANDLE ActorMSG - {:#?}", self.id, _amsg);
+                Ok(())
+            }
+            _ => panic!("Unknown actormessage not implemented"),
         }
     }
 
@@ -54,15 +59,9 @@ impl Actor {
             match self.receiver.recv().await {
                 Some(msg) => {
                     let status = self.fetch_and_handle_message(msg);
-                    match status {
-                        0 => {
-                            info!("actor #{} - DO 0", self.id);
-                        }
-                        1 => info!("actor #{} - DO 1", self.id),
-                        _ => panic!("not implemented #2424"),
-                    }
                 }
                 None => {
+                    // if senders are dropped, should halt the corresponding actor
                     info!("actor #{} - DROPPED BY SUPERVISOR -> HALTING", self.id);
                     break 1;
                 }
@@ -71,30 +70,10 @@ impl Actor {
         }
     }
 
-    // pub fn start(&mut self) -> Result<(), String> {
-    //     info!("Actor {:#?} is start running >>>", self.name);
-    //     let status = loop {
-    //         let msg = self.mbx.dequeue();
-    //         match msg {
-    //             Some(TypedMessage::WorkloadMsg(_wkl)) => {
-    //                 info!("on processing {:#?}", _wkl);
-    //                 self.on_compute(_wkl);
-    //             }
-    //             None => {
-    //                 info!("Actor {:#?} is finish running >>>", self.name);
-    //                 break Ok(());
-    //             }
-    //             _ => {
-    //                 break Err(String::from("Unknown msg type for actor to process"));
-    //             }
-    //         }
-    //     };
-    //     status
-    // }
-
-    // fn on_compute(&self, workload: Workload) -> () {
-    //     workload.mock_run();
-    // }
+    fn on_compute(&self, workload: Workload) -> Result<(), String> {
+        workload.mock_run();
+        Ok(())
+    }
 }
 
 impl Drop for Actor {

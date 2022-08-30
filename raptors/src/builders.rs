@@ -73,14 +73,28 @@ macro_rules! build_msg {
     ("spawn", $num:expr) => {
         TypedMessage::SystemMsg(SystemCommand::Spawn($num))
     };
-    ("start") => {
-        TypedMessage::SystemMsg(SystemCommand::StartExecution)
+
+    // operation workload msg
+    ("identity-op") => {
+        TypedMessage::WorkloadMsg(Workload::new(OpCode::IdentityOp))
     };
-    ("test-one") => {
-        TypedMessage::Testone
+    ("add-op") => {
+        TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp))
     };
-    ("test-zero") => {
-        TypedMessage::Testzero
+    ("sub-op") => {
+        TypedMessage::WorkloadMsg(Workload::new(OpCode::SubOp))
+    };
+    ("exp-op") => {
+        TypedMessage::WorkloadMsg(Workload::new(OpCode::ExpOp))
+    };
+    ("sin-op") => {
+        TypedMessage::WorkloadMsg(Workload::new(OpCode::SinOp))
+    };
+    ("Matmul-op") => {
+        TypedMessage::WorkloadMsg(Workload::new(OpCode::MatmulOp))
+    };
+    ("Conv-op") => {
+        TypedMessage::WorkloadMsg(Workload::new(OpCode::ConvOp))
     };
 }
 
@@ -126,5 +140,17 @@ mod tests {
     fn build_halt_msg_test() {
         let msg = build_msg!("halt", 3);
         assert_eq!(msg, TypedMessage::SystemMsg(SystemCommand::HaltOn(3)));
+    }
+
+    #[test]
+    fn build_add_op_test() {
+        let msg = build_msg!("add-op");
+        assert_eq!(msg, TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp)));
+    }
+
+    #[test]
+    fn build_exp_op_test() {
+        let msg = build_msg!("exp-op");
+        assert_eq!(msg, TypedMessage::WorkloadMsg(Workload::new(OpCode::ExpOp)));
     }
 }

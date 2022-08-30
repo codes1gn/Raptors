@@ -3,7 +3,7 @@
 use std::any::Any;
 use std::{thread, time};
 
-use crate::estimator::WorkloadEstimator;
+use crate::cost_model::CostModel;
 use crate::messages::TypedMessage;
 
 // dummy workload as dummy message but has a timeout for
@@ -31,7 +31,7 @@ impl Workload {
     }
 
     pub fn payload(&self) -> usize {
-        WorkloadEstimator::new().estimate(self)
+        CostModel::new().estimate(self)
     }
 
     pub fn op(&self) -> OpCode {
@@ -70,12 +70,12 @@ impl WorkloadMsg {
 /// # // Test default function for OpCode
 /// use raptors::prelude::*;
 ///
-/// assert_eq!(OpCode::default(), OpCode::DummyOp);
+/// assert_eq!(OpCode::default(), OpCode::IdentityOp);
 /// ```
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 // Copy trait is necessary, otherwise ownership will transit into the cost model
 pub enum OpCode {
-    DummyOp,
+    IdentityOp,
     AddOp,
     ConvOp,
     ExpOp,
@@ -86,7 +86,7 @@ pub enum OpCode {
 
 impl Default for OpCode {
     fn default() -> Self {
-        OpCode::DummyOp
+        OpCode::IdentityOp
     }
 }
 // TODO: More Ops to add; Other way to implement Opcode
@@ -116,7 +116,7 @@ mod tests {
     #[test]
     fn workload_ops_default_test() {
         let load = Workload::new(OpCode::default());
-        assert_eq!(load.op(), OpCode::DummyOp);
+        assert_eq!(load.op(), OpCode::IdentityOp);
     }
 
     #[test]

@@ -1,6 +1,6 @@
 pub mod actors;
 pub mod builders;
-pub mod estimator;
+pub mod cost_model;
 pub mod executor;
 pub mod mailbox;
 pub mod messages;
@@ -15,11 +15,10 @@ pub mod workloads;
 /// ```
 pub mod prelude {
     pub use crate::actors::Actor;
-    pub use crate::estimator::WorkloadEstimator;
+    pub use crate::cost_model::CostModel;
     pub use crate::executor::Executor;
     pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
     pub use crate::messages::{SystemCommand, SystemMsg, TypedMessage};
-    // pub use crate::scheduler::pre_schedule;
     pub use crate::system::{ActorSystem, SystemBuilder, SystemConfig};
     pub use crate::workloads::{OpCode, Workload, WorkloadMsg};
 

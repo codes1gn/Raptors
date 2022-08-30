@@ -30,8 +30,8 @@ async fn main() {
     system.on_receive(cmd);
     assert_eq!(system.ranks(), 6);
 
-    let msg0 = build_msg!("test-zero");
-    let msg1 = build_msg!("test-one");
+    let msg0 = build_msg!("add-op");
+    let msg1 = build_msg!("exp-op");
 
     info!("{:#?}", msg0);
     info!("{:#?}", msg1);
