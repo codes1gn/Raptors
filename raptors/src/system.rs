@@ -45,8 +45,8 @@ impl SystemConfig {
         self.ranks = Some(ranks);
     }
 
-    pub fn ranks(&self) -> Option<usize> {
-        self.ranks
+    pub fn ranks(&self) -> usize {
+        self.ranks.unwrap_or_else(|| 0)
     }
 
     pub fn name(&self) -> String {
@@ -63,8 +63,12 @@ impl SystemConfig {
 /// ```
 /// use raptors::prelude::*;
 ///
-/// let syst = build_system!("mock system", 2);
-/// assert_eq!(syst.name(), "mock system".to_string());
+/// #[tokio::main]
+/// async fn main() {
+///     let system = build_system!("mock system", 2);
+///     assert_eq!(system.name(), "mock system".to_string());
+///     assert_eq!(system.ranks(), 2);
+/// }
 /// ```
 ///
 #[derive(Default)]
@@ -80,7 +84,9 @@ impl SystemBuilder {
 
     pub fn build_with_config(&mut self, config: SystemConfig) -> ActorSystem {
         self.cfg = Some(config);
-        ActorSystem::new(&self.config().name().to_owned())
+        let mut system = ActorSystem::new(&self.config().name().to_owned());
+        system.spawn_actors(self.config().ranks());
+        system
     }
 
     fn config(&self) -> &SystemConfig {
@@ -92,8 +98,8 @@ impl SystemBuilder {
 pub struct ActorSystem {
     // TODO need a state machine that monitor actors
     // and allow graceful shutdown
-    pub name: String,
-    pub ranks: usize,
+    name: String,
+    ranks: usize,
     pub mails: Vec<mpsc::Sender<TypedMessage>>,
 }
 
@@ -112,6 +118,10 @@ impl ActorSystem {
 
     pub fn name(&self) -> String {
         self.name.clone()
+    }
+
+    pub fn ranks(&self) -> usize {
+        self.ranks
     }
 
     pub fn spawn_actors(&mut self, cnt: usize) {
@@ -220,15 +230,16 @@ mod tests {
         assert_eq!(system.name(), "raptor system");
     }
 
-    #[test]
-    fn create_system_with_macro_test_1() {
+    #[tokio::test]
+    async fn create_system_with_macro_test_1() {
         let mut system = build_system!("Raptors");
         assert_eq!(system.name(), "Raptors");
     }
 
-    #[test]
-    fn create_system_with_macro_test_2() {
+    #[tokio::test]
+    async fn create_system_with_macro_test_2() {
         let mut system = build_system!("Raptors", 2);
         assert_eq!(system.name(), "Raptors");
+        assert_eq!(system.ranks(), 2);
     }
 }

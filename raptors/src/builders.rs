@@ -17,8 +17,12 @@ use crate::workloads::*;
 /// ```
 /// use raptors::prelude::*;
 ///
-/// let mut system = build_system!("Raptors", 3);
-/// assert_eq!(system.name(), "Raptors");
+/// #[tokio::main]
+/// async fn main() {
+///     let mut system = build_system!("Raptors", 3);
+///     assert_eq!(system.name(), "Raptors");
+///     assert_eq!(system.ranks(), 3);
+/// }
 /// ```
 #[macro_export]
 macro_rules! build_system {
@@ -90,16 +94,17 @@ macro_rules! build_workload {
 mod tests {
     use super::*;
 
-    #[test]
-    fn build_system_using_macro_test0() {
+    #[tokio::test]
+    async fn build_system_using_macro_test0() {
         let system = build_system!("raptor");
         assert_eq!(system.name(), "raptor");
     }
 
-    #[test]
-    fn build_system_using_macro_test1() {
+    #[tokio::test]
+    async fn build_system_using_macro_test1() {
         let system = build_system!("raptor", 4);
         assert_eq!(system.name(), "raptor");
+        assert_eq!(system.ranks(), 4);
     }
 
     #[test]
