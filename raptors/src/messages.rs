@@ -3,7 +3,6 @@
 use std::any::Any;
 use std::{thread, time};
 
-use crate::system::System;
 use crate::workloads::OpCode;
 use crate::workloads::Workload;
 

@@ -12,23 +12,30 @@ use crate::mailbox::*;
 use crate::messages::TypedMessage;
 use crate::workloads::{OpCode, Workload};
 
-pub struct AsyncActor {
+// placehold for actors
+#[derive(Debug)]
+pub struct Actor {
     id: usize,
+    uuid: Uuid,
     receiver: mpsc::Receiver<TypedMessage>,
 }
 
-impl Drop for AsyncActor {
-    fn drop(&mut self) {
-        info!("actor #{} - DROP", self.id);
-    }
-}
-
-impl AsyncActor {
+impl Actor {
     pub fn new(id: usize, receiver: mpsc::Receiver<TypedMessage>) -> Self {
-        AsyncActor {
+        let new_uuid = Uuid::new_v4();
+        Actor {
             id: id,
             receiver: receiver,
+            uuid: new_uuid,
         }
+    }
+
+    pub fn id(&self) -> usize {
+        self.id
+    }
+
+    pub fn uuid(&self) -> Uuid {
+        self.uuid
     }
 
     fn fetch_and_handle_message(&mut self, msg: TypedMessage) -> u32 {
@@ -64,77 +71,36 @@ impl AsyncActor {
             }
         }
     }
+
+    // pub fn start(&mut self) -> Result<(), String> {
+    //     info!("Actor {:#?} is start running >>>", self.name);
+    //     let status = loop {
+    //         let msg = self.mbx.dequeue();
+    //         match msg {
+    //             Some(TypedMessage::WorkloadMsg(_wkl)) => {
+    //                 info!("on processing {:#?}", _wkl);
+    //                 self.on_compute(_wkl);
+    //             }
+    //             None => {
+    //                 info!("Actor {:#?} is finish running >>>", self.name);
+    //                 break Ok(());
+    //             }
+    //             _ => {
+    //                 break Err(String::from("Unknown msg type for actor to process"));
+    //             }
+    //         }
+    //     };
+    //     status
+    // }
+
+    // fn on_compute(&self, workload: Workload) -> () {
+    //     workload.mock_run();
+    // }
 }
 
-// placehold for actors
-#[derive(Debug, Eq)]
-pub struct Actor {
-    name: String,
-    // TODO(long-term) use v5 uuid, and give a hardcoded namespace, for removing randomness, also to allow
-    // testing
-    id: Uuid,
-    pub addr: Address,
-    // TODO(albert), how to access mailboxes from actor if mailboxes are owned by
-    // system/context/environment
-    pub mbx: Mailbox,
-}
-
-impl Actor {
-    pub fn new(name: &str) -> Actor {
-        let new_uuid = Uuid::new_v4();
-        // TODO addr use uuid instead of string
-        // let _addr = new_uuid.clone().hyphenated().to_string();
-        return Self {
-            name: String::from(name),
-            id: new_uuid,
-            addr: Address::new(new_uuid),
-            mbx: Mailbox::new(),
-        };
-    }
-
-    pub fn id(&self) -> Uuid {
-        self.id
-    }
-
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    pub fn addr(&self) -> Address {
-        self.addr.clone()
-    }
-
-    pub fn mailbox(&self) -> &Mailbox {
-        &self.mbx
-    }
-
-    pub fn mailbox_mut(&mut self) -> &mut Mailbox {
-        &mut self.mbx
-    }
-
-    pub fn start(&mut self) -> Result<(), String> {
-        info!("Actor {:#?} is start running >>>", self.name);
-        let status = loop {
-            let msg = self.mbx.dequeue();
-            match msg {
-                Some(TypedMessage::WorkloadMsg(_wkl)) => {
-                    info!("on processing {:#?}", _wkl);
-                    self.on_compute(_wkl);
-                }
-                None => {
-                    info!("Actor {:#?} is finish running >>>", self.name);
-                    break Ok(());
-                }
-                _ => {
-                    break Err(String::from("Unknown msg type for actor to process"));
-                }
-            }
-        };
-        status
-    }
-
-    fn on_compute(&self, workload: Workload) -> () {
-        workload.mock_run();
+impl Drop for Actor {
+    fn drop(&mut self) {
+        info!("actor #{} - DROP", self.id);
     }
 }
 
@@ -146,16 +112,18 @@ impl PartialOrd for Actor {
 
 impl Ord for Actor {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.name.cmp(&other.name)
+        self.id.cmp(&other.id)
     }
 }
 
 // TODO fix duplicate with uuid add to name
 impl PartialEq for Actor {
     fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
+        self.id == other.id
     }
 }
+
+impl Eq for Actor {}
 
 // unit tests
 #[cfg(test)]
@@ -165,32 +133,17 @@ mod tests {
     use std::time;
 
     // test visibility
-    #[test]
-    fn create_dummy_workload_test() {
-        let load = Workload::new(OpCode::AddOp);
-        assert_eq!(load.payload(), 11 as usize);
-    }
+    // #[test]
+    // fn create_dummy_workload_test() {
+    //     let load = Workload::new(OpCode::AddOp);
+    //     assert_eq!(load.payload(), 11 as usize);
+    // }
 
-    #[test]
-    fn workload_mock_run_test() {
-        let load = Workload::new(OpCode::AddOp);
-        let now = time::Instant::now();
-        load.mock_run();
-        assert!(now.elapsed() >= time::Duration::from_millis(11));
-    }
-
-    #[test]
-    fn query_actor_name() {
-        let actor = Actor::new("A");
-        assert_eq!(actor.name(), "A");
-    }
-
-    #[test]
-    fn receive_workload() {
-        let actor = Actor::new("A");
-        let load = Workload::new(OpCode::AddOp);
-        let now = time::Instant::now();
-        actor.on_compute(load);
-        assert!(now.elapsed() >= time::Duration::from_millis(11));
-    }
+    // #[test]
+    // fn workload_mock_run_test() {
+    //     let load = Workload::new(OpCode::AddOp);
+    //     let now = time::Instant::now();
+    //     load.mock_run();
+    //     assert!(now.elapsed() >= time::Duration::from_millis(11));
+    // }
 }

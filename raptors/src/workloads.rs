@@ -5,7 +5,6 @@ use std::{thread, time};
 
 use crate::estimator::WorkloadEstimator;
 use crate::messages::TypedMessage;
-use crate::system::System;
 
 // dummy workload as dummy message but has a timeout for
 // emulating the execution

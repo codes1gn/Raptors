@@ -23,14 +23,6 @@ use crate::workloads::*;
 /// It also contains the strategies, hardware/software environment info used for
 /// query purpose.
 ///
-/// ```
-/// use raptors::prelude::*;
-///
-/// let sys_config = SystemConfig::new("named");
-/// let num_actor = sys_config.ranks().unwrap_or_default();
-/// assert_eq!(num_actor, 0);
-///
-/// ```
 ///
 #[derive(Default, Debug)]
 pub struct SystemConfig {
@@ -39,7 +31,8 @@ pub struct SystemConfig {
 }
 
 impl SystemConfig {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, log_level: &str) -> Self {
+        std::env::set_var("RUST_LOG", log_level);
         // to make more precise timestamps
         Builder::new()
             .format(|buf, record| {
@@ -97,9 +90,9 @@ impl SystemBuilder {
         SystemBuilder::default()
     }
 
-    pub fn build_with_config(&mut self, config: SystemConfig) -> System {
+    pub fn build_with_config(&mut self, config: SystemConfig) -> ActorSystem {
         self.cfg = Some(config);
-        System::new(&self.config().name().to_owned())
+        ActorSystem::new(&self.config().name().to_owned())
     }
 
     fn config(&self) -> &SystemConfig {
@@ -107,73 +100,30 @@ impl SystemBuilder {
     }
 }
 
-/// System is the actor system that manages all the actors, supervisors and message channels
-///
-/// status: WIP
-///
-/// test system create
-/// ```
-/// use raptors::prelude::*;
-///
-/// let syst = System::new("system 1");
-/// assert_eq!(syst.name(), "system 1".to_string());
-/// ```
-///
-/// workflow of System
-/// step 1: new a system_builder
-/// step 2: customise a actor_config
-/// step 3: create system by system_builder with name and config
-/// step 4: create actor with name and config
-/// step 5: create a context from system? (pros: we can make a registry for that to query quickly)
-/// step 6: actor start or init with ctx
-///
 #[derive(Debug)]
-pub struct System {
-    name: String,
-    actor_registry: HashMap<Uuid, Actor>,
-    // sender_to_actors: Vec<mpsc::Sender<TypedMessage>>,
-}
-
-#[derive(Debug)]
-pub struct AsyncSystem {
+pub struct ActorSystem {
     // TODO need a state machine that monitor actors
     // and allow graceful shutdown
+    pub name: String,
     pub ranks: usize,
     pub mails: Vec<mpsc::Sender<TypedMessage>>,
 }
 
-impl AsyncSystem {
-    pub fn new(ranks: usize) -> Self {
+impl ActorSystem {
+    pub fn new(name: &str) -> Self {
         // refer to stackoverflow.com/questions/48850403/change-timestamp-format-used-by-env-logger
         // set default usage of info log level
-        std::env::set_var("RUST_LOG", "info");
-        // to make more precise timestamps
-        Builder::new()
-            .format(|buf, record| {
-                writeln!(
-                    buf,
-                    "{} {}: {}",
-                    record.level(),
-                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                    record.args()
-                )
-            })
-            .filter(None, LevelFilter::Info)
-            .init();
 
         let mut mailboxes: Vec<mpsc::Sender<TypedMessage>> = vec![];
-        for id in 0..ranks {
-            info!("creating actor with id = #{}", id);
-            let (sender, receiver) = mpsc::channel(16);
-            mailboxes.push(sender);
-            let mut actor = AsyncActor::new(id, receiver);
-            info!("on aspvr #{}", id);
-            tokio::spawn(async move { actor.run().await });
-        }
         Self {
-            ranks: ranks,
+            name: String::from(name),
+            ranks: 0,
             mails: mailboxes,
         }
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 
     pub fn spawn_actors(&mut self, cnt: usize) {
@@ -181,7 +131,7 @@ impl AsyncSystem {
             info!("creating actor with id = #{}", id);
             let (sender, receiver) = mpsc::channel(16);
             self.mails.push(sender);
-            let mut actor = AsyncActor::new(id, receiver);
+            let mut actor = Actor::new(id, receiver);
             info!("on aspvr #{}", id);
             tokio::spawn(async move { actor.run().await });
         }
@@ -206,177 +156,69 @@ impl AsyncSystem {
         }
         info!("FINISH: broadcast message");
     }
-}
 
-impl Default for System {
-    fn default() -> Self {
-        System {
-            name: String::from("Raptor System"),
-            actor_registry: HashMap::new(),
-        }
-    }
-}
+    // #[allow(unreachable_patterns)]
+    // pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
+    //     match msg {
+    //         TypedMessage::SystemMsg(cmd) => {
+    //             match cmd {
+    //                 SystemCommand::CreateActors(cnt, base_name) => {
+    //                     // let actor = self.create_actor("raptor");
+    //                     let actors = self.create_actors(cnt, &base_name);
+    //                     let status = self.register_actors(actors);
+    //                     // return usize currently
+    //                     match status {
+    //                         Ok(_) => Ok(()),
+    //                         Err(_e) => Err("Fail to register the actor".to_string()),
+    //                     }
+    //                 }
+    //                 SystemCommand::StartExecution => {
+    //                     info!(">>>>>> Raptors System Start Exec <<<<<<");
+    //                     let mut actors: Vec<&mut Actor> = self
+    //                         .actor_registry
+    //                         .values_mut()
+    //                         .collect::<Vec<&mut Actor>>();
+    //                     let status = actors
+    //                         .into_iter()
+    //                         .map(|x| x.start())
+    //                         .collect::<Result<(), String>>();
+    //                     info!(">>>>>> Raptors System Stop Exec <<<<<<");
+    //                     status
+    //                 }
+    //                 SystemCommand::DestroyAll => self.destroy_actors(),
+    //                 _ => Err("not implemented".to_string()),
+    //             }
+    //         }
+    //         _ => Err("not implemented".to_string()),
+    //     }
+    // }
 
-// TODO(max): make return type as Result<(Actor/Vec<Actor>), Err> to meld ErrMsg
-impl System {
-    pub fn new(name: &str) -> Self {
-        return Self {
-            name: String::from(name),
-            actor_registry: Default::default(),
-        };
-    }
+    // #[allow(unreachable_patterns)]
+    // pub fn on_deliver(&mut self, evlp: Envelope) -> Result<(), String> {
+    //     let status = self
+    //         .actor_registry
+    //         .get_mut(&evlp.receiver.into_aid())
+    //         .unwrap()
+    //         .mailbox_mut()
+    //         .enqueue(evlp.msg.clone());
+    //     status
+    // }
 
-    fn create_actor(&self, actor_name: &str) -> Actor {
-        Actor::new(actor_name)
-    }
+    // pub fn on_dispatch_workloads(&mut self, workloads: Vec<TypedMessage>) -> Result<(), String> {
+    //     let status = workloads
+    //         .into_iter()
+    //         .map(|msg| -> Result<(), String> { self.on_receive(msg) })
+    //         .collect::<Result<(), String>>();
+    //     status
+    // }
 
-    // use base name and base id for temp use
-    // TODO(albert, short-term): name redirection, maybe append one region from uuid
-    // ```
-    // use raptors::prelude::*;
-    //
-    // let syst = System::new("raptor system");
-    // let actors = syst.create_actors(4, "raptor");
-    // assert_eq!(actors.len(), 4);
-    // ```
-    fn create_actors(&self, count: usize, base_name: &str) -> Vec<Actor> {
-        let mut akts: Vec<Actor> = vec![];
-        for idx in 0..count {
-            let akt = Actor::new(format!("{} #{}", base_name, idx).as_str());
-            akts.push(akt);
-        }
-        akts
-    }
-
-    pub fn destroy_actors(&mut self) -> Result<(), String> {
-        self.actor_registry.clear();
-        Ok(())
-    }
-
-    pub fn register_actor(&mut self, mut actor: Actor) -> Result<(), String> {
-        // self.mailbox_registry.insert(actor.addr(), Mailbox::new());
-        self.actor_registry.insert(actor.id(), actor);
-        // actor.set_mbx(self.mailbox_registry.get(&actor.addr()).unwrap());
-        // actor.set_mbx(&self.mailbox_registry);
-        Ok(())
-    }
-
-    pub fn register_actors(&mut self, mut actors: Vec<Actor>) -> Result<(), String> {
-        debug!("before register {:?}", self.actor_registry);
-        actors
-            .into_iter()
-            .map(|actor| {
-                self.actor_registry.insert(actor.id(), actor);
-            })
-            .collect::<()>();
-        // TODO use more elegant way to logging, such as auto-enable/config for methods logging
-        debug!("after register {:?}", self.actor_registry);
-        Ok(())
-    }
-
-    // TODO support register multiple
-    // TODO support MSG to create actor and register in system
-
-    /// TODO support id and name for create actor MSG command
-    /// TODO convert String into ErrMsg in future
-    /// TODO test run on_receive twice, and add naming redirection in it
-    ///
-    /// ```
-    /// use raptors::prelude::*;
-    ///
-    /// let mut syst = System::new("system #1");
-    /// let msg = SystemCommand::CreateActors(1, String::from("raptor"));
-    /// syst.on_receive(msg.into());
-    /// let actor_reg = syst.actor_registry();
-    /// assert_eq!(actor_reg.len(), 1);
-    /// let actors: Vec<&Actor> = actor_reg.values().collect();
-    /// assert_eq!(actors[0].name(), "raptor #0".to_string());
-    /// ```
-    ///
-    /// ```
-    /// use raptors::prelude::*;
-    ///
-    /// let mut syst = System::new("system #1");
-    /// let msg = SystemCommand::CreateActors(2, String::from("raptor"));
-    /// syst.on_receive(msg.into());
-    /// let actor_reg = syst.actor_registry();
-    /// assert_eq!(actor_reg.len(), 2);
-    /// let mut actors: Vec<&Actor> = actor_reg.values().collect();
-    /// actors.sort_unstable();
-    /// println!("{:?}", actors);
-    /// assert_eq!(actors[0].name(), "raptor #0".to_string());
-    /// assert_eq!(actors[1].name(), "raptor #1".to_string());
-    /// ```
-    #[allow(unreachable_patterns)]
-    pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
-        match msg {
-            TypedMessage::SystemMsg(cmd) => {
-                match cmd {
-                    SystemCommand::CreateActors(cnt, base_name) => {
-                        // let actor = self.create_actor("raptor");
-                        let actors = self.create_actors(cnt, &base_name);
-                        let status = self.register_actors(actors);
-                        // return usize currently
-                        match status {
-                            Ok(_) => Ok(()),
-                            Err(_e) => Err("Fail to register the actor".to_string()),
-                        }
-                    }
-                    SystemCommand::StartExecution => {
-                        info!(">>>>>> Raptors System Start Exec <<<<<<");
-                        let mut actors: Vec<&mut Actor> = self
-                            .actor_registry
-                            .values_mut()
-                            .collect::<Vec<&mut Actor>>();
-                        let status = actors
-                            .into_iter()
-                            .map(|x| x.start())
-                            .collect::<Result<(), String>>();
-                        info!(">>>>>> Raptors System Stop Exec <<<<<<");
-                        status
-                    }
-                    SystemCommand::DestroyAll => self.destroy_actors(),
-                    _ => Err("not implemented".to_string()),
-                }
-            }
-            _ => Err("not implemented".to_string()),
-        }
-    }
-
-    #[allow(unreachable_patterns)]
-    pub fn on_deliver(&mut self, evlp: Envelope) -> Result<(), String> {
-        let status = self
-            .actor_registry
-            .get_mut(&evlp.receiver.into_aid())
-            .unwrap()
-            .mailbox_mut()
-            .enqueue(evlp.msg.clone());
-        status
-    }
-
-    pub fn on_dispatch_workloads(&mut self, workloads: Vec<TypedMessage>) -> Result<(), String> {
-        let status = workloads
-            .into_iter()
-            .map(|msg| -> Result<(), String> { self.on_receive(msg) })
-            .collect::<Result<(), String>>();
-        status
-    }
-
-    pub fn on_dispatch_envelopes(&mut self, envelopes: Vec<Envelope>) -> Result<(), String> {
-        let status = envelopes
-            .into_iter()
-            .map(|envelope| -> Result<(), String> { self.on_deliver(envelope) })
-            .collect::<Result<(), String>>();
-        status
-    }
-
-    pub fn actor_registry(&self) -> &HashMap<Uuid, Actor> {
-        &self.actor_registry
-    }
-
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
+    // pub fn on_dispatch_envelopes(&mut self, envelopes: Vec<Envelope>) -> Result<(), String> {
+    //     let status = envelopes
+    //         .into_iter()
+    //         .map(|envelope| -> Result<(), String> { self.on_deliver(envelope) })
+    //         .collect::<Result<(), String>>();
+    //     status
+    // }
 }
 
 // unit tests
@@ -386,95 +228,95 @@ mod tests {
 
     #[test]
     fn create_system() {
-        let syst = System::new("raptor system");
+        let syst = ActorSystem::new("raptor system");
         assert_eq!(syst.name(), "raptor system");
     }
 
-    #[test]
-    fn system_create_actor_test() {
-        let syst = System::new("raptor system");
-        let actor = syst.create_actor("raptor");
-        assert_eq!(actor.name(), "raptor");
-    }
+    // #[test]
+    // fn system_create_actor_test() {
+    //     let syst = ActorSystem::new("raptor system");
+    //     let actor = syst.create_actor("raptor");
+    //     assert_eq!(actor.name(), "raptor");
+    // }
 
-    #[test]
-    fn system_create_actors_test() {
-        let syst = System::new("raptor system");
-        let actors = syst.create_actors(4, "raptor");
-        assert_eq!(actors.len(), 4);
-        // TODO add more asserts
-    }
+    // #[test]
+    // fn system_create_actors_test() {
+    //     let syst = ActorSystem::new("raptor system");
+    //     let actors = syst.create_actors(4, "raptor");
+    //     assert_eq!(actors.len(), 4);
+    //     // TODO add more asserts
+    // }
 
-    #[test]
-    fn system_create_register_then_query_actor_from_map_test() {
-        let mut syst = System::new("raptor system");
+    // #[test]
+    // fn system_create_register_then_query_actor_from_map_test() {
+    //     let mut syst = ActorSystem::new("raptor system");
 
-        // register
-        let actor = syst.create_actor("raptor");
-        let status = syst.register_actor(actor);
+    //     // register
+    //     let actor = syst.create_actor("raptor");
+    //     let status = syst.register_actor(actor);
 
-        // check result
-        assert!(status.is_ok());
-        let mactor = syst.actor_registry();
-        assert_eq!(mactor.len(), 1);
-    }
+    //     // check result
+    //     assert!(status.is_ok());
+    //     let mactor = syst.actor_registry();
+    //     assert_eq!(mactor.len(), 1);
+    // }
 
-    #[test]
-    fn on_receive_not_systemmsg_test() {
-        let mut syst = System::new("system #1");
-        let msg = TypedMessage::ActorMsg;
-        let status = syst.on_receive(msg.into());
-        assert!(status.is_err());
-        assert_eq!(status.unwrap_err(), "not implemented".to_string());
-    }
+    // #[test]
+    // fn on_receive_not_systemmsg_test() {
+    //     let mut syst = ActorSystem::new("system #1");
+    //     let msg = TypedMessage::ActorMsg;
+    //     let status = syst.on_receive(msg.into());
+    //     assert!(status.is_err());
+    //     assert_eq!(status.unwrap_err(), "not implemented".to_string());
+    // }
 
-    #[test]
-    fn system_create_then_register_multiple_actors_test() {
-        let mut syst = System::new("raptor system");
+    // #[test]
+    // fn system_create_then_register_multiple_actors_test() {
+    //     let mut syst = ActorSystem::new("raptor system");
 
-        // register
-        let actors = syst.create_actors(2, "raptor");
-        let query_id = actors
-            .iter()
-            .map(|actor| actor.id().clone())
-            .collect::<Vec<Uuid>>();
-        let status = syst.register_actors(actors);
+    //     // register
+    //     let actors = syst.create_actors(2, "raptor");
+    //     let query_id = actors
+    //         .iter()
+    //         .map(|actor| actor.id().clone())
+    //         .collect::<Vec<Uuid>>();
+    //     let status = syst.register_actors(actors);
 
-        // check result
-        assert_eq!(status.is_ok(), true);
-        let query_actors = syst.actor_registry();
-        assert_eq!(query_actors.len(), 2);
-        assert_eq!(
-            query_actors.get(&query_id[0]).unwrap().name(),
-            "raptor #0".to_string()
-        );
-        assert_eq!(
-            query_actors.get(&query_id[1]).unwrap().name(),
-            "raptor #1".to_string()
-        );
-    }
+    //     // check result
+    //     assert_eq!(status.is_ok(), true);
+    //     let query_actors = syst.actor_registry();
+    //     assert_eq!(query_actors.len(), 2);
+    //     assert_eq!(
+    //         query_actors.get(&query_id[0]).unwrap().name(),
+    //         "raptor #0".to_string()
+    //     );
+    //     assert_eq!(
+    //         query_actors.get(&query_id[1]).unwrap().name(),
+    //         "raptor #1".to_string()
+    //     );
+    // }
 
-    #[test]
-    fn system_dispatch_workloadmsg_to_actors_test() {
-        let mut syst = System::new("system #1");
+    // #[test]
+    // fn system_dispatch_workloadmsg_to_actors_test() {
+    //     let mut syst = ActorSystem::new("system #1");
 
-        // create two actors
-        let msg = SystemCommand::CreateActors(2, String::from("raptor"));
-        syst.on_receive(msg.into());
+    //     // create two actors
+    //     let msg = SystemCommand::CreateActors(2, String::from("raptor"));
+    //     syst.on_receive(msg.into());
 
-        // create two workload msg
-        let mut workloads: Vec<TypedMessage> = vec![];
+    //     // create two workload msg
+    //     let mut workloads: Vec<TypedMessage> = vec![];
 
-        workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp)));
-        workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::SinOp)));
-        syst.on_dispatch_workloads(workloads);
+    //     workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp)));
+    //     workloads.push(TypedMessage::WorkloadMsg(Workload::new(OpCode::SinOp)));
+    //     syst.on_dispatch_workloads(workloads);
 
-        // check if take effects
-        let actor_reg = syst.actor_registry();
-        assert_eq!(actor_reg.len(), 2);
-        let actors: Vec<&Actor> = actor_reg.values().collect();
-        // panic!("{:?}", actors[0]);
-        // panic!("{:?}", actors[1]);
-        // assert_eq!(actors[0].mailbox.len(), 2);
-    }
+    //     // check if take effects
+    //     let actor_reg = syst.actor_registry();
+    //     assert_eq!(actor_reg.len(), 2);
+    //     let actors: Vec<&Actor> = actor_reg.values().collect();
+    //     // panic!("{:?}", actors[0]);
+    //     // panic!("{:?}", actors[1]);
+    //     // assert_eq!(actors[0].mailbox.len(), 2);
+    // }
 }

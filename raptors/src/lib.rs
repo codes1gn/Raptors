@@ -14,13 +14,13 @@ pub mod workloads;
 /// use raptors::prelude::*;
 /// ```
 pub mod prelude {
-    pub use crate::actors::{Actor, AsyncActor};
+    pub use crate::actors::Actor;
     pub use crate::estimator::WorkloadEstimator;
     pub use crate::executor::Executor;
     pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
     pub use crate::messages::{SystemCommand, SystemMsg, TypedMessage};
-    pub use crate::scheduler::pre_schedule;
-    pub use crate::system::{AsyncSystem, System, SystemBuilder, SystemConfig};
+    // pub use crate::scheduler::pre_schedule;
+    pub use crate::system::{ActorSystem, SystemBuilder, SystemConfig};
     pub use crate::workloads::{OpCode, Workload, WorkloadMsg};
 
     // macros that simplifies the interfaces

@@ -22,8 +22,8 @@ use raptors::prelude::*;
 // TODO make [tokio::main] a integrated annotation of raptors
 #[tokio::main]
 async fn main() {
-    let mut system = AsyncSystem::new(4);
-    system.spawn_actors(2);
+    let mut system = build_system!("Raptors");
+    system.spawn_actors(6);
     assert_eq!(system.mails.len(), 6);
     let msg0 = build_msg!("test-zero");
     let msg1 = build_msg!("test-one");
