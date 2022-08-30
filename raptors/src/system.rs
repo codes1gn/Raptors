@@ -124,7 +124,7 @@ impl ActorSystem {
         self.ranks
     }
 
-    pub fn spawn_actors(&mut self, cnt: usize) {
+    pub fn spawn_actors(&mut self, cnt: usize) -> Result<(), String> {
         for id in self.ranks..(self.ranks + cnt) {
             info!("creating actor with id = #{}", id);
             let (sender, receiver) = mpsc::channel(16);
@@ -134,11 +134,16 @@ impl ActorSystem {
             tokio::spawn(async move { actor.run().await });
         }
         self.ranks += cnt;
+        Ok(())
     }
 
-    pub fn halt_actor(&mut self, index: usize) {
+    pub fn halt_actor(&mut self, index: usize) -> Result<(), String> {
         info!("triggering drop");
+        if index >= self.mails.len() {
+            return Err(String::from("halt cmd out of actor id range"));
+        }
         self.mails.remove(index);
+        Ok(())
     }
 
     pub async fn deliver_to(&self, msg: TypedMessage, to: usize) {
@@ -155,12 +160,24 @@ impl ActorSystem {
         info!("FINISH: broadcast message");
     }
 
+    #[allow(unreachable_patterns)]
+    pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
+        match msg {
+            TypedMessage::SystemMsg(cmd) => match cmd {
+                SystemCommand::Spawn(cnt) => self.spawn_actors(cnt),
+                SystemCommand::HaltOn(idx) => self.halt_actor(idx),
+                _ => Err("not implemented".to_string()),
+            },
+            _ => Err("not implemented".to_string()),
+        }
+    }
+
     // #[allow(unreachable_patterns)]
     // pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
     //     match msg {
     //         TypedMessage::SystemMsg(cmd) => {
     //             match cmd {
-    //                 SystemCommand::CreateActors(cnt, base_name) => {
+    //                 SystemCommand::Spawn(cnt, base_name) => {
     //                     // let actor = self.create_actor("raptor");
     //                     let actors = self.create_actors(cnt, &base_name);
     //                     let status = self.register_actors(actors);

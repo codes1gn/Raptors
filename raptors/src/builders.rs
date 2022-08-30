@@ -67,8 +67,11 @@ macro_rules! build_msg {
     ("destroy-all") => {
         TypedMessage::SystemMsg(SystemCommand::DestroyAll)
     };
-    ("create-actors", $num:expr, $name:expr) => {
-        TypedMessage::SystemMsg(SystemCommand::CreateActors($num, $name.to_string()))
+    ("halt", $index:expr) => {
+        TypedMessage::SystemMsg(SystemCommand::HaltOn($index))
+    };
+    ("spawn", $num:expr) => {
+        TypedMessage::SystemMsg(SystemCommand::Spawn($num))
     };
     ("start") => {
         TypedMessage::SystemMsg(SystemCommand::StartExecution)
@@ -115,10 +118,7 @@ mod tests {
 
     #[test]
     fn actor_create_macro_test() {
-        let msg = build_msg!("create-actors", 3, "namebase");
-        assert_eq!(
-            msg,
-            TypedMessage::SystemMsg(SystemCommand::CreateActors(3, "namebase".to_string()))
-        );
+        let msg = build_msg!("spawn", 3);
+        assert_eq!(msg, TypedMessage::SystemMsg(SystemCommand::Spawn(3)));
     }
 }

@@ -22,9 +22,14 @@ use raptors::prelude::*;
 // TODO make [tokio::main] a integrated annotation of raptors
 #[tokio::main]
 async fn main() {
+    info!("================ Running raptors::diamond-tasks example ================");
     let mut system = build_system!("Raptors");
-    system.spawn_actors(6);
+    // alt! system.spawn_actors(6);
+    // need #[tokio::main]
+    let cmd = build_msg!("spawn", 6);
+    system.on_receive(cmd);
     assert_eq!(system.ranks(), 6);
+
     let msg0 = build_msg!("test-zero");
     let msg1 = build_msg!("test-one");
 
@@ -34,23 +39,13 @@ async fn main() {
     system.deliver_to(msg1.clone(), 0).await;
     system.deliver_to(msg0.clone(), 4).await;
 
-    system.halt_actor(3);
+    let halt_msg = build_msg!("halt", 3);
+    system.on_receive(halt_msg);
+    // alt! system.halt_actor(3);
 
     system.broadcast(msg1.clone()).await;
     system.broadcast(msg0.clone()).await;
 
-    // info!("================ Running raptors::diamond-tasks example ================");
-    // // STEP 1 system init
-    // let mut syst = build_system!("mock system", 4);
-    // assert_eq!(syst.name(), "mock system".to_string());
-
-    // // STEP 3 build actors with cmds
-    // // create 4 actors
-    // let cmd = build_msg!("create-actors", 4, "raptor");
-    // syst.on_receive(cmd);
-
-    // // STEP 4 build workloads and dispatch
-    // // create a list of workload
     // let mut workloads = build_workload!(vec![
     //     OpCode::AddOp,
     //     OpCode::SinOp,
