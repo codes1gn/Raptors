@@ -146,6 +146,12 @@ impl ActorSystem {
         Ok(())
     }
 
+    pub fn halt_all(&mut self) -> Result<(), String> {
+        info!("triggering drop all");
+        self.mails.clear();
+        Ok(())
+    }
+
     pub async fn deliver_to(&self, msg: TypedMessage, to: usize) {
         info!("WIP: deliver message to {}", to);
         self.mails[to].send(msg).await;
@@ -166,6 +172,7 @@ impl ActorSystem {
             TypedMessage::SystemMsg(cmd) => match cmd {
                 SystemCommand::Spawn(cnt) => self.spawn_actors(cnt),
                 SystemCommand::HaltOn(idx) => self.halt_actor(idx),
+                SystemCommand::HaltAll => self.halt_all(),
                 _ => Err("not implemented".to_string()),
             },
             _ => Err("not implemented".to_string()),

@@ -46,6 +46,9 @@ async fn main() {
     system.broadcast(msg1.clone()).await;
     system.broadcast(msg0.clone()).await;
 
+    let halt_all = build_msg!("halt-all");
+    system.on_receive(halt_all);
+
     // let mut workloads = build_workload!(vec![
     //     OpCode::AddOp,
     //     OpCode::SinOp,

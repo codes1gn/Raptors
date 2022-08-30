@@ -64,8 +64,8 @@ macro_rules! try_init_raptors {
 
 #[macro_export]
 macro_rules! build_msg {
-    ("destroy-all") => {
-        TypedMessage::SystemMsg(SystemCommand::DestroyAll)
+    ("halt-all") => {
+        TypedMessage::SystemMsg(SystemCommand::HaltAll)
     };
     ("halt", $index:expr) => {
         TypedMessage::SystemMsg(SystemCommand::HaltOn($index))
@@ -111,14 +111,20 @@ mod tests {
     }
 
     #[test]
-    fn actor_destroy_macro_test() {
-        let msg = build_msg!("destroy-all");
-        assert_eq!(msg, TypedMessage::SystemMsg(SystemCommand::DestroyAll));
+    fn build_halt_all_test() {
+        let msg = build_msg!("halt-all");
+        assert_eq!(msg, TypedMessage::SystemMsg(SystemCommand::HaltAll));
     }
 
     #[test]
-    fn actor_create_macro_test() {
+    fn build_spawn_msg_test() {
         let msg = build_msg!("spawn", 3);
         assert_eq!(msg, TypedMessage::SystemMsg(SystemCommand::Spawn(3)));
+    }
+
+    #[test]
+    fn build_halt_msg_test() {
+        let msg = build_msg!("halt", 3);
+        assert_eq!(msg, TypedMessage::SystemMsg(SystemCommand::HaltOn(3)));
     }
 }

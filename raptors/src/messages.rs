@@ -47,22 +47,15 @@ pub enum TypedMessage {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SystemCommand {
-    DummySysCmd,
-    Spawn(usize),
+    HaltAll, // add more accurate destroy control msg when needed
     HaltOn(usize),
+    Spawn(usize),
     StartExecution,
-    DestroyAll, // add more accurate destroy control msg when needed
 }
 
 impl Into<TypedMessage> for SystemCommand {
     fn into(self) -> TypedMessage {
         TypedMessage::SystemMsg(self)
-    }
-}
-
-impl Default for SystemCommand {
-    fn default() -> Self {
-        SystemCommand::DummySysCmd
     }
 }
 

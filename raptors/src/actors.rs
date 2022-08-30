@@ -56,10 +56,9 @@ impl Actor {
                     let status = self.fetch_and_handle_message(msg);
                     match status {
                         0 => {
-                            info!("actor #{} - HALT", self.id);
-                            break 0;
+                            info!("actor #{} - DO 0", self.id);
                         }
-                        1 => info!("actor #{} - CONTINUE", self.id),
+                        1 => info!("actor #{} - DO 1", self.id),
                         _ => panic!("not implemented #2424"),
                     }
                 }
