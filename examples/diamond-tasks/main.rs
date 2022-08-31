@@ -1,7 +1,14 @@
 extern crate raptors;
 extern crate uuid;
 
-use log::{debug, info};
+use tracing::info;
+use tracing_subscriber::prelude::*;
+//
+// use tracing::instrument;
+// use tracing_subscriber::{registry::Registry, prelude::*};
+// use tracing_chrome::ChromeLayerBuilder;
+//
+// use tracing::{info, span, Level};
 
 use std::{thread, time};
 
@@ -22,6 +29,34 @@ use raptors::prelude::*;
 // TODO make [tokio::main] a integrated annotation of raptors
 #[tokio::main]
 async fn main() {
+    std::env::set_var("RUST_LOG", "info");
+    let subscriber = tracing_subscriber::FmtSubscriber::new();
+    tracing::subscriber::set_global_default(subscriber);
+    // to make more precise timestamps
+    // Builder::new()
+    //     .format(|buf, record| {
+    //         writeln!(
+    //             buf,
+    //             "{} {}: {}",
+    //             record.level(),
+    //             Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+    //             record.args()
+    //         )
+    //     })
+    //     .filter(None, LevelFilter::Info)
+    //     .try_init();
+
+    // let _guard = if std::env::args().any(|arg| arg == "--no-trace") {
+    //     None
+    // } else {
+    //     let (chrome_layer, guard) = tracing_chrome::ChromeLayerBuilder::new()
+    //         .include_args(true)
+    //         .include_locations(true)
+    //         .build();
+    //     tracing_subscriber::registry().with(chrome_layer).try_init();
+    //     Some(guard)
+    // };
+
     info!("================ Running raptors::diamond-tasks example ================");
     let mut system = build_system!("Raptors");
     // alt! system.spawn_actors(6);
@@ -75,7 +110,7 @@ async fn main() {
     // // syst.on_dispatch_workloads(workloads);
     // syst.on_dispatch_envelopes(envelopes);
     // // TODO(albert): pretty fmt debug display
-    // debug!("{:#?}", syst.actor_registry().values());
+    // info!("{:#?}", syst.actor_registry().values());
 
     // // STEP 5 start all actors and perform
     // syst.start();

@@ -1,5 +1,7 @@
 // LICENSE PLACEHOLDER
-use log::{debug, info};
+use tracing::info;
+// use tracing::instrument;
+// use tracing::{span, Level};
 use tokio::sync::{mpsc, oneshot};
 use uuid::{Urn, Uuid};
 
@@ -21,6 +23,7 @@ pub struct Actor {
 }
 
 impl Actor {
+    // #[instrument]
     pub fn new(id: usize, receiver: mpsc::Receiver<TypedMessage>) -> Self {
         let new_uuid = Uuid::new_v4();
         Actor {
@@ -38,8 +41,8 @@ impl Actor {
         self.uuid
     }
 
+    // #[instrument]
     fn fetch_and_handle_message(&mut self, msg: TypedMessage) -> Result<(), String> {
-        thread::sleep(time::Duration::from_millis(1000 as u64));
         match msg {
             TypedMessage::WorkloadMsg(_wkl) => {
                 info!("actor #{} - COMPUTE {:#?}", self.id, _wkl);
@@ -53,6 +56,7 @@ impl Actor {
         }
     }
 
+    // #[instrument]
     pub async fn run(&mut self) -> u32 {
         loop {
             info!("actor #{} - IDLE", self.id);
@@ -70,6 +74,7 @@ impl Actor {
         }
     }
 
+    // #[instrument]
     fn on_compute(&self, workload: Workload) -> Result<(), String> {
         workload.mock_run();
         Ok(())

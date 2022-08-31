@@ -1,4 +1,6 @@
 use log::{debug, info};
+// use tracing_subscriber::{registry::Registry, prelude::*};
+// use tracing_chrome::ChromeLayerBuilder;
 
 use crate::actors::*;
 use crate::messages::*;
@@ -45,20 +47,33 @@ macro_rules! build_system {
 #[macro_export]
 macro_rules! try_init_raptors {
     ($log_level:expr) => {
-        std::env::set_var("RUST_LOG", $log_level);
+        // std::env::set_var("RUST_LOG", $log_level);
         // to make more precise timestamps
-        Builder::new()
-            .format(|buf, record| {
-                writeln!(
-                    buf,
-                    "{} {}: {}",
-                    record.level(),
-                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                    record.args()
-                )
-            })
-            .filter(None, LevelFilter::Info)
-            .try_init();
+        //
+        // TODO this part maybe replaced by tracing::info, since it can do the both
+        //
+        // Builder::new()
+        //     .format(|buf, record| {
+        //         writeln!(
+        //             buf,
+        //             "{} {}: {}",
+        //             record.level(),
+        //             Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+        //             record.args()
+        //         )
+        //     })
+        //     .filter(None, LevelFilter::Info)
+        //     .try_init();
+
+        // let _guard = if std::env::args().any(|arg| arg == "--no-trace") {
+        //     None
+        // } else {
+        //     let (chrome_layer, guard) = tracing_chrome::ChromeLayerBuilder::new()
+        //         .include_args(true)
+        //         .build();
+        //     tracing_subscriber::registry().with(chrome_layer).try_init();
+        //     Some(guard)
+        // };
     };
 }
 
