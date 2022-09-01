@@ -1,8 +1,11 @@
 extern crate raptors;
 extern crate uuid;
 
+use opentelemetry::global;
+use tokio::io::Result;
 use tracing::info;
 use tracing_subscriber::prelude::*;
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 //
 // use tracing::instrument;
 // use tracing_subscriber::{registry::Registry, prelude::*};
@@ -30,8 +33,21 @@ use raptors::prelude::*;
 #[tokio::main]
 async fn main() {
     std::env::set_var("RUST_LOG", "info");
-    let subscriber = tracing_subscriber::FmtSubscriber::new();
-    tracing::subscriber::set_global_default(subscriber);
+    // let subscriber = tracing_subscriber::FmtSubscriber::new();
+    // tracing::subscriber::set_global_default(subscriber);
+    global::set_text_map_propagator(opentelemetry_jaeger::Propagator::new());
+    let tracer = opentelemetry_jaeger::new_pipeline()
+        .with_service_name("raptors")
+        .install_simple()
+        .unwrap();
+
+    let opentelemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+    tracing_subscriber::registry()
+        .with(opentelemetry)
+        .with(fmt::Layer::default())
+        .try_init()
+        .unwrap();
+    //
     // to make more precise timestamps
     // Builder::new()
     //     .format(|buf, record| {
@@ -83,6 +99,7 @@ async fn main() {
 
     let halt_all = build_msg!("halt-all");
     system.on_receive(halt_all);
+    ()
 
     // let mut workloads = build_workload!(vec![
     //     OpCode::AddOp,

@@ -126,7 +126,7 @@ impl ActorSystem {
         self.ranks
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(name = "actor_system", skip(self))]
     pub fn spawn_actors(&mut self, cnt: usize) -> Result<(), String> {
         for id in self.ranks..(self.ranks + cnt) {
             info!("creating actor with id = #{}", id);
@@ -140,7 +140,7 @@ impl ActorSystem {
         Ok(())
     }
 
-    #[tracing::instrument(level = "info", name = "hahaha")]
+    #[tracing::instrument(name = "actor_system", skip(self))]
     pub fn halt_actor(&mut self, index: usize) -> Result<(), String> {
         info!("triggering drop");
         if index >= self.mails.len() {
@@ -150,21 +150,21 @@ impl ActorSystem {
         Ok(())
     }
 
-    // #[instrument]
+    #[tracing::instrument(name = "actor_system", skip(self))]
     pub fn halt_all(&mut self) -> Result<(), String> {
         info!("triggering drop all");
         self.mails.clear();
         Ok(())
     }
 
-    // #[instrument]
+    #[tracing::instrument(name = "actor_system", skip(self))]
     pub async fn deliver_to(&self, msg: TypedMessage, to: usize) {
         info!("WIP: deliver message to {}", to);
         self.mails[to].send(msg).await;
         info!("FINISH: deliver message to {}", to);
     }
 
-    // #[instrument]
+    #[tracing::instrument(name = "actor_system", skip(self))]
     pub async fn broadcast(&self, msg: TypedMessage) {
         info!("WIP: broadcast message");
         for mail in &self.mails {
@@ -174,6 +174,7 @@ impl ActorSystem {
     }
 
     #[allow(unreachable_patterns)]
+    #[tracing::instrument(name = "actor_system", skip(self))]
     pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
         match msg {
             TypedMessage::SystemMsg(cmd) => match cmd {
