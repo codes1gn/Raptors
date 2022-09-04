@@ -103,6 +103,7 @@ pub struct ActorSystem {
     name: String,
     ranks: usize,
     pub mails: Vec<mpsc::Sender<TypedMessage>>,
+    pub availables: Vec<usize>,
 }
 
 impl ActorSystem {
@@ -115,6 +116,7 @@ impl ActorSystem {
             name: String::from(name),
             ranks: 0,
             mails: mailboxes,
+            availables: vec![],
         }
     }
 
@@ -126,6 +128,13 @@ impl ActorSystem {
         self.ranks
     }
 
+    // get the first idle/available actor tid
+    // replace this into mpsc receiver with multiple actor to generate key back
+    pub fn poll_ready_actor(&mut self) -> usize {
+        assert_eq!(self.availables.is_empty(), false);
+        self.availables.remove(0)
+    }
+
     #[tracing::instrument(name = "actor_system", skip(self))]
     pub fn spawn_actors(&mut self, cnt: usize) -> Result<(), String> {
         for id in self.ranks..(self.ranks + cnt) {
@@ -135,6 +144,8 @@ impl ActorSystem {
             let mut actor = Actor::new(id, receiver);
             info!("on aspvr #{}", id);
             tokio::spawn(async move { actor.run().await });
+
+            self.availables.push(id);
         }
         self.ranks += cnt;
         Ok(())

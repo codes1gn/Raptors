@@ -17,88 +17,63 @@ use std::{thread, time};
 
 use raptors::prelude::*;
 
-/// Routine of this example
-///
-/// new a system SystemBuilder
-/// new a config
-/// build a system
-/// create 4 actors with msg
-/// refactor vec to register on actors
-/// dispatch workload to 4 actors
-/// actors execute on receive
-/// actors send back msg of results
-/// destroy 4 actors with msg after all finished
-///
-// TODO make [tokio::main] a integrated annotation of raptors
 #[tokio::main]
 async fn main() {
     std::env::set_var("RUST_LOG", "info");
-    // let subscriber = tracing_subscriber::FmtSubscriber::new();
-    // tracing::subscriber::set_global_default(subscriber);
-    global::set_text_map_propagator(opentelemetry_jaeger::Propagator::new());
-    let tracer = opentelemetry_jaeger::new_pipeline()
-        .with_service_name("raptors")
-        .install_simple()
-        .unwrap();
+    if std::env::args().any(|arg| arg == "--trace") {
+        global::set_text_map_propagator(opentelemetry_jaeger::Propagator::new());
+        let tracer = opentelemetry_jaeger::new_pipeline()
+            .with_service_name("raptors")
+            .install_simple()
+            .unwrap();
 
-    let opentelemetry = tracing_opentelemetry::layer().with_tracer(tracer);
-    tracing_subscriber::registry()
-        .with(opentelemetry)
-        .with(fmt::Layer::default())
-        .try_init()
-        .unwrap();
-    //
-    // to make more precise timestamps
-    // Builder::new()
-    //     .format(|buf, record| {
-    //         writeln!(
-    //             buf,
-    //             "{} {}: {}",
-    //             record.level(),
-    //             Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-    //             record.args()
-    //         )
-    //     })
-    //     .filter(None, LevelFilter::Info)
-    //     .try_init();
+        let opentelemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+        tracing_subscriber::registry()
+            .with(opentelemetry)
+            .with(fmt::Layer::default())
+            .try_init()
+            .unwrap();
+    } else {
+        tracing_subscriber::fmt::try_init().unwrap();
+    };
 
-    // let _guard = if std::env::args().any(|arg| arg == "--no-trace") {
-    //     None
-    // } else {
-    //     let (chrome_layer, guard) = tracing_chrome::ChromeLayerBuilder::new()
-    //         .include_args(true)
-    //         .include_locations(true)
-    //         .build();
-    //     tracing_subscriber::registry().with(chrome_layer).try_init();
-    //     Some(guard)
-    // };
 
     info!("================ Running raptors::diamond-tasks example ================");
     let mut system = build_system!("Raptors");
-    // alt! system.spawn_actors(6);
-    // need #[tokio::main]
-    let cmd = build_msg!("spawn", 6);
+    let cmd = build_msg!("spawn", 2);
     system.on_receive(cmd);
-    assert_eq!(system.ranks(), 6);
+    assert_eq!(system.ranks(), 2);
 
     let msg0 = build_msg!("add-op");
     let msg1 = build_msg!("exp-op");
+    let msg2 = build_msg!("sub-op");
 
-    info!("{:#?}", msg0);
-    info!("{:#?}", msg1);
+    // deliver msg to first idle
+    let idle_actor = system.poll_ready_actor();
+    system.deliver_to(msg1.clone(), idle_actor).await;
 
-    system.deliver_to(msg1.clone(), 0).await;
-    system.deliver_to(msg0.clone(), 4).await;
+    // deliver msg to first idle
+    let idle_actor = system.poll_ready_actor();
+    system.deliver_to(msg0.clone(), idle_actor).await;
 
-    let halt_msg = build_msg!("halt", 3);
-    system.on_receive(halt_msg);
+    // TODO to fix current one-off actors in available queue
+    // // deliver msg to first idle
+    // let idle_actor = system.poll_ready_actor();
+    // system.deliver_to(msg2.clone(), idle_actor).await;
+
+    // // deliver msg to first idle
+    // let idle_actor = system.poll_ready_actor();
+    // system.deliver_to(msg2.clone(), idle_actor).await;
+
+
+    // TODO not use
+    // let halt_msg = build_msg!("halt", 3);
+    // system.on_receive(halt_msg);
     // alt! system.halt_actor(3);
-
-    system.broadcast(msg1.clone()).await;
-    system.broadcast(msg0.clone()).await;
-
-    let halt_all = build_msg!("halt-all");
-    system.on_receive(halt_all);
+    // system.broadcast(msg1.clone()).await;
+    // system.broadcast(msg0.clone()).await;
+    // let halt_all = build_msg!("halt-all");
+    // system.on_receive(halt_all);
     ()
 
     // let mut workloads = build_workload!(vec![
