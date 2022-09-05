@@ -18,8 +18,8 @@ pub mod prelude {
     pub use crate::cost_model::CostModel;
     pub use crate::executor::Executor;
     pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
-    pub use crate::messages::{SystemCommand, SystemMsg, TypedMessage};
-    pub use crate::system::{ActorSystem, SystemBuilder, SystemConfig};
+    pub use crate::messages::{ActorCommand, ActorMsg, SystemCommand, SystemMsg, TypedMessage};
+    pub use crate::system::{ActorSystem, ActorSystemHandle, SystemBuilder, SystemConfig};
     pub use crate::workloads::{OpCode, Workload, WorkloadMsg};
 
     // macros that simplifies the interfaces

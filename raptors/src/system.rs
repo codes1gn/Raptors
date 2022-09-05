@@ -107,7 +107,7 @@ pub struct ActorSystemHandle {
 impl ActorSystemHandle {
     pub fn new(name: &str) -> Self {
         let (sender, receiver) = mpsc::channel(100);
-        let mut system = ActorSystem::new(name, receiver);
+        let mut system = ActorSystem::new(name, receiver, sender.clone());
         tokio::spawn(async move { system.run().await });
         Self {
             name: name.to_string(),
@@ -138,10 +138,16 @@ pub struct ActorSystem {
     pub mails: Vec<mpsc::Sender<TypedMessage>>,
     pub availables: Vec<usize>,
     system_cmd_recvbox: mpsc::Receiver<TypedMessage>,
+    cloned_sendbox: mpsc::Sender<TypedMessage>,
+    delayed_workloads: Vec<TypedMessage>,
 }
 
 impl ActorSystem {
-    pub fn new(name: &str, receiver: mpsc::Receiver<TypedMessage>) -> Self {
+    pub fn new(
+        name: &str,
+        receiver: mpsc::Receiver<TypedMessage>,
+        cloned_sender: mpsc::Sender<TypedMessage>,
+    ) -> Self {
         // refer to stackoverflow.com/questions/48850403/change-timestamp-format-used-by-env-logger
         // set default usage of info log level
 
@@ -152,6 +158,8 @@ impl ActorSystem {
             mails: mailboxes,
             availables: vec![],
             system_cmd_recvbox: receiver,
+            cloned_sendbox: cloned_sender,
+            delayed_workloads: vec![],
         }
     }
 
@@ -165,9 +173,12 @@ impl ActorSystem {
 
     // get the first idle/available actor tid
     // replace this into mpsc receiver with multiple actor to generate key back
-    pub fn poll_ready_actor(&mut self) -> usize {
-        assert_eq!(self.availables.is_empty(), false);
-        self.availables.remove(0)
+    pub fn poll_ready_actor(&mut self) -> Option<usize> {
+        if self.availables.is_empty() == true {
+            None
+        } else {
+            Some(self.availables.remove(0))
+        }
     }
 
     #[tracing::instrument(name = "actor_system", skip(self))]
@@ -176,7 +187,7 @@ impl ActorSystem {
             info!("ASYS - creating actor with id = #{}", id);
             let (sender, receiver) = mpsc::channel(16);
             self.mails.push(sender);
-            let mut actor = Actor::new(id, receiver);
+            let mut actor = Actor::new(id, receiver, self.cloned_sendbox.clone());
             tokio::spawn(async move { actor.run().await });
 
             self.availables.push(id);
@@ -229,8 +240,16 @@ impl ActorSystem {
             TypedMessage::WorkloadMsg(_) => {
                 info!("lalala");
                 let idle_actor = self.poll_ready_actor();
-                self.deliver_to(msg, idle_actor).await;
-                Ok(())
+                match idle_actor {
+                    None => {
+                        self.delayed_workloads.push(msg);
+                        Ok(())
+                    }
+                    Some(idx) => {
+                        self.deliver_to(msg, idx).await;
+                        Ok(())
+                    }
+                }
             }
             // let idle_actor = system.poll_ready_actor();
             // system.deliver_to(msg1.clone(), idle_actor).await;
@@ -255,13 +274,35 @@ impl ActorSystem {
                     },
                     TypedMessage::WorkloadMsg(_) => {
                         let idle_actor = self.poll_ready_actor();
-                        info!(
-                            "ASYS - dispatch workload msg to first idle actor #{}",
-                            idle_actor
-                        );
-                        self.deliver_to(msg, idle_actor).await;
-                        Ok(())
+                        match idle_actor {
+                            None => {
+                                self.delayed_workloads.push(msg);
+                                Ok(())
+                            }
+                            Some(idx) => {
+                                info!("ASYS - dispatch workload msg to first idle actor #{}", idx);
+                                self.deliver_to(msg, idx).await;
+                                Ok(())
+                            }
+                        }
                     }
+                    TypedMessage::ActorMsg(_amsg) => match _amsg {
+                        ActorCommand::Available(idx) => {
+                            info!("ASYS - requeue available actor #{}", idx);
+                            self.availables.push(idx);
+                            if self.delayed_workloads.is_empty() == false {
+                                let idle_actor = self.poll_ready_actor().unwrap();
+                                let _delayed_wkl = self.delayed_workloads.remove(0);
+                                info!(
+                                    "ASYS - delayed workload dispatched to actor #{}",
+                                    idle_actor
+                                );
+                                self.deliver_to(_delayed_wkl, idle_actor).await;
+                            }
+                            Ok(())
+                        }
+                        _ => panic!("not implemented"),
+                    },
                     // not handle msg other than system cmd
                     _ => Ok(()),
                 },

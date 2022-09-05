@@ -2,6 +2,7 @@
 use tracing::info;
 // use tracing::instrument;
 // use tracing::{span, Level};
+use tokio::sync::mpsc::error::TryRecvError;
 use tokio::sync::{mpsc, oneshot};
 use uuid::{Urn, Uuid};
 
@@ -10,8 +11,9 @@ use std::collections::HashMap;
 use std::str::Bytes;
 use std::{thread, time};
 
+use crate::build_msg;
 use crate::mailbox::*;
-use crate::messages::TypedMessage;
+use crate::messages::{ActorCommand, TypedMessage};
 use crate::workloads::{OpCode, Workload};
 
 // placehold for actors
@@ -20,15 +22,21 @@ pub struct Actor {
     id: usize,
     uuid: Uuid,
     receiver: mpsc::Receiver<TypedMessage>,
+    respond_to: mpsc::Sender<TypedMessage>,
 }
 
 impl Actor {
-    pub fn new(id: usize, receiver: mpsc::Receiver<TypedMessage>) -> Self {
+    pub fn new(
+        id: usize,
+        receiver: mpsc::Receiver<TypedMessage>,
+        respond_to: mpsc::Sender<TypedMessage>,
+    ) -> Self {
         let new_uuid = Uuid::new_v4();
         Actor {
             id: id,
             receiver: receiver,
             uuid: new_uuid,
+            respond_to: respond_to,
         }
     }
 
@@ -43,11 +51,11 @@ impl Actor {
     fn fetch_and_handle_message(&mut self, msg: TypedMessage) -> Result<(), String> {
         match msg {
             TypedMessage::WorkloadMsg(_wkl) => {
-                info!("actor #{} - COMPUTE {:?}", self.id, _wkl);
+                info!("ACT#{} - COMPUTE {:?}", self.id, _wkl);
                 self.on_compute(_wkl)
             }
             TypedMessage::ActorMsg(_amsg) => {
-                info!("actor #{} - HANDLE ActorMSG - {:#?}", self.id, _amsg);
+                info!("ACT#{} - HANDLE ActorMSG - {:#?}", self.id, _amsg);
                 Ok(())
             }
             _ => panic!("Unknown actormessage not implemented"),
@@ -58,18 +66,42 @@ impl Actor {
     pub async fn run(&mut self) -> u32 {
         loop {
             info!("ACT#{} - IDLE", self.id);
-            match self.receiver.recv().await {
-                Some(msg) => {
-                    info!("ACT#{} - receive msg from system", self.id);
-                    let status = self.fetch_and_handle_message(msg);
+            match self.receiver.try_recv() {
+                Ok(_msg) => {
+                    info!("ACT#{} - receive msg from system ENTER", self.id);
+                    let status = self.fetch_and_handle_message(_msg);
+                    info!("ACT#{} - receive msg from system EXIT", self.id);
                 }
-                None => {
-                    // if senders are dropped, should halt the corresponding actor
+                Err(TryRecvError::Empty) => {
+                    let msg = build_msg!("available", self.id);
+                    self.respond_to.try_send(msg);
+                    info!("ACT#{} - tell supervisor i am available", self.id);
+                    match self.receiver.recv().await {
+                        Some(_msg) => {
+                            info!("ACT#{} - receive msg from system", self.id);
+                            let status = self.fetch_and_handle_message(_msg);
+                        }
+                        None => {
+                            info!("ACT#{} - DROPPED BY SUPERVISOR -> HALTING", self.id);
+                            break 1;
+                        }
+                    }
+                }
+                Err(TryRecvError::Disconnected) => {
                     info!("ACT#{} - DROPPED BY SUPERVISOR -> HALTING", self.id);
                     break 1;
                 }
                 _ => (),
             }
+            // match self.receiver.try_recv() {
+            //     Err(TryRecvError::Empty) => {
+            //         let msg = build_msg!("available", self.id);
+            //         self.respond_to.try_send(msg);
+            //         // info!("ACT#{} - tell supervisor i am available", self.id);
+            //         ()
+            //     }
+            //     _ => (),
+            // }
         }
     }
 
@@ -82,7 +114,7 @@ impl Actor {
 
 impl Drop for Actor {
     fn drop(&mut self) {
-        info!("actor #{} - DROP", self.id);
+        info!("ACT#{} - DROP", self.id);
     }
 }
 

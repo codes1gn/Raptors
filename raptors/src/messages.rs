@@ -42,12 +42,25 @@ pub enum TypedMessage {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ActorCommand {
+    Available(usize),
     PLACEHOLDER,
 }
 
 impl Into<TypedMessage> for ActorCommand {
     fn into(self) -> TypedMessage {
         TypedMessage::ActorMsg(self)
+    }
+}
+
+/// SystemMsg indicates the message of the system.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ActorMsg {
+    cmd: ActorCommand,
+}
+
+impl ActorMsg {
+    pub fn new(cmd: ActorCommand) -> Self {
+        return Self { cmd: cmd };
     }
 }
 

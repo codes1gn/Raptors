@@ -1,4 +1,4 @@
-use log::{debug, info};
+use tracing::{debug, info};
 // use tracing_subscriber::{registry::Registry, prelude::*};
 // use tracing_chrome::ChromeLayerBuilder;
 
@@ -83,6 +83,11 @@ macro_rules! build_msg {
         TypedMessage::SystemMsg(SystemCommand::Spawn($num))
     };
 
+    // actor msg
+    ("available", $num:expr) => {
+        TypedMessage::ActorMsg(ActorCommand::Available($num))
+    };
+
     // operation workload msg
     ("identity-op") => {
         TypedMessage::WorkloadMsg(Workload::new(OpCode::IdentityOp))
@@ -162,5 +167,11 @@ mod tests {
     fn build_exp_op_test() {
         let msg = build_msg!("exp-op");
         assert_eq!(msg, TypedMessage::WorkloadMsg(Workload::new(OpCode::ExpOp)));
+    }
+
+    #[test]
+    fn build_actor_available_msg_test() {
+        let msg = build_msg!("available", 0);
+        assert_eq!(msg, TypedMessage::ActorMsg(ActorCommand::Available(0)));
     }
 }
