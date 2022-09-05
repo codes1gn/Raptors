@@ -1,6 +1,7 @@
 // LICENSE PLACEHOLDER
 use std::any::Any;
 use std::{thread, time};
+use tracing::info;
 
 use crate::cost_model::CostModel;
 use crate::messages::TypedMessage;
@@ -41,7 +42,9 @@ impl Workload {
     // TODO:
     // 1. change signiture to return values
     // 2. values may use a value type that defined include possible results
+    #[tracing::instrument(name = "workload::mock_run", skip(self))]
     pub fn mock_run(&self) -> () {
+        info!("WKL - compute");
         thread::sleep(time::Duration::from_millis((self.payload() * 10) as u64));
     }
 }

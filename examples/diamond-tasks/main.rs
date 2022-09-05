@@ -37,44 +37,22 @@ async fn main() {
         tracing_subscriber::fmt::try_init().unwrap();
     };
 
-
     info!("================ Running raptors::diamond-tasks example ================");
     let mut system = build_system!("Raptors");
+
     let cmd = build_msg!("spawn", 2);
-    system.on_receive(cmd);
-    assert_eq!(system.ranks(), 2);
+    system.issue_order(cmd).await;
 
     let msg0 = build_msg!("add-op");
     let msg1 = build_msg!("exp-op");
     let msg2 = build_msg!("sub-op");
 
-    // deliver msg to first idle
-    let idle_actor = system.poll_ready_actor();
-    system.deliver_to(msg1.clone(), idle_actor).await;
-
-    // deliver msg to first idle
-    let idle_actor = system.poll_ready_actor();
-    system.deliver_to(msg0.clone(), idle_actor).await;
-
-    // TODO to fix current one-off actors in available queue
     // // deliver msg to first idle
-    // let idle_actor = system.poll_ready_actor();
-    // system.deliver_to(msg2.clone(), idle_actor).await;
-
-    // // deliver msg to first idle
-    // let idle_actor = system.poll_ready_actor();
-    // system.deliver_to(msg2.clone(), idle_actor).await;
-
-
-    // TODO not use
-    // let halt_msg = build_msg!("halt", 3);
-    // system.on_receive(halt_msg);
-    // alt! system.halt_actor(3);
-    // system.broadcast(msg1.clone()).await;
-    // system.broadcast(msg0.clone()).await;
-    // let halt_all = build_msg!("halt-all");
-    // system.on_receive(halt_all);
-    ()
+    system.issue_order(msg0.clone()).await;
+    system.issue_order(msg1.clone()).await;
+    system.issue_order(msg0.clone()).await;
+    system.issue_order(msg2.clone()).await;
+    system.issue_order(msg0.clone()).await;
 
     // let mut workloads = build_workload!(vec![
     //     OpCode::AddOp,
@@ -112,4 +90,8 @@ async fn main() {
     // // TODO we need msg builder
     // let cmd = build_msg!("destroy-all");
     // syst.on_receive(cmd);
+    thread::sleep(time::Duration::from_millis((1000) as u64));
+    let halt_all = build_msg!("halt-all");
+    system.issue_order(halt_all).await;
+    ()
 }

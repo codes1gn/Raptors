@@ -40,11 +40,10 @@ impl Actor {
         self.uuid
     }
 
-    #[tracing::instrument(name = "actor::fetch_and_handle_message", skip(self))]
     fn fetch_and_handle_message(&mut self, msg: TypedMessage) -> Result<(), String> {
         match msg {
             TypedMessage::WorkloadMsg(_wkl) => {
-                info!("actor #{} - COMPUTE {:#?}", self.id, _wkl);
+                info!("actor #{} - COMPUTE {:?}", self.id, _wkl);
                 self.on_compute(_wkl)
             }
             TypedMessage::ActorMsg(_amsg) => {
@@ -58,14 +57,15 @@ impl Actor {
     #[tracing::instrument(name = "actor::run", skip(self))]
     pub async fn run(&mut self) -> u32 {
         loop {
-            info!("actor #{} - IDLE", self.id);
+            info!("ACT#{} - IDLE", self.id);
             match self.receiver.recv().await {
                 Some(msg) => {
+                    info!("ACT#{} - receive msg from system", self.id);
                     let status = self.fetch_and_handle_message(msg);
                 }
                 None => {
                     // if senders are dropped, should halt the corresponding actor
-                    info!("actor #{} - DROPPED BY SUPERVISOR -> HALTING", self.id);
+                    info!("ACT#{} - DROPPED BY SUPERVISOR -> HALTING", self.id);
                     break 1;
                 }
                 _ => (),
@@ -73,7 +73,7 @@ impl Actor {
         }
     }
 
-    #[tracing::instrument(name = "actor::on_compute", skip(self))]
+    #[tracing::instrument(name = "actor::on_compute", skip(self, workload))]
     fn on_compute(&self, workload: Workload) -> Result<(), String> {
         workload.mock_run();
         Ok(())

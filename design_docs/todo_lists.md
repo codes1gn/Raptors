@@ -9,10 +9,13 @@ Dones:
 * make asynchonously with tokio runtime
 * optimize tokio runtime with tracing + tracing-subscriber + tracing-chrome
 
-WIPs:
+epic
 * scheduling: a naive dynamic list scheduling = active_registry (state machine)
   * system on_receive change into a event_loop, copy all senders, one for on_receive, called by parent; others are send to actors for callback-msg-pass
   * actors can re-register into availables, that poll_ready_actor can get first
+
+WIPs:
+* scheduling: a naive dynamic list scheduling = active_registry (state machine)
   * make poll_ready_actor async, that dispatch msg can become a easy-life
   * make 100 workloads workable all right
   * <then try to use crt workflow_frontend to call a session embedded actorsystem, with fake executor>
