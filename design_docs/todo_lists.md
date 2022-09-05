@@ -13,11 +13,10 @@ epic
 * scheduling: a naive dynamic list scheduling = active_registry (state machine)
   * system on_receive change into a event_loop, copy all senders, one for on_receive, called by parent; others are send to actors for callback-msg-pass
   * actors can re-register into availables, that poll_ready_actor can get first
+  * make 100 workloads workable all right
 
 WIPs:
 * scheduling: a naive dynamic list scheduling = active_registry (state machine)
-  * make poll_ready_actor async, that dispatch msg can become a easy-life
-  * make 100 workloads workable all right
   * <then try to use crt workflow_frontend to call a session embedded actorsystem, with fake executor>
   * session create/own actorsystem
   * run a single instruction with actorsystem + fake executor

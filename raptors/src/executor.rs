@@ -7,6 +7,7 @@ use crate::workloads::{OpCode, Workload};
 // TODO(long-term):
 // as a interface, make refactor as Trait and expose to CRT level,
 // make CRT vm to impl this trait
+#[derive(Debug)]
 pub struct Executor {}
 
 impl Executor {

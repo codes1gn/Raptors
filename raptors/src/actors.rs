@@ -12,6 +12,7 @@ use std::str::Bytes;
 use std::{thread, time};
 
 use crate::build_msg;
+use crate::executor::Executor;
 use crate::mailbox::*;
 use crate::messages::{ActorCommand, TypedMessage};
 use crate::workloads::{OpCode, Workload};
@@ -23,6 +24,7 @@ pub struct Actor {
     uuid: Uuid,
     receiver: mpsc::Receiver<TypedMessage>,
     respond_to: mpsc::Sender<TypedMessage>,
+    executor: Executor,
 }
 
 impl Actor {
@@ -32,11 +34,13 @@ impl Actor {
         respond_to: mpsc::Sender<TypedMessage>,
     ) -> Self {
         let new_uuid = Uuid::new_v4();
+        let exec = Executor::new();
         Actor {
             id: id,
             receiver: receiver,
             uuid: new_uuid,
             respond_to: respond_to,
+            executor: exec,
         }
     }
 
@@ -65,7 +69,6 @@ impl Actor {
     #[tracing::instrument(name = "actor::run", skip(self))]
     pub async fn run(&mut self) -> u32 {
         loop {
-            info!("ACT#{} - IDLE", self.id);
             match self.receiver.try_recv() {
                 Ok(_msg) => {
                     info!("ACT#{} - receive msg from system ENTER", self.id);
@@ -93,21 +96,12 @@ impl Actor {
                 }
                 _ => (),
             }
-            // match self.receiver.try_recv() {
-            //     Err(TryRecvError::Empty) => {
-            //         let msg = build_msg!("available", self.id);
-            //         self.respond_to.try_send(msg);
-            //         // info!("ACT#{} - tell supervisor i am available", self.id);
-            //         ()
-            //     }
-            //     _ => (),
-            // }
         }
     }
 
     #[tracing::instrument(name = "actor::on_compute", skip(self, workload))]
     fn on_compute(&self, workload: Workload) -> Result<(), String> {
-        workload.mock_run();
+        self.executor.compute(workload);
         Ok(())
     }
 }
