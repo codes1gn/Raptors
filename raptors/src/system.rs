@@ -99,6 +99,7 @@ impl SystemBuilder {
     }
 }
 
+#[derive(Debug)]
 pub struct ActorSystemHandle {
     name: String,
     system_cmd_sendbox: mpsc::Sender<TypedMessage>,
