@@ -3,6 +3,7 @@ use tracing::{debug, info};
 // use tracing_chrome::ChromeLayerBuilder;
 
 use crate::actors::*;
+use crate::executor::*;
 use crate::messages::*;
 use crate::system::*;
 use crate::workloads::*;
@@ -26,14 +27,14 @@ macro_rules! build_system {
         let mut sys_config = SystemConfig::new($name, "info");
         let mut sys_builder = SystemBuilder::new();
         sys_config.set_ranks(0 as usize);
-        let system = sys_builder.build_with_config(sys_config);
+        let system = sys_builder.build_with_config::<Executor, Workload>(sys_config);
         system
     }};
     ($name:expr, $cnt:expr) => {{
         let mut sys_config = SystemConfig::new($name, "info");
         let mut sys_builder = SystemBuilder::new();
         sys_config.set_ranks($cnt as usize);
-        let system = sys_builder.build_with_config(sys_config);
+        let system = sys_builder.build_with_config::<Executor, Workload>(sys_config);
         system
     }};
 }
@@ -141,37 +142,40 @@ mod tests {
 
     #[test]
     fn build_halt_all_test() {
-        let msg = build_msg!("halt-all");
+        let msg: TypedMessage<Workload> = build_msg!("halt-all");
         assert_eq!(msg, TypedMessage::SystemMsg(SystemCommand::HaltAll));
     }
 
     #[test]
     fn build_spawn_msg_test() {
-        let msg = build_msg!("spawn", 3);
+        let msg: TypedMessage<Workload> = build_msg!("spawn", 3);
         assert_eq!(msg, TypedMessage::SystemMsg(SystemCommand::Spawn(3)));
     }
 
     #[test]
     fn build_halt_msg_test() {
-        let msg = build_msg!("halt", 3);
+        let msg: TypedMessage<Workload> = build_msg!("halt", 3);
         assert_eq!(msg, TypedMessage::SystemMsg(SystemCommand::HaltOn(3)));
     }
 
     #[test]
     fn build_add_op_test() {
-        let msg = build_msg!("add-op");
+        let msg: TypedMessage<Workload> = build_msg!("add-op");
         assert_eq!(msg, TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp)));
     }
 
     #[test]
     fn build_exp_op_test() {
-        let msg = build_msg!("exp-op");
+        let msg: TypedMessage<Workload> = build_msg!("exp-op");
         assert_eq!(msg, TypedMessage::WorkloadMsg(Workload::new(OpCode::ExpOp)));
     }
 
     #[test]
     fn build_actor_available_msg_test() {
-        let msg = build_msg!("available", 0);
-        assert_eq!(msg, TypedMessage::ActorMsg(ActorCommand::Available(0)));
+        let msg: TypedMessage<Workload> = build_msg!("available", 0);
+        assert_eq!(
+            msg,
+            TypedMessage::<Workload>::ActorMsg(ActorCommand::Available(0))
+        );
     }
 }

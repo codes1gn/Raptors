@@ -2,6 +2,7 @@
 use uuid::Uuid;
 
 use crate::messages::*;
+use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Address(Uuid);
@@ -18,7 +19,7 @@ impl Address {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Envelope {
-    pub msg: TypedMessage,
+    pub msg: TypedMessage<Workload>,
     // sender: Address,
     pub receiver: Address,
 }
@@ -36,7 +37,7 @@ pub struct Mailbox {
     // *** ringbuffer
     // *** ringbuf
     // *** ring_queue
-    mails: Vec<TypedMessage>,
+    mails: Vec<TypedMessage<Workload>>,
 }
 
 // TODO traits tobe put together, this is a trait only for util, not for interface
@@ -61,7 +62,7 @@ impl Mailbox {
         return Self { mails: vec![] };
     }
 
-    fn mails(&self) -> Vec<TypedMessage> {
+    fn mails(&self) -> Vec<TypedMessage<Workload>> {
         self.mails.clone()
     }
 
@@ -73,7 +74,7 @@ impl Mailbox {
     /// mbx.enqueue(msg.into());
     /// assert_eq!(mbx.len(), 1);
     /// ```
-    pub fn enqueue(&mut self, msg: TypedMessage) -> Result<(), String> {
+    pub fn enqueue(&mut self, msg: TypedMessage<Workload>) -> Result<(), String> {
         self.mails.push(msg);
         Ok(())
     }
@@ -100,7 +101,7 @@ impl Mailbox {
     /// let msg = mbx.dequeue();
     /// assert_eq!(msg.is_none(), true);
     /// ```
-    pub fn dequeue(&mut self) -> Option<TypedMessage> {
+    pub fn dequeue(&mut self) -> Option<TypedMessage<Workload>> {
         if self.mails.is_empty() {
             None
         } else {

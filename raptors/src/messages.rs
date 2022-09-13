@@ -3,6 +3,7 @@
 use std::any::Any;
 use std::{thread, time};
 
+use crate::executor::*;
 use crate::workloads::OpCode;
 use crate::workloads::Workload;
 
@@ -24,20 +25,22 @@ type Message = Box<dyn Any + Send>;
 ///```
 /// use raptors::prelude::*;
 ///
-/// let msg = SystemCommand::Spawn(1);
-/// assert_eq!(msg, SystemCommand::Spawn(1));
+/// let msg: TypedMessage<Workload> = build_msg!("spawn", 1);
 ///
 /// # // define a test function for type check
-/// pub fn test_msg_type(msg: TypedMessage) -> bool {
+/// pub fn test_msg_type(msg: TypedMessage<Workload>) -> bool {
 ///     true
 /// }
 /// assert!(test_msg_type(msg.into()));
 ///```
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TypedMessage {
+pub enum TypedMessage<T>
+where
+    T: TensorTrait + Clone,
+{
     SystemMsg(SystemCommand),
     ActorMsg(ActorCommand),
-    WorkloadMsg(Workload),
+    WorkloadMsg(T),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -46,9 +49,9 @@ pub enum ActorCommand {
     PLACEHOLDER,
 }
 
-impl Into<TypedMessage> for ActorCommand {
-    fn into(self) -> TypedMessage {
-        TypedMessage::ActorMsg(self)
+impl<T: TensorTrait + Clone> Into<TypedMessage<T>> for ActorCommand {
+    fn into(self) -> TypedMessage<T> {
+        TypedMessage::<T>::ActorMsg(self)
     }
 }
 
@@ -71,9 +74,9 @@ pub enum SystemCommand {
     Spawn(usize),
 }
 
-impl Into<TypedMessage> for SystemCommand {
-    fn into(self) -> TypedMessage {
-        TypedMessage::SystemMsg(self)
+impl<T: TensorTrait + Clone> Into<TypedMessage<T>> for SystemCommand {
+    fn into(self) -> TypedMessage<T> {
+        TypedMessage::<T>::SystemMsg(self)
     }
 }
 

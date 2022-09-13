@@ -9,9 +9,11 @@ use tracing::info;
 use uuid::Uuid;
 
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use std::{thread, time};
 
 use crate::actors::*;
+use crate::executor::{Executor, ExecutorTrait};
 use crate::mailbox::*;
 use crate::messages::*;
 use crate::prelude::*;
@@ -85,9 +87,15 @@ impl SystemBuilder {
         SystemBuilder::default()
     }
 
-    pub fn build_with_config(&mut self, config: SystemConfig) -> ActorSystemHandle {
+    pub fn build_with_config<
+        T: 'static + ExecutorTrait<TensorLike = U> + Send + Sync,
+        U: 'static + TensorTrait + Clone + Send + Sync,
+    >(
+        &mut self,
+        config: SystemConfig,
+    ) -> ActorSystemHandle<T, U> {
         self.cfg = Some(config);
-        let mut system = ActorSystemHandle::new(&self.config().name().to_owned());
+        let mut system = ActorSystemHandle::<T, U>::new(&self.config().name().to_owned());
         // TODO-FIX#1 make issue_order sync func
         // let cmd = build_msg!("spawn", self.config().ranks());
         // system.issue_order(cmd).await;
@@ -100,19 +108,29 @@ impl SystemBuilder {
 }
 
 #[derive(Debug)]
-pub struct ActorSystemHandle {
+pub struct ActorSystemHandle<T, U>
+where
+    T: 'static + ExecutorTrait<TensorLike = U> + Send + Sync,
+    U: 'static + TensorTrait + Clone + Send + Sync,
+{
     name: String,
-    system_cmd_sendbox: mpsc::Sender<TypedMessage>,
+    system_cmd_sendbox: mpsc::Sender<TypedMessage<U>>,
+    _marker: PhantomData<T>,
 }
 
-impl ActorSystemHandle {
+impl<T, U> ActorSystemHandle<T, U>
+where
+    T: 'static + ExecutorTrait<TensorLike = U> + Send + Sync,
+    U: 'static + TensorTrait + Clone + Send + Sync,
+{
     pub fn new(name: &str) -> Self {
         let (sender, receiver) = mpsc::channel(100);
-        let mut system = ActorSystem::new(name, receiver, sender.clone());
+        let mut system = ActorSystem::<T, U>::new(name, receiver, sender.clone());
         tokio::spawn(async move { system.run().await });
         Self {
             name: name.to_string(),
             system_cmd_sendbox: sender,
+            _marker: PhantomData,
         }
     }
 
@@ -120,39 +138,48 @@ impl ActorSystemHandle {
         self.name.clone()
     }
 
-    pub async fn issue_order(&mut self, msg: TypedMessage) -> () {
+    pub async fn issue_order(&mut self, msg: TypedMessage<U>) -> () {
         self.system_cmd_sendbox.send(msg).await;
     }
 
     pub async fn spawn(&mut self, cnt: usize) {
-        let cmd = build_msg!("spawn", cnt);
+        let cmd: TypedMessage<U> = build_msg!("spawn", cnt);
         self.issue_order(cmd).await
     }
 }
 
 #[derive(Debug)]
-pub struct ActorSystem {
+pub struct ActorSystem<T, U>
+where
+    T: 'static + ExecutorTrait<TensorLike = U> + Send,
+    U: 'static + TensorTrait + Clone + Send + Sync,
+{
     // TODO need a state machine that monitor actors
     // and allow graceful shutdown
     name: String,
     ranks: usize,
-    pub mails: Vec<mpsc::Sender<TypedMessage>>,
+    pub mails: Vec<mpsc::Sender<TypedMessage<U>>>,
     pub availables: Vec<usize>,
-    system_cmd_recvbox: mpsc::Receiver<TypedMessage>,
-    cloned_sendbox: mpsc::Sender<TypedMessage>,
-    delayed_workloads: Vec<TypedMessage>,
+    system_cmd_recvbox: mpsc::Receiver<TypedMessage<U>>,
+    cloned_sendbox: mpsc::Sender<TypedMessage<U>>,
+    delayed_workloads: Vec<TypedMessage<U>>,
+    _marker: PhantomData<T>,
 }
 
-impl ActorSystem {
+impl<T, U> ActorSystem<T, U>
+where
+    T: 'static + ExecutorTrait<TensorLike = U> + std::marker::Send,
+    U: 'static + TensorTrait + Clone + Send + Sync,
+{
     pub fn new(
         name: &str,
-        receiver: mpsc::Receiver<TypedMessage>,
-        cloned_sender: mpsc::Sender<TypedMessage>,
+        receiver: mpsc::Receiver<TypedMessage<U>>,
+        cloned_sender: mpsc::Sender<TypedMessage<U>>,
     ) -> Self {
         // refer to stackoverflow.com/questions/48850403/change-timestamp-format-used-by-env-logger
         // set default usage of info log level
 
-        let mut mailboxes: Vec<mpsc::Sender<TypedMessage>> = vec![];
+        let mut mailboxes: Vec<mpsc::Sender<TypedMessage<U>>> = vec![];
         Self {
             name: String::from(name),
             ranks: 0,
@@ -161,6 +188,7 @@ impl ActorSystem {
             system_cmd_recvbox: receiver,
             cloned_sendbox: cloned_sender,
             delayed_workloads: vec![],
+            _marker: PhantomData,
         }
     }
 
@@ -188,7 +216,7 @@ impl ActorSystem {
             info!("ASYS - creating actor with id = #{}", id);
             let (sender, receiver) = mpsc::channel(16);
             self.mails.push(sender);
-            let mut actor = Actor::new(id, receiver, self.cloned_sendbox.clone());
+            let mut actor = Actor::<T, U>::new(id, receiver, self.cloned_sendbox.clone());
             tokio::spawn(async move { actor.run().await });
 
             self.availables.push(id);
@@ -213,49 +241,17 @@ impl ActorSystem {
     }
 
     #[tracing::instrument(name = "actor_system", skip(self, msg))]
-    pub async fn deliver_to(&self, msg: TypedMessage, to: usize) {
+    pub async fn deliver_to(&self, msg: TypedMessage<U>, to: usize) {
         self.mails[to].send(msg).await;
         info!("ASYS - deliver message to {}", to);
     }
 
     #[tracing::instrument(name = "actor_system", skip(self, msg))]
-    pub async fn broadcast(&self, msg: TypedMessage) {
+    pub async fn broadcast(&self, msg: TypedMessage<U>) {
         for mail in &self.mails {
             mail.send(msg.clone()).await;
         }
         info!("ASYS - broadcast message to all");
-    }
-
-    #[cfg(any())]
-    #[deprecated]
-    #[allow(unreachable_patterns)]
-    #[tracing::instrument(name = "actor_system", skip(self))]
-    pub fn on_receive(&mut self, msg: TypedMessage) -> Result<(), String> {
-        match msg {
-            TypedMessage::SystemMsg(cmd) => match cmd {
-                SystemCommand::Spawn(cnt) => self.spawn_actors(cnt),
-                SystemCommand::HaltOn(idx) => self.halt_actor(idx),
-                SystemCommand::HaltAll => self.halt_all(),
-                _ => Err("not implemented".to_string()),
-            },
-            TypedMessage::WorkloadMsg(_) => {
-                info!("lalala");
-                let idle_actor = self.poll_ready_actor();
-                match idle_actor {
-                    None => {
-                        self.delayed_workloads.push(msg);
-                        Ok(())
-                    }
-                    Some(idx) => {
-                        self.deliver_to(msg, idx).await;
-                        Ok(())
-                    }
-                }
-            }
-            // let idle_actor = system.poll_ready_actor();
-            // system.deliver_to(msg1.clone(), idle_actor).await;
-            _ => Err("not implemented".to_string()),
-        }
     }
 
     #[tracing::instrument(name = "system::run", skip(self))]
@@ -311,33 +307,6 @@ impl ActorSystem {
             };
         }
     }
-
-    // #[allow(unreachable_patterns)]
-    // pub fn on_deliver(&mut self, evlp: Envelope) -> Result<(), String> {
-    //     let status = self
-    //         .actor_registry
-    //         .get_mut(&evlp.receiver.into_aid())
-    //         .unwrap()
-    //         .mailbox_mut()
-    //         .enqueue(evlp.msg.clone());
-    //     status
-    // }
-
-    // pub fn on_dispatch_workloads(&mut self, workloads: Vec<TypedMessage>) -> Result<(), String> {
-    //     let status = workloads
-    //         .into_iter()
-    //         .map(|msg| -> Result<(), String> { self.on_receive(msg) })
-    //         .collect::<Result<(), String>>();
-    //     status
-    // }
-
-    // pub fn on_dispatch_envelopes(&mut self, envelopes: Vec<Envelope>) -> Result<(), String> {
-    //     let status = envelopes
-    //         .into_iter()
-    //         .map(|envelope| -> Result<(), String> { self.on_deliver(envelope) })
-    //         .collect::<Result<(), String>>();
-    //     status
-    // }
 }
 
 // unit tests
@@ -347,7 +316,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_system_with_new_test_1() {
-        let system = ActorSystemHandle::new("raptor system");
+        let system = ActorSystemHandle::<Executor, Workload>::new("raptor system");
         assert_eq!(system.name(), "raptor system");
     }
 

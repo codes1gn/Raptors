@@ -8,33 +8,42 @@ use uuid::{Urn, Uuid};
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::marker::Send;
 use std::str::Bytes;
 use std::{thread, time};
 
 use crate::build_msg;
-use crate::executor::Executor;
+use crate::executor::{Executor, ExecutorTrait, TensorTrait};
 use crate::mailbox::*;
 use crate::messages::{ActorCommand, TypedMessage};
 use crate::workloads::{OpCode, Workload};
 
 // placehold for actors
 #[derive(Debug)]
-pub struct Actor {
+pub struct Actor<T, U>
+where
+    T: ExecutorTrait<TensorLike = U>,
+    U: TensorTrait + Clone,
+{
     id: usize,
     uuid: Uuid,
-    receiver: mpsc::Receiver<TypedMessage>,
-    respond_to: mpsc::Sender<TypedMessage>,
-    executor: Executor,
+    receiver: mpsc::Receiver<TypedMessage<U>>,
+    respond_to: mpsc::Sender<TypedMessage<U>>,
+    executor: T,
 }
 
-impl Actor {
+impl<T, U> Actor<T, U>
+where
+    T: ExecutorTrait<TensorLike = U>,
+    U: TensorTrait + Clone,
+{
     pub fn new(
         id: usize,
-        receiver: mpsc::Receiver<TypedMessage>,
-        respond_to: mpsc::Sender<TypedMessage>,
+        receiver: mpsc::Receiver<TypedMessage<U>>,
+        respond_to: mpsc::Sender<TypedMessage<U>>,
     ) -> Self {
         let new_uuid = Uuid::new_v4();
-        let exec = Executor::new();
+        let exec = T::new();
         Actor {
             id: id,
             receiver: receiver,
@@ -52,10 +61,10 @@ impl Actor {
         self.uuid
     }
 
-    fn fetch_and_handle_message(&mut self, msg: TypedMessage) -> Result<(), String> {
+    fn fetch_and_handle_message(&mut self, msg: TypedMessage<U>) -> Result<(), String> {
         match msg {
             TypedMessage::WorkloadMsg(_wkl) => {
-                info!("ACT#{} - COMPUTE {:?}", self.id, _wkl);
+                // info!("ACT#{} - COMPUTE {:?}", self.id, _wkl);
                 self.on_compute(_wkl)
             }
             TypedMessage::ActorMsg(_amsg) => {
@@ -100,38 +109,60 @@ impl Actor {
     }
 
     #[tracing::instrument(name = "actor::on_compute", skip(self, workload))]
-    fn on_compute(&self, workload: Workload) -> Result<(), String> {
-        self.executor.compute(workload);
+    fn on_compute(&self, workload: U) -> Result<(), String> {
+        // ExecutorTrait::compute_wkl(&mut self.executor, workload);
+        self.executor.compute_it(workload);
         Ok(())
     }
 }
 
-impl Drop for Actor {
+impl<T, U> Drop for Actor<T, U>
+where
+    T: ExecutorTrait<TensorLike = U>,
+    U: TensorTrait + Clone,
+{
     fn drop(&mut self) {
         info!("ACT#{} - DROP", self.id);
     }
 }
 
-impl PartialOrd for Actor {
+impl<T, U> PartialOrd for Actor<T, U>
+where
+    T: ExecutorTrait<TensorLike = U>,
+    U: TensorTrait + Clone,
+{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for Actor {
+impl<T, U> Ord for Actor<T, U>
+where
+    T: ExecutorTrait<TensorLike = U>,
+    U: TensorTrait + Clone,
+{
     fn cmp(&self, other: &Self) -> Ordering {
         self.id.cmp(&other.id)
     }
 }
 
 // TODO fix duplicate with uuid add to name
-impl PartialEq for Actor {
+impl<T, U> PartialEq for Actor<T, U>
+where
+    T: ExecutorTrait<TensorLike = U>,
+    U: TensorTrait + Clone,
+{
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
 
-impl Eq for Actor {}
+impl<T, U> Eq for Actor<T, U>
+where
+    T: ExecutorTrait<TensorLike = U>,
+    U: TensorTrait + Clone,
+{
+}
 
 // unit tests
 #[cfg(test)]

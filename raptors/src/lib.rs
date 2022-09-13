@@ -16,7 +16,7 @@ pub mod workloads;
 pub mod prelude {
     pub use crate::actors::Actor;
     pub use crate::cost_model::CostModel;
-    pub use crate::executor::Executor;
+    pub use crate::executor::{Executor, ExecutorTrait, TensorTrait};
     pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
     pub use crate::messages::{ActorCommand, ActorMsg, SystemCommand, SystemMsg, TypedMessage};
     pub use crate::system::{ActorSystem, ActorSystemHandle, SystemBuilder, SystemConfig};
