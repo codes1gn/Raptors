@@ -3,9 +3,9 @@
 use std::any::Any;
 use std::{thread, time};
 
+use crate::cost_model::OpCode;
 use crate::executor::*;
-use crate::workloads::OpCode;
-use crate::workloads::Workload;
+use crate::tensor_types::{TensorLike, Workload};
 
 // message trait is the definition of behaviours that the concept
 // `message` shall obey, in other words, two properties referred.
@@ -36,7 +36,7 @@ type Message = Box<dyn Any + Send>;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypedMessage<T>
 where
-    T: TensorTrait + Clone,
+    T: TensorLike + Clone,
 {
     SystemMsg(SystemCommand),
     ActorMsg(ActorCommand),
@@ -49,7 +49,7 @@ pub enum ActorCommand {
     PLACEHOLDER,
 }
 
-impl<T: TensorTrait + Clone> Into<TypedMessage<T>> for ActorCommand {
+impl<T: TensorLike + Clone> Into<TypedMessage<T>> for ActorCommand {
     fn into(self) -> TypedMessage<T> {
         TypedMessage::<T>::ActorMsg(self)
     }
@@ -74,7 +74,7 @@ pub enum SystemCommand {
     Spawn(usize),
 }
 
-impl<T: TensorTrait + Clone> Into<TypedMessage<T>> for SystemCommand {
+impl<T: TensorLike + Clone> Into<TypedMessage<T>> for SystemCommand {
     fn into(self) -> TypedMessage<T> {
         TypedMessage::<T>::SystemMsg(self)
     }

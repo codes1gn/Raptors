@@ -13,17 +13,18 @@ use std::str::Bytes;
 use std::{thread, time};
 
 use crate::build_msg;
-use crate::executor::{Executor, ExecutorTrait, TensorTrait};
+use crate::cost_model::OpCode;
+use crate::executor::{Executor, ExecutorLike};
 use crate::mailbox::*;
 use crate::messages::{ActorCommand, TypedMessage};
-use crate::workloads::{OpCode, Workload};
+use crate::tensor_types::{TensorLike, Workload};
 
 // placehold for actors
 #[derive(Debug)]
 pub struct Actor<T, U>
 where
-    T: ExecutorTrait<TensorLike = U>,
-    U: TensorTrait + Clone,
+    T: ExecutorLike<TensorType = U>,
+    U: TensorLike + Clone,
 {
     id: usize,
     uuid: Uuid,
@@ -34,8 +35,8 @@ where
 
 impl<T, U> Actor<T, U>
 where
-    T: ExecutorTrait<TensorLike = U>,
-    U: TensorTrait + Clone,
+    T: ExecutorLike<TensorType = U>,
+    U: TensorLike + Clone,
 {
     pub fn new(
         id: usize,
@@ -110,16 +111,15 @@ where
 
     #[tracing::instrument(name = "actor::on_compute", skip(self, workload))]
     fn on_compute(&self, workload: U) -> Result<(), String> {
-        // ExecutorTrait::compute_wkl(&mut self.executor, workload);
-        self.executor.compute_it(workload);
+        self.executor.compute(workload);
         Ok(())
     }
 }
 
 impl<T, U> Drop for Actor<T, U>
 where
-    T: ExecutorTrait<TensorLike = U>,
-    U: TensorTrait + Clone,
+    T: ExecutorLike<TensorType = U>,
+    U: TensorLike + Clone,
 {
     fn drop(&mut self) {
         info!("ACT#{} - DROP", self.id);
@@ -128,8 +128,8 @@ where
 
 impl<T, U> PartialOrd for Actor<T, U>
 where
-    T: ExecutorTrait<TensorLike = U>,
-    U: TensorTrait + Clone,
+    T: ExecutorLike<TensorType = U>,
+    U: TensorLike + Clone,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
@@ -138,8 +138,8 @@ where
 
 impl<T, U> Ord for Actor<T, U>
 where
-    T: ExecutorTrait<TensorLike = U>,
-    U: TensorTrait + Clone,
+    T: ExecutorLike<TensorType = U>,
+    U: TensorLike + Clone,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.id.cmp(&other.id)
@@ -149,8 +149,8 @@ where
 // TODO fix duplicate with uuid add to name
 impl<T, U> PartialEq for Actor<T, U>
 where
-    T: ExecutorTrait<TensorLike = U>,
-    U: TensorTrait + Clone,
+    T: ExecutorLike<TensorType = U>,
+    U: TensorLike + Clone,
 {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
@@ -159,8 +159,8 @@ where
 
 impl<T, U> Eq for Actor<T, U>
 where
-    T: ExecutorTrait<TensorLike = U>,
-    U: TensorTrait + Clone,
+    T: ExecutorLike<TensorType = U>,
+    U: TensorLike + Clone,
 {
 }
 

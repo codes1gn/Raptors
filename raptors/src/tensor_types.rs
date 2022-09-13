@@ -7,6 +7,13 @@ use crate::cost_model::CostModel;
 use crate::messages::TypedMessage;
 use crate::prelude::*;
 
+// defining TensorLike trait
+// TODO(albert), change naming at last, see how these abstractions evolves
+// tensortype -> payload
+// tensorlike -> computable
+// compute(a: Computable) -> ??
+pub trait TensorLike {}
+
 // dummy workload as dummy message but has a timeout for
 // emulating the execution
 //
@@ -26,7 +33,7 @@ pub struct Workload {
     op: OpCode,
 }
 
-impl TensorTrait for Workload {}
+impl TensorLike for Workload {}
 
 impl Workload {
     pub fn new(op: OpCode) -> Workload {
@@ -70,30 +77,6 @@ impl WorkloadMsg {
     }
 }
 
-// Definition for Opcode
-/// ```
-/// # // Test default function for OpCode
-/// use raptors::prelude::*;
-///
-/// assert_eq!(OpCode::default(), OpCode::IdentityOp);
-/// ```
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
-// Copy trait is necessary, otherwise ownership will transit into the cost model
-pub enum OpCode {
-    IdentityOp,
-    AddOp,
-    ConvOp,
-    ExpOp,
-    MatmulOp,
-    SinOp,
-    SubOp,
-}
-
-impl Default for OpCode {
-    fn default() -> Self {
-        OpCode::IdentityOp
-    }
-}
 // TODO: More Ops to add; Other way to implement Opcode
 
 // unit tests

@@ -13,11 +13,11 @@ use std::marker::PhantomData;
 use std::{thread, time};
 
 use crate::actors::*;
-use crate::executor::{Executor, ExecutorTrait};
+use crate::executor::{Executor, ExecutorLike};
 use crate::mailbox::*;
 use crate::messages::*;
 use crate::prelude::*;
-use crate::workloads::*;
+use crate::tensor_types::*;
 
 /// TODO(short-term) make dedicated mod and move it to there, maybe name it system_config.rs
 /// test SystemConfig creation and get
@@ -88,8 +88,8 @@ impl SystemBuilder {
     }
 
     pub fn build_with_config<
-        T: 'static + ExecutorTrait<TensorLike = U> + Send + Sync,
-        U: 'static + TensorTrait + Clone + Send + Sync,
+        T: 'static + ExecutorLike<TensorType = U> + Send + Sync,
+        U: 'static + TensorLike + Clone + Send + Sync,
     >(
         &mut self,
         config: SystemConfig,
@@ -110,8 +110,8 @@ impl SystemBuilder {
 #[derive(Debug)]
 pub struct ActorSystemHandle<T, U>
 where
-    T: 'static + ExecutorTrait<TensorLike = U> + Send + Sync,
-    U: 'static + TensorTrait + Clone + Send + Sync,
+    T: 'static + ExecutorLike<TensorType = U> + Send + Sync,
+    U: 'static + TensorLike + Clone + Send + Sync,
 {
     name: String,
     system_cmd_sendbox: mpsc::Sender<TypedMessage<U>>,
@@ -120,8 +120,8 @@ where
 
 impl<T, U> ActorSystemHandle<T, U>
 where
-    T: 'static + ExecutorTrait<TensorLike = U> + Send + Sync,
-    U: 'static + TensorTrait + Clone + Send + Sync,
+    T: 'static + ExecutorLike<TensorType = U> + Send + Sync,
+    U: 'static + TensorLike + Clone + Send + Sync,
 {
     pub fn new(name: &str) -> Self {
         let (sender, receiver) = mpsc::channel(100);
@@ -151,8 +151,8 @@ where
 #[derive(Debug)]
 pub struct ActorSystem<T, U>
 where
-    T: 'static + ExecutorTrait<TensorLike = U> + Send,
-    U: 'static + TensorTrait + Clone + Send + Sync,
+    T: 'static + ExecutorLike<TensorType = U> + Send,
+    U: 'static + TensorLike + Clone + Send + Sync,
 {
     // TODO need a state machine that monitor actors
     // and allow graceful shutdown
@@ -162,14 +162,14 @@ where
     pub availables: Vec<usize>,
     system_cmd_recvbox: mpsc::Receiver<TypedMessage<U>>,
     cloned_sendbox: mpsc::Sender<TypedMessage<U>>,
-    delayed_workloads: Vec<TypedMessage<U>>,
+    delayed_tensor_types: Vec<TypedMessage<U>>,
     _marker: PhantomData<T>,
 }
 
 impl<T, U> ActorSystem<T, U>
 where
-    T: 'static + ExecutorTrait<TensorLike = U> + std::marker::Send,
-    U: 'static + TensorTrait + Clone + Send + Sync,
+    T: 'static + ExecutorLike<TensorType = U> + std::marker::Send,
+    U: 'static + TensorLike + Clone + Send + Sync,
 {
     pub fn new(
         name: &str,
@@ -187,7 +187,7 @@ where
             availables: vec![],
             system_cmd_recvbox: receiver,
             cloned_sendbox: cloned_sender,
-            delayed_workloads: vec![],
+            delayed_tensor_types: vec![],
             _marker: PhantomData,
         }
     }
@@ -273,7 +273,7 @@ where
                         let idle_actor = self.poll_ready_actor();
                         match idle_actor {
                             None => {
-                                self.delayed_workloads.push(msg);
+                                self.delayed_tensor_types.push(msg);
                                 Ok(())
                             }
                             Some(idx) => {
@@ -287,9 +287,9 @@ where
                         ActorCommand::Available(idx) => {
                             info!("ASYS - requeue available actor #{}", idx);
                             self.availables.push(idx);
-                            if self.delayed_workloads.is_empty() == false {
+                            if self.delayed_tensor_types.is_empty() == false {
                                 let idle_actor = self.poll_ready_actor().unwrap();
-                                let _delayed_wkl = self.delayed_workloads.remove(0);
+                                let _delayed_wkl = self.delayed_tensor_types.remove(0);
                                 info!(
                                     "ASYS - delayed workload dispatched to actor #{}",
                                     idle_actor

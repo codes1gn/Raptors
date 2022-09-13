@@ -3,10 +3,11 @@ use tracing::{debug, info};
 // use tracing_chrome::ChromeLayerBuilder;
 
 use crate::actors::*;
+use crate::cost_model::OpCode;
 use crate::executor::*;
 use crate::messages::*;
 use crate::system::*;
-use crate::workloads::*;
+use crate::tensor_types::*;
 
 /// Test build_system! macro
 ///

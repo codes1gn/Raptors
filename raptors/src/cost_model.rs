@@ -1,7 +1,32 @@
 // LICENSE PLACEHOLDER
 use std::collections::HashMap;
 
-use crate::workloads::{OpCode, Workload};
+use crate::tensor_types::Workload;
+
+// Definition for Opcode
+/// ```
+/// # // Test default function for OpCode
+/// use raptors::prelude::*;
+///
+/// assert_eq!(OpCode::default(), OpCode::IdentityOp);
+/// ```
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+// Copy trait is necessary, otherwise ownership will transit into the cost model
+pub enum OpCode {
+    IdentityOp,
+    AddOp,
+    ConvOp,
+    ExpOp,
+    MatmulOp,
+    SinOp,
+    SubOp,
+}
+
+impl Default for OpCode {
+    fn default() -> Self {
+        OpCode::IdentityOp
+    }
+}
 
 /// Definition: The estimator helps to compute the estimated cost for different ops.
 ///

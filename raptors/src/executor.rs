@@ -1,8 +1,7 @@
 // LICENSE PLACEHOLDER
 //
-use crate::workloads::{OpCode, Workload};
-
-pub trait TensorTrait {}
+use crate::cost_model::OpCode;
+use crate::tensor_types::Workload;
 
 // wrap a dedicated executor module that only consider how to do computations
 //
@@ -20,11 +19,10 @@ pub struct Executor {}
 //     type AssociateTypeA: TraitB;
 //     fn func(&self) -> AssociateTypeA;
 // }
-pub trait ExecutorTrait {
-    type TensorLike;
+pub trait ExecutorLike {
+    type TensorType;
     fn new() -> Self;
-    fn compute_it(&self, wkl: Self::TensorLike) -> Self::TensorLike;
-    fn compute_wkl(&self, workload: Self::TensorLike) -> Self::TensorLike;
+    fn compute(&self, wkl: Self::TensorType) -> Self::TensorType;
 }
 
 // impl Executor {
@@ -33,18 +31,14 @@ pub trait ExecutorTrait {
 //     }
 // }
 
-impl ExecutorTrait for Executor {
-    type TensorLike = Workload;
+impl ExecutorLike for Executor {
+    type TensorType = Workload;
     fn new() -> Executor {
         Self {}
     }
-    fn compute_it(&self, wkl: Self::TensorLike) -> Self::TensorLike {
+    fn compute(&self, wkl: Self::TensorType) -> Self::TensorType {
         wkl.mock_run();
         wkl
-    }
-    fn compute_wkl(&self, workload: Self::TensorLike) -> Self::TensorLike {
-        // workload.mock_run();
-        workload
     }
 }
 
@@ -60,7 +54,7 @@ mod tests {
         let exec = Executor::new();
         let load = Workload::new(OpCode::AddOp);
         let now = time::Instant::now();
-        exec.compute_it(load);
+        exec.compute(load);
         assert!(now.elapsed() >= time::Duration::from_millis(11));
     }
 }
