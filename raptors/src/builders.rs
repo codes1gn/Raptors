@@ -73,6 +73,17 @@ macro_rules! try_init_raptors {
     };
 }
 
+// msg used for CRT compute, all messages are based on <U = TensorView<f32>>
+#[macro_export]
+macro_rules! build_comp_msg {
+    ("add-op") => {
+        TypedMessage::WorkloadMsg(Workload::new(OpCode::AddOp))
+    };
+    ("sub-op") => {
+        TypedMessage::WorkloadMsg(Workload::new(OpCode::SubOp))
+    };
+}
+
 #[macro_export]
 macro_rules! build_msg {
     ("halt-all") => {

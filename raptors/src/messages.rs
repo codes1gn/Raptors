@@ -3,6 +3,8 @@
 use std::any::Any;
 use std::{thread, time};
 
+use tokio::sync::oneshot;
+
 use crate::cost_model::OpCode;
 use crate::executor::*;
 use crate::tensor_types::{TensorLike, Workload};
@@ -41,7 +43,51 @@ where
     SystemMsg(SystemCommand),
     ActorMsg(ActorCommand),
     WorkloadMsg(T),
+    // ComputeFunctorMsg { op: OpCode, lhs: T, rhs: T },
+    // ComputeFunctorMsg { op: OpCode, lhs: T, rhs: T, respond_to: oneshot::Sender<T> },
 }
+
+#[derive(Debug)]
+pub enum PayloadMessage<T>
+where
+    T: TensorLike + Clone,
+{
+    ComputeFunctorMsg {
+        op: OpCode,
+        lhs: T,
+        rhs: T,
+        respond_to: oneshot::Sender<T>,
+    },
+}
+
+#[derive(Debug)]
+pub enum GeneralMessage<T>
+where
+    T: TensorLike + Clone,
+{
+    Cmd(TypedMessage<T>),
+    Payload(PayloadMessage<T>),
+}
+
+impl<T> MessageLike for TypedMessage<T> where T: TensorLike + Clone {}
+
+impl<T> MessageLike for PayloadMessage<T> where T: TensorLike + Clone {}
+
+pub trait MessageLike {}
+
+// impl Clone for TypedMessage<T>
+// where
+//     T: TensorLike + Clone,
+// {
+//     fn clone(&self) -> Self {
+//         match self {
+//             SystemMsg(a) => TypedMessage::<T>::SystemMsg(a.clone()),
+//             ActorMsg(a) => TypedMessage::<T>::ActorMsg(a.clone()),
+//             WorkloadMsg(a) => TypedMessage::<T>::WorkloadMsg(a.clone()),
+//             _ => panic!("not clonable for ComputeFunctorMsg"),
+//         }
+//     }
+// }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ActorCommand {

@@ -39,6 +39,7 @@ async fn main() {
 
     info!("================ Running raptors::diamond-tasks example ================");
     let mut system = build_system!("Raptors");
+    // system.init();
 
     let cmd = build_msg!("spawn", 3);
     system.issue_order(cmd).await;

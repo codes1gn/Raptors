@@ -22,7 +22,15 @@ pub struct Executor {}
 pub trait ExecutorLike {
     type TensorType;
     fn new() -> Self;
-    fn compute(&self, wkl: Self::TensorType) -> Self::TensorType;
+    fn init(&mut self) -> ();
+    fn compute_mock(&mut self, arg: Self::TensorType) -> Self::TensorType;
+    fn compute_unary(&mut self, op: OpCode, arg: Self::TensorType) -> Self::TensorType;
+    fn compute_binary(
+        &mut self,
+        op: OpCode,
+        lhs: Self::TensorType,
+        rhs: Self::TensorType,
+    ) -> Self::TensorType;
 }
 
 // impl Executor {
@@ -36,9 +44,27 @@ impl ExecutorLike for Executor {
     fn new() -> Executor {
         Self {}
     }
-    fn compute(&self, wkl: Self::TensorType) -> Self::TensorType {
-        wkl.mock_run();
-        wkl
+
+    fn init(&mut self) -> () {}
+
+    fn compute_mock(&mut self, arg: Self::TensorType) -> Self::TensorType {
+        arg.mock_run();
+        arg
+    }
+
+    fn compute_unary(&mut self, op: OpCode, arg: Self::TensorType) -> Self::TensorType {
+        arg.mock_run();
+        arg
+    }
+
+    fn compute_binary(
+        &mut self,
+        op: OpCode,
+        lhs: Self::TensorType,
+        rhs: Self::TensorType,
+    ) -> Self::TensorType {
+        lhs.mock_run();
+        lhs
     }
 }
 

@@ -8,6 +8,7 @@ use uuid::{Urn, Uuid};
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::marker::Send;
 use std::str::Bytes;
 use std::{thread, time};
@@ -16,7 +17,7 @@ use crate::build_msg;
 use crate::cost_model::OpCode;
 use crate::executor::{Executor, ExecutorLike};
 use crate::mailbox::*;
-use crate::messages::{ActorCommand, TypedMessage};
+use crate::messages::{ActorCommand, GeneralMessage, MessageLike, PayloadMessage, TypedMessage};
 use crate::tensor_types::{TensorLike, Workload};
 
 // placehold for actors
@@ -24,27 +25,28 @@ use crate::tensor_types::{TensorLike, Workload};
 pub struct Actor<T, U>
 where
     T: ExecutorLike<TensorType = U>,
-    U: TensorLike + Clone,
+    U: TensorLike + Clone + Debug,
 {
     id: usize,
     uuid: Uuid,
-    receiver: mpsc::Receiver<TypedMessage<U>>,
-    respond_to: mpsc::Sender<TypedMessage<U>>,
+    receiver: mpsc::Receiver<GeneralMessage<U>>,
+    respond_to: mpsc::Sender<GeneralMessage<U>>,
     executor: T,
 }
 
 impl<T, U> Actor<T, U>
 where
     T: ExecutorLike<TensorType = U>,
-    U: TensorLike + Clone,
+    U: TensorLike + Clone + Debug,
 {
     pub fn new(
         id: usize,
-        receiver: mpsc::Receiver<TypedMessage<U>>,
-        respond_to: mpsc::Sender<TypedMessage<U>>,
+        receiver: mpsc::Receiver<GeneralMessage<U>>,
+        respond_to: mpsc::Sender<GeneralMessage<U>>,
     ) -> Self {
         let new_uuid = Uuid::new_v4();
-        let exec = T::new();
+        let mut exec = T::new();
+        exec.init();
         Actor {
             id: id,
             receiver: receiver,
@@ -62,12 +64,47 @@ where
         self.uuid
     }
 
+    fn fetch_and_handle(&mut self, msg: GeneralMessage<U>) -> Result<(), String> {
+        match msg {
+            GeneralMessage::Cmd(_msg) => self.fetch_and_handle_message(_msg),
+            GeneralMessage::Payload(_msg) => self.fetch_and_handle_payload(_msg),
+        }
+    }
+
+    fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U>) -> Result<(), String> {
+        match msg {
+            PayloadMessage::ComputeFunctorMsg {
+                op,
+                lhs,
+                rhs,
+                respond_to,
+            } => {
+                // TODO need unary branch
+                println!("received");
+                let outs = self.on_compute_new(op, lhs, rhs).expect("compute failed");
+                println!("sending callback");
+                respond_to.send(outs);
+                println!("Dona - sending callback");
+                // TODO sendback
+                Ok(())
+            }
+        }
+    }
+
     fn fetch_and_handle_message(&mut self, msg: TypedMessage<U>) -> Result<(), String> {
         match msg {
             TypedMessage::WorkloadMsg(_wkl) => {
                 // info!("ACT#{} - COMPUTE {:?}", self.id, _wkl);
                 self.on_compute(_wkl)
             }
+            // TypedMessage::ComputeFunctorMsg { op, lhs, rhs, respond_to } => {
+            // TypedMessage::ComputeFunctorMsg { op, lhs, rhs } => {
+            //     // TODO need unary branch
+            //     println!("received");
+            //     let outs = self.on_compute_new(op, lhs, rhs);
+            //     // TODO sendback
+            //     Ok(())
+            // },
             TypedMessage::ActorMsg(_amsg) => {
                 info!("ACT#{} - HANDLE ActorMSG - {:#?}", self.id, _amsg);
                 Ok(())
@@ -82,17 +119,18 @@ where
             match self.receiver.try_recv() {
                 Ok(_msg) => {
                     info!("ACT#{} - receive msg from system ENTER", self.id);
-                    let status = self.fetch_and_handle_message(_msg);
+                    let status = self.fetch_and_handle(_msg);
                     info!("ACT#{} - receive msg from system EXIT", self.id);
                 }
                 Err(TryRecvError::Empty) => {
                     let msg = build_msg!("available", self.id);
-                    self.respond_to.try_send(msg);
+                    // TODO update build_msg with generalmessage
+                    self.respond_to.try_send(GeneralMessage::Cmd(msg));
                     info!("ACT#{} - tell supervisor i am available", self.id);
                     match self.receiver.recv().await {
                         Some(_msg) => {
                             info!("ACT#{} - receive msg from system", self.id);
-                            let status = self.fetch_and_handle_message(_msg);
+                            let status = self.fetch_and_handle(_msg);
                         }
                         None => {
                             info!("ACT#{} - DROPPED BY SUPERVISOR -> HALTING", self.id);
@@ -110,16 +148,22 @@ where
     }
 
     #[tracing::instrument(name = "actor::on_compute", skip(self, workload))]
-    fn on_compute(&self, workload: U) -> Result<(), String> {
-        self.executor.compute(workload);
+    fn on_compute(&mut self, workload: U) -> Result<(), String> {
+        self.executor.compute_mock(workload);
         Ok(())
+    }
+
+    #[tracing::instrument(name = "actor::on_compute", skip(self, lhs, rhs))]
+    fn on_compute_new(&mut self, op: OpCode, lhs: U, rhs: U) -> Result<U, String> {
+        let outs = self.executor.compute_binary(op, lhs, rhs);
+        Ok(outs)
     }
 }
 
 impl<T, U> Drop for Actor<T, U>
 where
     T: ExecutorLike<TensorType = U>,
-    U: TensorLike + Clone,
+    U: TensorLike + Clone + Debug,
 {
     fn drop(&mut self) {
         info!("ACT#{} - DROP", self.id);
@@ -129,7 +173,7 @@ where
 impl<T, U> PartialOrd for Actor<T, U>
 where
     T: ExecutorLike<TensorType = U>,
-    U: TensorLike + Clone,
+    U: TensorLike + Clone + Debug,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
@@ -139,7 +183,7 @@ where
 impl<T, U> Ord for Actor<T, U>
 where
     T: ExecutorLike<TensorType = U>,
-    U: TensorLike + Clone,
+    U: TensorLike + Clone + Debug,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.id.cmp(&other.id)
@@ -150,7 +194,7 @@ where
 impl<T, U> PartialEq for Actor<T, U>
 where
     T: ExecutorLike<TensorType = U>,
-    U: TensorLike + Clone,
+    U: TensorLike + Clone + Debug,
 {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
@@ -160,7 +204,7 @@ where
 impl<T, U> Eq for Actor<T, U>
 where
     T: ExecutorLike<TensorType = U>,
-    U: TensorLike + Clone,
+    U: TensorLike + Clone + Debug,
 {
 }
 
