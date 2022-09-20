@@ -73,19 +73,32 @@ macro_rules! try_init_raptors {
     };
 }
 
-// msg used for CRT compute, all messages are based on <U = TensorView<f32>>
-#[macro_export]
-macro_rules! build_comp_msg {
-    ("add-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::AddOp))
-    };
-    ("sub-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SubOp))
-    };
-}
+// TODO add builder for payload msg
+// #[macro_export]
+// macro_rules! build_payload_msg {
+//     ("add-op") => {
+//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::AddOp))
+//     };
+//     ("sub-op") => {
+//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SubOp))
+//     };
+//     };
+//     ("exp-op") => {
+//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ExpOp))
+//     };
+//     ("sin-op") => {
+//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SinOp))
+//     };
+//     ("Matmul-op") => {
+//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::MatmulOp))
+//     };
+//     ("Conv-op") => {
+//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ConvOp))
+//     };
+// }
 
 #[macro_export]
-macro_rules! build_msg {
+macro_rules! build_loadfree_msg {
     ("halt-all") => {
         LoadfreeMessage::SystemMsg(SystemCommand::HaltAll)
     };
@@ -126,13 +139,46 @@ macro_rules! build_msg {
 }
 
 #[macro_export]
-macro_rules! build_workload {
-    ($x:expr) => {{
-        $x.into_iter()
-            .map(|x| Workload::new(x).into())
-            .collect::<Vec<LoadfreeMessage>>()
-    }};
+macro_rules! build_msg {
+    ("halt-all") => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::SystemMsg(SystemCommand::HaltAll))
+    };
+    ("halt", $index:expr) => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::SystemMsg(SystemCommand::HaltOn($index)))
+    };
+    ("spawn", $num:expr) => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::SystemMsg(SystemCommand::Spawn($num)))
+    };
+
+    // actor msg
+    ("available", $num:expr) => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::ActorMsg(ActorCommand::Available($num)))
+    };
+
+    // operation workload msg
+    ("identity-op") => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::IdentityOp)))
+    };
+    ("add-op") => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::AddOp)))
+    };
+    ("sub-op") => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SubOp)))
+    };
+    ("exp-op") => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ExpOp)))
+    };
+    ("sin-op") => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SinOp)))
+    };
+    ("Matmul-op") => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::MatmulOp)))
+    };
+    ("Conv-op") => {
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ConvOp)))
+    };
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -154,37 +200,37 @@ mod tests {
 
     #[test]
     fn build_halt_all_test() {
-        let msg: LoadfreeMessage<Workload> = build_msg!("halt-all");
+        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("halt-all");
         assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::HaltAll));
     }
 
     #[test]
     fn build_spawn_msg_test() {
-        let msg: LoadfreeMessage<Workload> = build_msg!("spawn", 3);
+        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", 3);
         assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::Spawn(3)));
     }
 
     #[test]
     fn build_halt_msg_test() {
-        let msg: LoadfreeMessage<Workload> = build_msg!("halt", 3);
+        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("halt", 3);
         assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::HaltOn(3)));
     }
 
     #[test]
     fn build_add_op_test() {
-        let msg: LoadfreeMessage<Workload> = build_msg!("add-op");
+        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("add-op");
         assert_eq!(msg, LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::AddOp)));
     }
 
     #[test]
     fn build_exp_op_test() {
-        let msg: LoadfreeMessage<Workload> = build_msg!("exp-op");
+        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("exp-op");
         assert_eq!(msg, LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ExpOp)));
     }
 
     #[test]
     fn build_actor_available_msg_test() {
-        let msg: LoadfreeMessage<Workload> = build_msg!("available", 0);
+        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("available", 0);
         assert_eq!(
             msg,
             LoadfreeMessage::<Workload>::ActorMsg(ActorCommand::Available(0))

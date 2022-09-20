@@ -30,7 +30,7 @@ impl<T> MessageLike for PayloadMessage<T> where T: TensorLike + Clone {}
 ///```
 /// use raptors::prelude::*;
 ///
-/// let msg: LoadfreeMessage<Workload> = build_msg!("spawn", 1);
+/// let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", 1);
 ///
 /// # // define a test function for type check
 /// pub fn test_msg_type(msg: LoadfreeMessage<Workload>) -> bool {

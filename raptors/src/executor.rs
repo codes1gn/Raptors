@@ -77,10 +77,10 @@ mod tests {
 
     #[test]
     fn compute_workload() {
-        let exec = Executor::new();
+        let mut exec = Executor::new();
         let load = Workload::new(OpCode::AddOp);
         let now = time::Instant::now();
-        exec.compute(load);
+        exec.compute_mock(load);
         assert!(now.elapsed() >= time::Duration::from_millis(11));
     }
 }

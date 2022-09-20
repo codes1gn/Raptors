@@ -13,7 +13,7 @@ use std::marker::Send;
 use std::str::Bytes;
 use std::{thread, time};
 
-use crate::build_msg;
+use crate::{build_loadfree_msg};
 use crate::cost_model::OpCode;
 use crate::executor::{Executor, ExecutorLike};
 use crate::mailbox::*;
@@ -123,7 +123,7 @@ where
                     info!("ACT#{} - receive msg from system EXIT", self.id);
                 }
                 Err(TryRecvError::Empty) => {
-                    let msg = build_msg!("available", self.id);
+                    let msg = build_loadfree_msg!("available", self.id);
                     // TODO update build_msg with generalmessage
                     self.respond_to.try_send(RaptorMessage::LoadfreeMSG(msg));
                     info!("ACT#{} - tell supervisor i am available", self.id);

@@ -98,7 +98,7 @@ impl SystemBuilder {
         self.cfg = Some(config);
         let mut system = ActorSystemHandle::<T, U>::new(&self.config().name().to_owned());
         // TODO-FIX#1 make issue_order sync func
-        // let cmd = build_msg!("spawn", self.config().ranks());
+        // let cmd = build_loadfree_msg!("spawn", self.config().ranks());
         // system.issue_order(cmd).await;
         system
     }
@@ -151,7 +151,7 @@ where
     }
 
     pub async fn spawn(&mut self, cnt: usize) {
-        let cmd: LoadfreeMessage<U> = build_msg!("spawn", cnt);
+        let cmd: LoadfreeMessage<U> = build_loadfree_msg!("spawn", cnt);
         self.issue_order(RaptorMessage::LoadfreeMSG(cmd)).await
     }
 }

@@ -25,5 +25,5 @@ pub mod prelude {
     pub use crate::tensor_types::{TensorLike, Workload, WorkloadMsg};
 
     // macros that simplifies the interfaces
-    pub use crate::{build_comp_msg, build_msg, build_system, build_workload, try_init_raptors};
+    pub use crate::{build_loadfree_msg, build_msg, build_system, try_init_raptors};
 }
