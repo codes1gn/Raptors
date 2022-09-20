@@ -14,7 +14,7 @@ pub mod tensor_types;
 /// ```
 pub mod prelude {
     pub use crate::actors::Actor;
-    pub use crate::cost_model::{CostModel, OpCode};
+    pub use crate::cost_model::{CostModel, MockOpCode, OpCodeLike};
     pub use crate::executor::{Executor, ExecutorLike};
     pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
     pub use crate::messages::{
@@ -25,5 +25,5 @@ pub mod prelude {
     pub use crate::tensor_types::{TensorLike, Workload, WorkloadMsg};
 
     // macros that simplifies the interfaces
-    pub use crate::{build_loadfree_msg, build_msg, build_system, try_init_raptors};
+    pub use crate::{build_loadfree_msg, build_mock_system, build_msg, try_init_raptors};
 }

@@ -3,39 +3,39 @@ use tracing::{debug, info};
 // use tracing_chrome::ChromeLayerBuilder;
 
 use crate::actors::*;
-use crate::cost_model::OpCode;
+use crate::cost_model::MockOpCode;
 use crate::executor::*;
 use crate::messages::*;
 use crate::system::*;
 use crate::tensor_types::*;
 
-/// Test build_system! macro
+/// Test build_mock_system! macro
 ///
 /// ```
 /// use raptors::prelude::*;
 ///
 /// #[tokio::main]
 /// async fn main() {
-///     let mut system = build_system!("Raptors", 3);
+///     let mut system = build_mock_system!("Raptors", 3);
 ///     assert_eq!(system.name(), "Raptors");
 ///     // TODO-FIX#1
 ///     // assert_eq!(system.ranks(), 3);
 /// }
 /// ```
 #[macro_export]
-macro_rules! build_system {
+macro_rules! build_mock_system {
     ($name:expr) => {{
         let mut sys_config = SystemConfig::new($name, "info");
         let mut sys_builder = SystemBuilder::new();
         sys_config.set_ranks(0 as usize);
-        let system = sys_builder.build_with_config::<Executor, Workload>(sys_config);
+        let system = sys_builder.build_with_config::<Executor, Workload, MockOpCode>(sys_config);
         system
     }};
     ($name:expr, $cnt:expr) => {{
         let mut sys_config = SystemConfig::new($name, "info");
         let mut sys_builder = SystemBuilder::new();
         sys_config.set_ranks($cnt as usize);
-        let system = sys_builder.build_with_config::<Executor, Workload>(sys_config);
+        let system = sys_builder.build_with_config::<Executor, Workload, MockOpCode>(sys_config);
         system
     }};
 }
@@ -77,23 +77,23 @@ macro_rules! try_init_raptors {
 // #[macro_export]
 // macro_rules! build_payload_msg {
 //     ("add-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::AddOp))
+//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::AddOp))
 //     };
 //     ("sub-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SubOp))
+//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::SubOp))
 //     };
 //     };
 //     ("exp-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ExpOp))
+//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ExpOp))
 //     };
 //     ("sin-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SinOp))
+//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::SinOp))
 //     };
 //     ("Matmul-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::MatmulOp))
+//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::MatmulOp))
 //     };
 //     ("Conv-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ConvOp))
+//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ConvOp))
 //     };
 // }
 
@@ -116,25 +116,25 @@ macro_rules! build_loadfree_msg {
 
     // operation workload msg
     ("identity-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::IdentityOp))
+        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::IdentityOp))
     };
     ("add-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::AddOp))
+        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::AddOp))
     };
     ("sub-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SubOp))
+        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::SubOp))
     };
     ("exp-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ExpOp))
+        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ExpOp))
     };
     ("sin-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SinOp))
+        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::SinOp))
     };
     ("Matmul-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::MatmulOp))
+        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::MatmulOp))
     };
     ("Conv-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ConvOp))
+        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ConvOp))
     };
 }
 
@@ -157,28 +157,41 @@ macro_rules! build_msg {
 
     // operation workload msg
     ("identity-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::IdentityOp)))
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+            MockOpCode::IdentityOp,
+        )))
     };
     ("add-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::AddOp)))
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+            MockOpCode::AddOp,
+        )))
     };
     ("sub-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SubOp)))
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+            MockOpCode::SubOp,
+        )))
     };
     ("exp-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ExpOp)))
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+            MockOpCode::ExpOp,
+        )))
     };
     ("sin-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::SinOp)))
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+            MockOpCode::SinOp,
+        )))
     };
     ("Matmul-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::MatmulOp)))
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+            MockOpCode::MatmulOp,
+        )))
     };
     ("Conv-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ConvOp)))
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+            MockOpCode::ConvOp,
+        )))
     };
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -186,13 +199,13 @@ mod tests {
 
     #[tokio::test]
     async fn build_system_using_macro_test0() {
-        let system = build_system!("raptor");
+        let system = build_mock_system!("raptor");
         assert_eq!(system.name(), "raptor");
     }
 
     #[tokio::test]
     async fn build_system_using_macro_test1() {
-        let system = build_system!("raptor", 4);
+        let system = build_mock_system!("raptor", 4);
         assert_eq!(system.name(), "raptor");
         // TODO-FIX#1, currently not spawn at creation due to async-sync
         // assert_eq!(system.ranks(), 4);
@@ -219,13 +232,19 @@ mod tests {
     #[test]
     fn build_add_op_test() {
         let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("add-op");
-        assert_eq!(msg, LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::AddOp)));
+        assert_eq!(
+            msg,
+            LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::AddOp))
+        );
     }
 
     #[test]
     fn build_exp_op_test() {
         let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("exp-op");
-        assert_eq!(msg, LoadfreeMessage::WorkloadMsg(Workload::new(OpCode::ExpOp)));
+        assert_eq!(
+            msg,
+            LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ExpOp))
+        );
     }
 
     #[test]

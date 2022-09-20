@@ -14,6 +14,7 @@ use std::marker::PhantomData;
 use std::{thread, time};
 
 use crate::actors::*;
+use crate::cost_model::{MockOpCode, OpCodeLike};
 use crate::executor::{Executor, ExecutorLike};
 use crate::mailbox::*;
 use crate::messages::*;
@@ -70,7 +71,7 @@ impl SystemConfig {
 ///
 /// #[tokio::main]
 /// async fn main() {
-///     let system = build_system!("mock system", 2);
+///     let system = build_mock_system!("mock system", 2);
 ///     assert_eq!(system.name(), "mock system".to_string());
 ///     // TODO-FIX#1, currently not spawn at creation due to async-sync
 ///     // assert_eq!(system.ranks(), 2);
@@ -89,14 +90,15 @@ impl SystemBuilder {
     }
 
     pub fn build_with_config<
-        T: 'static + ExecutorLike<TensorType = U> + Send + Sync,
+        T: 'static + ExecutorLike<TensorType = U, OpCodeType = O> + Send + Sync,
         U: 'static + TensorLike + Clone + Send + Sync + Debug,
+        O: 'static + OpCodeLike + Debug + Send + Sync,
     >(
         &mut self,
         config: SystemConfig,
-    ) -> ActorSystemHandle<T, U> {
+    ) -> ActorSystemHandle<T, U, O> {
         self.cfg = Some(config);
-        let mut system = ActorSystemHandle::<T, U>::new(&self.config().name().to_owned());
+        let mut system = ActorSystemHandle::<T, U, O>::new(&self.config().name().to_owned());
         // TODO-FIX#1 make issue_order sync func
         // let cmd = build_loadfree_msg!("spawn", self.config().ranks());
         // system.issue_order(cmd).await;
@@ -109,34 +111,38 @@ impl SystemBuilder {
 }
 
 #[derive(Debug)]
-pub struct ActorSystemHandle<T, U>
+pub struct ActorSystemHandle<T, U, O>
 where
-    T: 'static + ExecutorLike<TensorType = U> + Send + Sync,
+    T: 'static + ExecutorLike<TensorType = U, OpCodeType = O> + Send + Sync,
     U: 'static + TensorLike + Clone + Send + Sync + Debug,
+    O: 'static + OpCodeLike + Debug + Send + Sync,
 {
     name: String,
-    system_cmd_sendbox: mpsc::Sender<RaptorMessage<U>>,
-    _marker: PhantomData<T>,
+    system_cmd_sendbox: mpsc::Sender<RaptorMessage<U, O>>,
+    _markerT: PhantomData<T>,
+    _markerO: PhantomData<O>,
 }
 
-impl<T, U> ActorSystemHandle<T, U>
+impl<T, U, O> ActorSystemHandle<T, U, O>
 where
-    T: 'static + ExecutorLike<TensorType = U> + Send + Sync,
+    T: 'static + ExecutorLike<TensorType = U, OpCodeType = O> + Send + Sync,
     U: 'static + TensorLike + Clone + Send + Sync + Debug,
+    O: 'static + OpCodeLike + Debug + Send + Sync,
 {
     pub fn new(name: &str) -> Self {
         let (sender, receiver) = mpsc::channel(100);
-        let mut system = ActorSystem::<T, U>::new(name, receiver, sender.clone());
+        let mut system = ActorSystem::<T, U, O>::new(name, receiver, sender.clone());
         tokio::spawn(async move { system.run().await });
         Self {
             name: name.to_string(),
             system_cmd_sendbox: sender,
-            _marker: PhantomData,
+            _markerT: PhantomData,
+            _markerO: PhantomData,
         }
     }
 
     // pub fn init() -> () {
-    //     let mut system = ActorSystem::<T, U>::new(name, receiver, sender.clone());
+    //     let mut system = ActorSystem::<T, U, O>::new(name, receiver, sender.clone());
     //     tokio::spawn(async move { system.run().await });
     // }
 
@@ -144,7 +150,7 @@ where
         self.name.clone()
     }
 
-    pub async fn issue_order(&mut self, msg: RaptorMessage<U>) -> () {
+    pub async fn issue_order(&mut self, msg: RaptorMessage<U, O>) -> () {
         println!("issue order = {:#?}", msg);
         info!("issue order = {:#?}", msg);
         self.system_cmd_sendbox.send(msg).await;
@@ -157,37 +163,40 @@ where
 }
 
 #[derive(Debug)]
-pub struct ActorSystem<T, U>
+pub struct ActorSystem<T, U, O>
 where
-    T: 'static + ExecutorLike<TensorType = U> + Send,
+    T: 'static + ExecutorLike<TensorType = U, OpCodeType = O> + Send,
     U: 'static + TensorLike + Clone + Send + Sync + Debug,
+    O: 'static + OpCodeLike + Debug + Send,
 {
     // TODO need a state machine that monitor actors
     // and allow graceful shutdown
     name: String,
     ranks: usize,
-    pub mails: Vec<mpsc::Sender<RaptorMessage<U>>>,
+    pub mails: Vec<mpsc::Sender<RaptorMessage<U, O>>>,
     pub availables: Vec<usize>,
-    system_cmd_recvbox: mpsc::Receiver<RaptorMessage<U>>,
-    cloned_sendbox: mpsc::Sender<RaptorMessage<U>>,
-    delayed_tensor_types: Vec<RaptorMessage<U>>,
-    _marker: PhantomData<T>,
+    system_cmd_recvbox: mpsc::Receiver<RaptorMessage<U, O>>,
+    cloned_sendbox: mpsc::Sender<RaptorMessage<U, O>>,
+    delayed_tensor_types: Vec<RaptorMessage<U, O>>,
+    _markerT: PhantomData<T>,
+    _markerO: PhantomData<O>,
 }
 
-impl<T, U> ActorSystem<T, U>
+impl<T, U, O> ActorSystem<T, U, O>
 where
-    T: 'static + ExecutorLike<TensorType = U> + std::marker::Send,
+    T: 'static + ExecutorLike<TensorType = U, OpCodeType = O> + Send,
     U: 'static + TensorLike + Clone + Send + Sync + Debug,
+    O: 'static + OpCodeLike + Debug + Send,
 {
     pub fn new(
         name: &str,
-        receiver: mpsc::Receiver<RaptorMessage<U>>,
-        cloned_sender: mpsc::Sender<RaptorMessage<U>>,
+        receiver: mpsc::Receiver<RaptorMessage<U, O>>,
+        cloned_sender: mpsc::Sender<RaptorMessage<U, O>>,
     ) -> Self {
         // refer to stackoverflow.com/questions/48850403/change-timestamp-format-used-by-env-logger
         // set default usage of info log level
 
-        let mut mailboxes: Vec<mpsc::Sender<RaptorMessage<U>>> = vec![];
+        let mut mailboxes: Vec<mpsc::Sender<RaptorMessage<U, O>>> = vec![];
         Self {
             name: String::from(name),
             ranks: 0,
@@ -196,7 +205,8 @@ where
             system_cmd_recvbox: receiver,
             cloned_sendbox: cloned_sender,
             delayed_tensor_types: vec![],
-            _marker: PhantomData,
+            _markerT: PhantomData,
+            _markerO: PhantomData,
         }
     }
 
@@ -224,7 +234,7 @@ where
             info!("ASYS - creating actor with id = #{}", id);
             let (sender, receiver) = mpsc::channel(16);
             self.mails.push(sender);
-            let mut actor = Actor::<T, U>::new(id, receiver, self.cloned_sendbox.clone());
+            let mut actor = Actor::<T, U, O>::new(id, receiver, self.cloned_sendbox.clone());
             tokio::spawn(async move { actor.run().await });
 
             self.availables.push(id);
@@ -249,7 +259,7 @@ where
     }
 
     #[tracing::instrument(name = "actor_system", skip(self, msg))]
-    pub async fn deliver_to(&self, msg: RaptorMessage<U>, to: usize) {
+    pub async fn deliver_to(&self, msg: RaptorMessage<U, O>, to: usize) {
         self.mails[to].send(msg).await;
         info!("ASYS - deliver message to {}", to);
     }
@@ -348,19 +358,19 @@ mod tests {
 
     #[tokio::test]
     async fn create_system_with_new_test_1() {
-        let system = ActorSystemHandle::<Executor, Workload>::new("raptor system");
+        let system = ActorSystemHandle::<Executor, Workload, MockOpCode>::new("raptor system");
         assert_eq!(system.name(), "raptor system");
     }
 
     #[tokio::test]
     async fn create_system_with_macro_test_1() {
-        let mut system = build_system!("Raptors");
+        let mut system = build_mock_system!("Raptors");
         assert_eq!(system.name(), "Raptors");
     }
 
     #[tokio::test]
     async fn create_system_with_macro_test_2() {
-        let mut system = build_system!("Raptors", 2);
+        let mut system = build_mock_system!("Raptors", 2);
         assert_eq!(system.name(), "Raptors");
         // TODO-FIX#1, currently not spawn at creation due to async-sync
         // assert_eq!(system.ranks(), 2);

@@ -9,40 +9,45 @@ use uuid::{Urn, Uuid};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::marker::PhantomData;
 use std::marker::Send;
 use std::str::Bytes;
 use std::{thread, time};
 
-use crate::{build_loadfree_msg};
-use crate::cost_model::OpCode;
+use crate::build_loadfree_msg;
+use crate::cost_model::{MockOpCode, OpCodeLike};
 use crate::executor::{Executor, ExecutorLike};
 use crate::mailbox::*;
 use crate::messages::{ActorCommand, LoadfreeMessage, MessageLike, PayloadMessage, RaptorMessage};
 use crate::tensor_types::{TensorLike, Workload};
 
-// placehold for actors
+// T: executor type
+// U: Tensor type
+// O: OpCode type
 #[derive(Debug)]
-pub struct Actor<T, U>
+pub struct Actor<T, U, O>
 where
-    T: ExecutorLike<TensorType = U>,
+    T: ExecutorLike<TensorType = U, OpCodeType = O>,
     U: TensorLike + Clone + Debug,
+    O: OpCodeLike + Debug,
 {
     id: usize,
     uuid: Uuid,
-    receiver: mpsc::Receiver<RaptorMessage<U>>,
-    respond_to: mpsc::Sender<RaptorMessage<U>>,
+    receiver: mpsc::Receiver<RaptorMessage<U, O>>,
+    respond_to: mpsc::Sender<RaptorMessage<U, O>>,
     executor: T,
 }
 
-impl<T, U> Actor<T, U>
+impl<T, U, O> Actor<T, U, O>
 where
-    T: ExecutorLike<TensorType = U>,
+    T: ExecutorLike<TensorType = U, OpCodeType = O>,
     U: TensorLike + Clone + Debug,
+    O: OpCodeLike + Debug,
 {
     pub fn new(
         id: usize,
-        receiver: mpsc::Receiver<RaptorMessage<U>>,
-        respond_to: mpsc::Sender<RaptorMessage<U>>,
+        receiver: mpsc::Receiver<RaptorMessage<U, O>>,
+        respond_to: mpsc::Sender<RaptorMessage<U, O>>,
     ) -> Self {
         let new_uuid = Uuid::new_v4();
         let mut exec = T::new();
@@ -64,14 +69,14 @@ where
         self.uuid
     }
 
-    fn fetch_and_handle(&mut self, msg: RaptorMessage<U>) -> Result<(), String> {
+    fn fetch_and_handle(&mut self, msg: RaptorMessage<U, O>) -> Result<(), String> {
         match msg {
             RaptorMessage::LoadfreeMSG(_msg) => self.fetch_and_handle_message(_msg),
             RaptorMessage::PayloadMSG(_msg) => self.fetch_and_handle_payload(_msg),
         }
     }
 
-    fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U>) -> Result<(), String> {
+    fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
         match msg {
             PayloadMessage::ComputeFunctorMsg {
                 op,
@@ -154,36 +159,39 @@ where
     }
 
     #[tracing::instrument(name = "actor::on_compute", skip(self, lhs, rhs))]
-    fn on_compute_new(&mut self, op: OpCode, lhs: U, rhs: U) -> Result<U, String> {
+    fn on_compute_new(&mut self, op: O, lhs: U, rhs: U) -> Result<U, String> {
         let outs = self.executor.compute_binary(op, lhs, rhs);
         Ok(outs)
     }
 }
 
-impl<T, U> Drop for Actor<T, U>
+impl<T, U, O> Drop for Actor<T, U, O>
 where
-    T: ExecutorLike<TensorType = U>,
+    T: ExecutorLike<TensorType = U, OpCodeType = O>,
     U: TensorLike + Clone + Debug,
+    O: OpCodeLike + Debug,
 {
     fn drop(&mut self) {
         info!("ACT#{} - DROP", self.id);
     }
 }
 
-impl<T, U> PartialOrd for Actor<T, U>
+impl<T, U, O> PartialOrd for Actor<T, U, O>
 where
-    T: ExecutorLike<TensorType = U>,
+    T: ExecutorLike<TensorType = U, OpCodeType = O>,
     U: TensorLike + Clone + Debug,
+    O: OpCodeLike + Debug,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T, U> Ord for Actor<T, U>
+impl<T, U, O> Ord for Actor<T, U, O>
 where
-    T: ExecutorLike<TensorType = U>,
+    T: ExecutorLike<TensorType = U, OpCodeType = O>,
     U: TensorLike + Clone + Debug,
+    O: OpCodeLike + Debug,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.id.cmp(&other.id)
@@ -191,20 +199,22 @@ where
 }
 
 // TODO fix duplicate with uuid add to name
-impl<T, U> PartialEq for Actor<T, U>
+impl<T, U, O> PartialEq for Actor<T, U, O>
 where
-    T: ExecutorLike<TensorType = U>,
+    T: ExecutorLike<TensorType = U, OpCodeType = O>,
     U: TensorLike + Clone + Debug,
+    O: OpCodeLike + Debug,
 {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
 
-impl<T, U> Eq for Actor<T, U>
+impl<T, U, O> Eq for Actor<T, U, O>
 where
-    T: ExecutorLike<TensorType = U>,
+    T: ExecutorLike<TensorType = U, OpCodeType = O>,
     U: TensorLike + Clone + Debug,
+    O: OpCodeLike + Debug,
 {
 }
 

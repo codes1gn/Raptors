@@ -5,7 +5,7 @@ use std::{thread, time};
 
 use tokio::sync::oneshot;
 
-use crate::cost_model::OpCode;
+use crate::cost_model::OpCodeLike;
 use crate::executor::*;
 use crate::tensor_types::{TensorLike, Workload};
 
@@ -14,17 +14,28 @@ pub trait MessageLike {}
 
 // Raptor Top-level Message Type
 #[derive(Debug)]
-pub enum RaptorMessage<T>
+pub enum RaptorMessage<T, O>
 where
     T: TensorLike + Clone,
+    O: OpCodeLike,
 {
     LoadfreeMSG(LoadfreeMessage<T>),
-    PayloadMSG(PayloadMessage<T>),
+    PayloadMSG(PayloadMessage<T, O>),
 }
 
-impl<T> MessageLike for RaptorMessage<T> where T: TensorLike + Clone {}
+impl<T, O> MessageLike for RaptorMessage<T, O>
+where
+    T: TensorLike + Clone,
+    O: OpCodeLike,
+{
+}
 impl<T> MessageLike for LoadfreeMessage<T> where T: TensorLike + Clone {}
-impl<T> MessageLike for PayloadMessage<T> where T: TensorLike + Clone {}
+impl<T, O> MessageLike for PayloadMessage<T, O>
+where
+    T: TensorLike + Clone,
+    O: OpCodeLike,
+{
+}
 
 // LoadfreeMessage without carrying payloads
 ///```
@@ -50,12 +61,13 @@ where
 
 // PayloadMessage with payloads
 #[derive(Debug)]
-pub enum PayloadMessage<T>
+pub enum PayloadMessage<T, O>
 where
     T: TensorLike + Clone,
+    O: OpCodeLike,
 {
     ComputeFunctorMsg {
-        op: OpCode,
+        op: O,
         lhs: T,
         rhs: T,
         respond_to: oneshot::Sender<T>,

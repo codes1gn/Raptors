@@ -1,6 +1,6 @@
 // LICENSE PLACEHOLDER
 //
-use crate::cost_model::OpCode;
+use crate::cost_model::MockOpCode;
 use crate::tensor_types::Workload;
 
 // wrap a dedicated executor module that only consider how to do computations
@@ -21,13 +21,14 @@ pub struct Executor {}
 // }
 pub trait ExecutorLike {
     type TensorType;
+    type OpCodeType;
     fn new() -> Self;
     fn init(&mut self) -> ();
     fn compute_mock(&mut self, arg: Self::TensorType) -> Self::TensorType;
-    fn compute_unary(&mut self, op: OpCode, arg: Self::TensorType) -> Self::TensorType;
+    fn compute_unary(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType;
     fn compute_binary(
         &mut self,
-        op: OpCode,
+        op: Self::OpCodeType,
         lhs: Self::TensorType,
         rhs: Self::TensorType,
     ) -> Self::TensorType;
@@ -40,6 +41,7 @@ pub trait ExecutorLike {
 // }
 
 impl ExecutorLike for Executor {
+    type OpCodeType = MockOpCode;
     type TensorType = Workload;
     fn new() -> Executor {
         Self {}
@@ -52,14 +54,14 @@ impl ExecutorLike for Executor {
         arg
     }
 
-    fn compute_unary(&mut self, op: OpCode, arg: Self::TensorType) -> Self::TensorType {
+    fn compute_unary(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType {
         arg.mock_run();
         arg
     }
 
     fn compute_binary(
         &mut self,
-        op: OpCode,
+        op: Self::OpCodeType,
         lhs: Self::TensorType,
         rhs: Self::TensorType,
     ) -> Self::TensorType {
@@ -78,7 +80,7 @@ mod tests {
     #[test]
     fn compute_workload() {
         let mut exec = Executor::new();
-        let load = Workload::new(OpCode::AddOp);
+        let load = Workload::new(MockOpCode::AddOp);
         let now = time::Instant::now();
         exec.compute_mock(load);
         assert!(now.elapsed() >= time::Duration::from_millis(11));

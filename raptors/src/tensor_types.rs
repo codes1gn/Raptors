@@ -30,13 +30,13 @@ pub trait TensorLike {}
 //
 #[derive(Clone, Debug, PartialEq, Default, Eq)]
 pub struct Workload {
-    op: OpCode,
+    op: MockOpCode,
 }
 
 impl TensorLike for Workload {}
 
 impl Workload {
-    pub fn new(op: OpCode) -> Workload {
+    pub fn new(op: MockOpCode) -> Workload {
         return Self { op: op };
     }
 
@@ -44,7 +44,7 @@ impl Workload {
         CostModel::new().estimate(self)
     }
 
-    pub fn op(&self) -> OpCode {
+    pub fn op(&self) -> MockOpCode {
         self.op.clone()
     }
 
@@ -86,44 +86,44 @@ mod tests {
 
     #[test]
     fn create_dummy_workload_test() {
-        let load = Workload::new(OpCode::AddOp);
+        let load = Workload::new(MockOpCode::AddOp);
         assert_eq!(load.payload(), 11 as usize);
-        assert_eq!(load.op(), OpCode::AddOp);
+        assert_eq!(load.op(), MockOpCode::AddOp);
     }
 
     #[test]
     fn worklaod_mock_run_test() {
-        let load = Workload::new(OpCode::ConvOp);
+        let load = Workload::new(MockOpCode::ConvOp);
         let now = time::Instant::now();
         load.mock_run();
-        assert_eq!(load.op(), OpCode::ConvOp);
+        assert_eq!(load.op(), MockOpCode::ConvOp);
     }
 
     #[test]
     fn workload_ops_default_test() {
-        let load = Workload::new(OpCode::default());
-        assert_eq!(load.op(), OpCode::IdentityOp);
+        let load = Workload::new(MockOpCode::default());
+        assert_eq!(load.op(), MockOpCode::IdentityOp);
     }
 
     #[test]
     fn workload_ops_matmul_test() {
-        let load = Workload::new(OpCode::MatmulOp);
-        assert_eq!(load.op(), OpCode::MatmulOp);
+        let load = Workload::new(MockOpCode::MatmulOp);
+        assert_eq!(load.op(), MockOpCode::MatmulOp);
     }
 
     #[test]
     fn workload_ops_exp_test() {
-        let load = Workload::new(OpCode::ExpOp);
-        assert_eq!(load.op(), OpCode::ExpOp);
+        let load = Workload::new(MockOpCode::ExpOp);
+        assert_eq!(load.op(), MockOpCode::ExpOp);
     }
 
     #[test]
     fn workload_message_test() {
-        let load = Workload::new(OpCode::ExpOp);
+        let load = Workload::new(MockOpCode::ExpOp);
         let wlmsg = LoadfreeMessage::<Workload>::WorkloadMsg(load);
         assert_eq!(
             wlmsg,
-            LoadfreeMessage::<Workload>::WorkloadMsg(Workload::new(OpCode::ExpOp))
+            LoadfreeMessage::<Workload>::WorkloadMsg(Workload::new(MockOpCode::ExpOp))
         );
     }
 }
