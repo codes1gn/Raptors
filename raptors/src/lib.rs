@@ -18,8 +18,8 @@ pub mod prelude {
     pub use crate::executor::{Executor, ExecutorLike};
     pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
     pub use crate::messages::{
-        ActorCommand, ActorMsg, GeneralMessage, PayloadMessage, SystemCommand, SystemMsg,
-        TypedMessage,
+        ActorCommand, ActorMsg, LoadfreeMessage, MessageLike, PayloadMessage, RaptorMessage,
+        SystemCommand, SystemMsg,
     };
     pub use crate::system::{ActorSystem, ActorSystemHandle, SystemBuilder, SystemConfig};
     pub use crate::tensor_types::{TensorLike, Workload, WorkloadMsg};

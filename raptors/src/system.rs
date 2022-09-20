@@ -115,7 +115,7 @@ where
     U: 'static + TensorLike + Clone + Send + Sync + Debug,
 {
     name: String,
-    system_cmd_sendbox: mpsc::Sender<GeneralMessage<U>>,
+    system_cmd_sendbox: mpsc::Sender<RaptorMessage<U>>,
     _marker: PhantomData<T>,
 }
 
@@ -144,15 +144,15 @@ where
         self.name.clone()
     }
 
-    pub async fn issue_order(&mut self, msg: GeneralMessage<U>) -> () {
+    pub async fn issue_order(&mut self, msg: RaptorMessage<U>) -> () {
         println!("issue order = {:#?}", msg);
         info!("issue order = {:#?}", msg);
         self.system_cmd_sendbox.send(msg).await;
     }
 
     pub async fn spawn(&mut self, cnt: usize) {
-        let cmd: TypedMessage<U> = build_msg!("spawn", cnt);
-        self.issue_order(GeneralMessage::Cmd(cmd)).await
+        let cmd: LoadfreeMessage<U> = build_msg!("spawn", cnt);
+        self.issue_order(RaptorMessage::LoadfreeMSG(cmd)).await
     }
 }
 
@@ -166,11 +166,11 @@ where
     // and allow graceful shutdown
     name: String,
     ranks: usize,
-    pub mails: Vec<mpsc::Sender<GeneralMessage<U>>>,
+    pub mails: Vec<mpsc::Sender<RaptorMessage<U>>>,
     pub availables: Vec<usize>,
-    system_cmd_recvbox: mpsc::Receiver<GeneralMessage<U>>,
-    cloned_sendbox: mpsc::Sender<GeneralMessage<U>>,
-    delayed_tensor_types: Vec<GeneralMessage<U>>,
+    system_cmd_recvbox: mpsc::Receiver<RaptorMessage<U>>,
+    cloned_sendbox: mpsc::Sender<RaptorMessage<U>>,
+    delayed_tensor_types: Vec<RaptorMessage<U>>,
     _marker: PhantomData<T>,
 }
 
@@ -181,13 +181,13 @@ where
 {
     pub fn new(
         name: &str,
-        receiver: mpsc::Receiver<GeneralMessage<U>>,
-        cloned_sender: mpsc::Sender<GeneralMessage<U>>,
+        receiver: mpsc::Receiver<RaptorMessage<U>>,
+        cloned_sender: mpsc::Sender<RaptorMessage<U>>,
     ) -> Self {
         // refer to stackoverflow.com/questions/48850403/change-timestamp-format-used-by-env-logger
         // set default usage of info log level
 
-        let mut mailboxes: Vec<mpsc::Sender<GeneralMessage<U>>> = vec![];
+        let mut mailboxes: Vec<mpsc::Sender<RaptorMessage<U>>> = vec![];
         Self {
             name: String::from(name),
             ranks: 0,
@@ -249,15 +249,15 @@ where
     }
 
     #[tracing::instrument(name = "actor_system", skip(self, msg))]
-    pub async fn deliver_to(&self, msg: GeneralMessage<U>, to: usize) {
+    pub async fn deliver_to(&self, msg: RaptorMessage<U>, to: usize) {
         self.mails[to].send(msg).await;
         info!("ASYS - deliver message to {}", to);
     }
 
     #[tracing::instrument(name = "actor_system", skip(self, msg))]
-    pub async fn broadcast(&self, msg: TypedMessage<U>) {
+    pub async fn broadcast(&self, msg: LoadfreeMessage<U>) {
         for mail in &self.mails {
-            mail.send(GeneralMessage::Cmd(msg.clone())).await;
+            mail.send(RaptorMessage::LoadfreeMSG(msg.clone())).await;
         }
         info!("ASYS - broadcast message to all");
     }
@@ -269,7 +269,7 @@ where
             match self.system_cmd_recvbox.recv().await {
                 Some(gmsg) => {
                     match gmsg {
-                        GeneralMessage::Payload(ref msg) => {
+                        RaptorMessage::PayloadMSG(ref msg) => {
                             match msg {
                                 PayloadMessage::ComputeFunctorMsg { .. } => {
                                     let idle_actor = self.poll_ready_actor();
@@ -287,9 +287,9 @@ where
                                 }
                             }
                         }
-                        GeneralMessage::Cmd(ref msg) => {
+                        RaptorMessage::LoadfreeMSG(ref msg) => {
                             match msg {
-                                TypedMessage::SystemMsg(cmd) => match cmd {
+                                LoadfreeMessage::SystemMsg(cmd) => match cmd {
                                     SystemCommand::Spawn(cnt) => {
                                         info!("ASYS - received spawn-actors cmd with #{}", cnt);
                                         self.spawn_actors(*cnt)
@@ -298,7 +298,7 @@ where
                                     SystemCommand::HaltAll => self.halt_all(),
                                     _ => Err("not implemented".to_string()),
                                 },
-                                TypedMessage::WorkloadMsg(_) => {
+                                LoadfreeMessage::WorkloadMsg(_) => {
                                     let idle_actor = self.poll_ready_actor();
                                     match idle_actor {
                                         None => {
@@ -312,7 +312,7 @@ where
                                         }
                                     }
                                 }
-                                TypedMessage::ActorMsg(_amsg) => match _amsg {
+                                LoadfreeMessage::ActorMsg(_amsg) => match _amsg {
                                     ActorCommand::Available(idx) => {
                                         info!("ASYS - requeue available actor #{}", idx);
                                         self.availables.push(*idx);

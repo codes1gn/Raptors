@@ -4,7 +4,7 @@ use std::{thread, time};
 use tracing::info;
 
 use crate::cost_model::CostModel;
-use crate::messages::TypedMessage;
+use crate::messages::LoadfreeMessage;
 use crate::prelude::*;
 
 // defining TensorLike trait
@@ -59,9 +59,9 @@ impl Workload {
     }
 }
 
-impl Into<TypedMessage<Workload>> for Workload {
-    fn into(self) -> TypedMessage<Workload> {
-        TypedMessage::<Workload>::WorkloadMsg(self)
+impl Into<LoadfreeMessage<Workload>> for Workload {
+    fn into(self) -> LoadfreeMessage<Workload> {
+        LoadfreeMessage::<Workload>::WorkloadMsg(self)
     }
 }
 
@@ -120,10 +120,10 @@ mod tests {
     #[test]
     fn workload_message_test() {
         let load = Workload::new(OpCode::ExpOp);
-        let wlmsg = TypedMessage::<Workload>::WorkloadMsg(load);
+        let wlmsg = LoadfreeMessage::<Workload>::WorkloadMsg(load);
         assert_eq!(
             wlmsg,
-            TypedMessage::<Workload>::WorkloadMsg(Workload::new(OpCode::ExpOp))
+            LoadfreeMessage::<Workload>::WorkloadMsg(Workload::new(OpCode::ExpOp))
         );
     }
 }

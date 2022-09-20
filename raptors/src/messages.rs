@@ -9,44 +9,46 @@ use crate::cost_model::OpCode;
 use crate::executor::*;
 use crate::tensor_types::{TensorLike, Workload};
 
-// message trait is the definition of behaviours that the concept
-// `message` shall obey, in other words, two properties referred.
-// 1. sendable via mailboxes
-// 2. tracable on its sender and receiver
-//
-// TODO(long-term):
-// 1. make msg async to passing with non-blocking style
-// 2. make it typed to build the effect system/handlers.
-// 3. support Se/Des in future
-// 4. consider stream processing and compression designs
-#[allow(dead_code)]
-type Message = Box<dyn Any + Send>;
+// Message Trait
+pub trait MessageLike {}
 
-// TODO(albert, short-term) complete the family of MessageTypes
-// test with simple design at first
+// Raptor Top-level Message Type
+#[derive(Debug)]
+pub enum RaptorMessage<T>
+where
+    T: TensorLike + Clone,
+{
+    LoadfreeMSG(LoadfreeMessage<T>),
+    PayloadMSG(PayloadMessage<T>),
+}
+
+impl<T> MessageLike for RaptorMessage<T> where T: TensorLike + Clone {}
+impl<T> MessageLike for LoadfreeMessage<T> where T: TensorLike + Clone {}
+impl<T> MessageLike for PayloadMessage<T> where T: TensorLike + Clone {}
+
+// LoadfreeMessage without carrying payloads
 ///```
 /// use raptors::prelude::*;
 ///
-/// let msg: TypedMessage<Workload> = build_msg!("spawn", 1);
+/// let msg: LoadfreeMessage<Workload> = build_msg!("spawn", 1);
 ///
 /// # // define a test function for type check
-/// pub fn test_msg_type(msg: TypedMessage<Workload>) -> bool {
+/// pub fn test_msg_type(msg: LoadfreeMessage<Workload>) -> bool {
 ///     true
 /// }
 /// assert!(test_msg_type(msg.into()));
 ///```
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum TypedMessage<T>
+pub enum LoadfreeMessage<T>
 where
     T: TensorLike + Clone,
 {
     SystemMsg(SystemCommand),
     ActorMsg(ActorCommand),
     WorkloadMsg(T),
-    // ComputeFunctorMsg { op: OpCode, lhs: T, rhs: T },
-    // ComputeFunctorMsg { op: OpCode, lhs: T, rhs: T, respond_to: oneshot::Sender<T> },
 }
 
+// PayloadMessage with payloads
 #[derive(Debug)]
 pub enum PayloadMessage<T>
 where
@@ -60,76 +62,17 @@ where
     },
 }
 
-#[derive(Debug)]
-pub enum GeneralMessage<T>
-where
-    T: TensorLike + Clone,
-{
-    Cmd(TypedMessage<T>),
-    Payload(PayloadMessage<T>),
-}
-
-impl<T> MessageLike for TypedMessage<T> where T: TensorLike + Clone {}
-
-impl<T> MessageLike for PayloadMessage<T> where T: TensorLike + Clone {}
-
-pub trait MessageLike {}
-
-// impl Clone for TypedMessage<T>
-// where
-//     T: TensorLike + Clone,
-// {
-//     fn clone(&self) -> Self {
-//         match self {
-//             SystemMsg(a) => TypedMessage::<T>::SystemMsg(a.clone()),
-//             ActorMsg(a) => TypedMessage::<T>::ActorMsg(a.clone()),
-//             WorkloadMsg(a) => TypedMessage::<T>::WorkloadMsg(a.clone()),
-//             _ => panic!("not clonable for ComputeFunctorMsg"),
-//         }
-//     }
-// }
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum ActorCommand {
-    Available(usize),
-    PLACEHOLDER,
-}
-
-impl<T: TensorLike + Clone> Into<TypedMessage<T>> for ActorCommand {
-    fn into(self) -> TypedMessage<T> {
-        TypedMessage::<T>::ActorMsg(self)
-    }
-}
-
-/// SystemMsg indicates the message of the system.
+// SystemMsg that received and processed only by actor_system
 #[derive(Clone, Debug, PartialEq)]
-pub struct ActorMsg {
-    cmd: ActorCommand,
-}
-
-impl ActorMsg {
-    pub fn new(cmd: ActorCommand) -> Self {
-        return Self { cmd: cmd };
-    }
+pub struct SystemMsg {
+    cmd: SystemCommand,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SystemCommand {
-    HaltAll, // add more accurate destroy control msg when needed
+    HaltAll,
     HaltOn(usize),
     Spawn(usize),
-}
-
-impl<T: TensorLike + Clone> Into<TypedMessage<T>> for SystemCommand {
-    fn into(self) -> TypedMessage<T> {
-        TypedMessage::<T>::SystemMsg(self)
-    }
-}
-
-/// SystemMsg indicates the message of the system.
-#[derive(Clone, Debug, PartialEq)]
-pub struct SystemMsg {
-    cmd: SystemCommand,
 }
 
 impl SystemMsg {
@@ -138,7 +81,36 @@ impl SystemMsg {
     }
 }
 
-// unit tests
+impl<T: TensorLike + Clone> Into<LoadfreeMessage<T>> for SystemCommand {
+    fn into(self) -> LoadfreeMessage<T> {
+        LoadfreeMessage::<T>::SystemMsg(self)
+    }
+}
+
+// ActorMsg received and processed by working actors
+#[derive(Clone, Debug, PartialEq)]
+pub struct ActorMsg {
+    cmd: ActorCommand,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ActorCommand {
+    Available(usize),
+    PLACEHOLDER,
+}
+
+impl ActorMsg {
+    pub fn new(cmd: ActorCommand) -> Self {
+        return Self { cmd: cmd };
+    }
+}
+
+impl<T: TensorLike + Clone> Into<LoadfreeMessage<T>> for ActorCommand {
+    fn into(self) -> LoadfreeMessage<T> {
+        LoadfreeMessage::<T>::ActorMsg(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

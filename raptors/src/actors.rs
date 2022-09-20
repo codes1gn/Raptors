@@ -17,7 +17,7 @@ use crate::build_msg;
 use crate::cost_model::OpCode;
 use crate::executor::{Executor, ExecutorLike};
 use crate::mailbox::*;
-use crate::messages::{ActorCommand, GeneralMessage, MessageLike, PayloadMessage, TypedMessage};
+use crate::messages::{ActorCommand, LoadfreeMessage, MessageLike, PayloadMessage, RaptorMessage};
 use crate::tensor_types::{TensorLike, Workload};
 
 // placehold for actors
@@ -29,8 +29,8 @@ where
 {
     id: usize,
     uuid: Uuid,
-    receiver: mpsc::Receiver<GeneralMessage<U>>,
-    respond_to: mpsc::Sender<GeneralMessage<U>>,
+    receiver: mpsc::Receiver<RaptorMessage<U>>,
+    respond_to: mpsc::Sender<RaptorMessage<U>>,
     executor: T,
 }
 
@@ -41,8 +41,8 @@ where
 {
     pub fn new(
         id: usize,
-        receiver: mpsc::Receiver<GeneralMessage<U>>,
-        respond_to: mpsc::Sender<GeneralMessage<U>>,
+        receiver: mpsc::Receiver<RaptorMessage<U>>,
+        respond_to: mpsc::Sender<RaptorMessage<U>>,
     ) -> Self {
         let new_uuid = Uuid::new_v4();
         let mut exec = T::new();
@@ -64,10 +64,10 @@ where
         self.uuid
     }
 
-    fn fetch_and_handle(&mut self, msg: GeneralMessage<U>) -> Result<(), String> {
+    fn fetch_and_handle(&mut self, msg: RaptorMessage<U>) -> Result<(), String> {
         match msg {
-            GeneralMessage::Cmd(_msg) => self.fetch_and_handle_message(_msg),
-            GeneralMessage::Payload(_msg) => self.fetch_and_handle_payload(_msg),
+            RaptorMessage::LoadfreeMSG(_msg) => self.fetch_and_handle_message(_msg),
+            RaptorMessage::PayloadMSG(_msg) => self.fetch_and_handle_payload(_msg),
         }
     }
 
@@ -91,21 +91,21 @@ where
         }
     }
 
-    fn fetch_and_handle_message(&mut self, msg: TypedMessage<U>) -> Result<(), String> {
+    fn fetch_and_handle_message(&mut self, msg: LoadfreeMessage<U>) -> Result<(), String> {
         match msg {
-            TypedMessage::WorkloadMsg(_wkl) => {
+            LoadfreeMessage::WorkloadMsg(_wkl) => {
                 // info!("ACT#{} - COMPUTE {:?}", self.id, _wkl);
                 self.on_compute(_wkl)
             }
-            // TypedMessage::ComputeFunctorMsg { op, lhs, rhs, respond_to } => {
-            // TypedMessage::ComputeFunctorMsg { op, lhs, rhs } => {
+            // LoadfreeMessage::ComputeFunctorMsg { op, lhs, rhs, respond_to } => {
+            // LoadfreeMessage::ComputeFunctorMsg { op, lhs, rhs } => {
             //     // TODO need unary branch
             //     println!("received");
             //     let outs = self.on_compute_new(op, lhs, rhs);
             //     // TODO sendback
             //     Ok(())
             // },
-            TypedMessage::ActorMsg(_amsg) => {
+            LoadfreeMessage::ActorMsg(_amsg) => {
                 info!("ACT#{} - HANDLE ActorMSG - {:#?}", self.id, _amsg);
                 Ok(())
             }
@@ -125,7 +125,7 @@ where
                 Err(TryRecvError::Empty) => {
                     let msg = build_msg!("available", self.id);
                     // TODO update build_msg with generalmessage
-                    self.respond_to.try_send(GeneralMessage::Cmd(msg));
+                    self.respond_to.try_send(RaptorMessage::LoadfreeMSG(msg));
                     info!("ACT#{} - tell supervisor i am available", self.id);
                     match self.receiver.recv().await {
                         Some(_msg) => {
