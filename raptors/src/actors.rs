@@ -3,23 +3,17 @@ use tracing::info;
 // use tracing::instrument;
 // use tracing::{span, Level};
 use tokio::sync::mpsc::error::TryRecvError;
-use tokio::sync::{mpsc, oneshot};
-use uuid::{Urn, Uuid};
+use tokio::sync::{mpsc};
+use uuid::{Uuid};
 
 use std::cmp::Ordering;
-use std::collections::HashMap;
 use std::fmt::Debug;
-use std::marker::PhantomData;
-use std::marker::Send;
-use std::str::Bytes;
-use std::{thread, time};
 
 use crate::build_loadfree_msg;
-use crate::cost_model::{MockOpCode, OpCodeLike};
-use crate::executor::{Executor, ExecutorLike};
-use crate::mailbox::*;
-use crate::messages::{ActorCommand, LoadfreeMessage, MessageLike, PayloadMessage, RaptorMessage};
-use crate::tensor_types::{TensorLike, Workload};
+use crate::cost_model::{OpCodeLike};
+use crate::executor::{ExecutorLike};
+use crate::messages::{ActorCommand, LoadfreeMessage, PayloadMessage, RaptorMessage};
+use crate::tensor_types::{TensorLike};
 
 // T: executor type
 // U: Tensor type
@@ -220,5 +214,5 @@ where
 #[cfg(test)]
 
 mod tests {
-    use super::*;
+
 }

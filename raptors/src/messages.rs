@@ -1,13 +1,9 @@
 // LICENSE PLACEHOLDER
 
-use std::any::Any;
-use std::{thread, time};
-
 use tokio::sync::oneshot;
 
 use crate::cost_model::OpCodeLike;
-use crate::executor::*;
-use crate::tensor_types::{TensorLike, Workload};
+use crate::tensor_types::{TensorLike};
 
 // Message Trait
 pub trait MessageLike {}
@@ -125,5 +121,5 @@ impl<T: TensorLike + Clone> Into<LoadfreeMessage<T>> for ActorCommand {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+
 }
