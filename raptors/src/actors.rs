@@ -85,12 +85,10 @@ where
                 respond_to,
             } => {
                 // TODO need unary branch
-                println!("received");
                 let outs = self.on_compute_new(op, lhs, rhs).expect("compute failed");
-                println!("sending callback");
+                // println!("sending callback");
                 respond_to.send(outs);
-                println!("Dona - sending callback");
-                // TODO sendback
+                // println!("Dona - sending callback");
                 Ok(())
             }
         }

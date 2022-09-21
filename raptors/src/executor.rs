@@ -26,6 +26,7 @@ pub trait ExecutorLike {
     fn init(&mut self) -> ();
     fn compute_mock(&mut self, arg: Self::TensorType) -> Self::TensorType;
     fn compute_unary(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType;
+    // TODO need to support monomorphism for SupportedDataType
     fn compute_binary(
         &mut self,
         op: Self::OpCodeType,

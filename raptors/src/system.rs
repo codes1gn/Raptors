@@ -151,7 +151,7 @@ where
     }
 
     pub async fn issue_order(&mut self, msg: RaptorMessage<U, O>) -> () {
-        println!("issue order = {:#?}", msg);
+        // println!("issue order = {:#?}", msg);
         info!("issue order = {:#?}", msg);
         self.system_cmd_sendbox.send(msg).await;
     }
