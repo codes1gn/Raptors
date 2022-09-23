@@ -8,14 +8,10 @@ Dones:
 * builder with macro support, and modify example usage
 * make asynchonously with tokio runtime
 * optimize tokio runtime with tracing + tracing-subscriber + tracing-chrome
-
-epic
 * scheduling: a naive dynamic list scheduling = active_registry (state machine)
   * system on_receive change into a event_loop, copy all senders, one for on_receive, called by parent; others are send to actors for callback-msg-pass
   * actors can re-register into availables, that poll_ready_actor can get first
   * make 100 workloads workable all right
-
-WIPs:
 * scheduling: a naive dynamic list scheduling = active_registry (state machine)
   * <then try to use crt workflow_frontend to call a session embedded actorsystem, with fake executor>
   * session create/own actorsystem
@@ -26,6 +22,9 @@ WIPs:
   * make device_context/functor to impl executor trait and provide that fake one
   * bridge the real function to there
 * make Workload trait to packaging real load, and make real workflow work
+* support executor on dynamic dtype tensor; support T rather than hardcode f32 in U = TensorView<f32>
+
+WIPs:
 
 Backlogs:
 * perf tuning with RUST PERFORMANCE BOOK IN WEBSITES' BOOKMARK

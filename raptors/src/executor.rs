@@ -24,10 +24,10 @@ pub trait ExecutorLike {
     type OpCodeType;
     fn new() -> Self;
     fn init(&mut self) -> ();
-    fn compute_mock(&mut self, arg: Self::TensorType) -> Self::TensorType;
-    fn compute_unary(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType;
+    fn mock_compute(&mut self, arg: Self::TensorType) -> Self::TensorType;
+    fn unary_compute(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType;
     // TODO need to support monomorphism for SupportedDataType
-    fn compute_binary(
+    fn binary_compute(
         &mut self,
         op: Self::OpCodeType,
         lhs: Self::TensorType,
@@ -50,17 +50,17 @@ impl ExecutorLike for Executor {
 
     fn init(&mut self) -> () {}
 
-    fn compute_mock(&mut self, arg: Self::TensorType) -> Self::TensorType {
+    fn mock_compute(&mut self, arg: Self::TensorType) -> Self::TensorType {
         arg.mock_run();
         arg
     }
 
-    fn compute_unary(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType {
+    fn unary_compute(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType {
         arg.mock_run();
         arg
     }
 
-    fn compute_binary(
+    fn binary_compute(
         &mut self,
         op: Self::OpCodeType,
         lhs: Self::TensorType,
@@ -83,7 +83,7 @@ mod tests {
         let mut exec = Executor::new();
         let load = Workload::new(MockOpCode::AddOp);
         let now = time::Instant::now();
-        exec.compute_mock(load);
+        exec.mock_compute(load);
         assert!(now.elapsed() >= time::Duration::from_millis(11));
     }
 }

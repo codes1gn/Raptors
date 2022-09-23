@@ -72,6 +72,7 @@ where
 
     fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
         match msg {
+            // TODO need MSG to handle unary operations
             PayloadMessage::ComputeFunctorMsg {
                 op,
                 lhs,
@@ -79,10 +80,10 @@ where
                 respond_to,
             } => {
                 // TODO need unary branch
-                let outs = self.on_compute_new(op, lhs, rhs).expect("compute failed");
-                // println!("sending callback");
+                let outs = self
+                    .on_binary_compute(op, lhs, rhs)
+                    .expect("compute failed");
                 respond_to.send(outs);
-                // println!("Dona - sending callback");
                 Ok(())
             }
         }
@@ -92,16 +93,8 @@ where
         match msg {
             LoadfreeMessage::WorkloadMsg(_wkl) => {
                 // info!("ACT#{} - COMPUTE {:?}", self.id, _wkl);
-                self.on_compute(_wkl)
+                self.on_simulate(_wkl)
             }
-            // LoadfreeMessage::ComputeFunctorMsg { op, lhs, rhs, respond_to } => {
-            // LoadfreeMessage::ComputeFunctorMsg { op, lhs, rhs } => {
-            //     // TODO need unary branch
-            //     println!("received");
-            //     let outs = self.on_compute_new(op, lhs, rhs);
-            //     // TODO sendback
-            //     Ok(())
-            // },
             LoadfreeMessage::ActorMsg(_amsg) => {
                 info!("ACT#{} - HANDLE ActorMSG - {:#?}", self.id, _amsg);
                 Ok(())
@@ -145,14 +138,20 @@ where
     }
 
     #[tracing::instrument(name = "actor::on_compute", skip(self, workload))]
-    fn on_compute(&mut self, workload: U) -> Result<(), String> {
-        self.executor.compute_mock(workload);
+    fn on_simulate(&mut self, workload: U) -> Result<(), String> {
+        self.executor.mock_compute(workload);
         Ok(())
     }
 
-    #[tracing::instrument(name = "actor::on_compute", skip(self, lhs, rhs))]
-    fn on_compute_new(&mut self, op: O, lhs: U, rhs: U) -> Result<U, String> {
-        let outs = self.executor.compute_binary(op, lhs, rhs);
+    #[tracing::instrument(name = "actor::on_binary_compute", skip(self, lhs, rhs))]
+    fn on_binary_compute(&mut self, op: O, lhs: U, rhs: U) -> Result<U, String> {
+        let outs = self.executor.binary_compute(op, lhs, rhs);
+        Ok(outs)
+    }
+
+    #[tracing::instrument(name = "actor::on_unary_compute", skip(self, operand))]
+    fn on_unary_compute(&mut self, op: O, operand: U) -> Result<U, String> {
+        let outs = self.executor.unary_compute(op, operand);
         Ok(outs)
     }
 }
