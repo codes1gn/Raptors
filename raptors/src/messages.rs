@@ -37,10 +37,10 @@ where
 ///```
 /// use raptors::prelude::*;
 ///
-/// let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", "mock", 1);
+/// let msg: LoadfreeMessage<MockTensor> = build_loadfree_msg!("spawn", "mock", 1);
 ///
 /// # // define a test function for type check
-/// pub fn test_msg_type(msg: LoadfreeMessage<Workload>) -> bool {
+/// pub fn test_msg_type(msg: LoadfreeMessage<MockTensor>) -> bool {
 ///     true
 /// }
 /// assert!(test_msg_type(msg.into()));
@@ -52,7 +52,7 @@ where
 {
     SystemMsg(SystemCommand),
     ActorMsg(ActorCommand),
-    WorkloadMsg(T),
+    MockTensorMsg(T),
 }
 
 // PayloadMessage with payloads

@@ -21,21 +21,21 @@ pub trait TensorLike {}
 // querying on both opcode and scale.
 //
 // TODO(long-term): extend this desing into typed messages
-// 1. WorkloadMsg, contains bytecode modules
+// 1. MockTensorMsg, contains bytecode modules
 // 2. DataMsg, support data exchange
 // 3. CommandMsg, operations that instruct the action of
 // each actor
 //
 //
 #[derive(Clone, Debug, PartialEq, Default, Eq)]
-pub struct Workload {
+pub struct MockTensor {
     op: MockOpCode,
 }
 
-impl TensorLike for Workload {}
+impl TensorLike for MockTensor {}
 
-impl Workload {
-    pub fn new(op: MockOpCode) -> Workload {
+impl MockTensor {
+    pub fn new(op: MockOpCode) -> MockTensor {
         return Self { op: op };
     }
 
@@ -58,20 +58,20 @@ impl Workload {
     }
 }
 
-impl Into<LoadfreeMessage<Workload>> for Workload {
-    fn into(self) -> LoadfreeMessage<Workload> {
-        LoadfreeMessage::<Workload>::WorkloadMsg(self)
+impl Into<LoadfreeMessage<MockTensor>> for MockTensor {
+    fn into(self) -> LoadfreeMessage<MockTensor> {
+        LoadfreeMessage::<MockTensor>::MockTensorMsg(self)
     }
 }
 
-/// WorkloadMsg indicates the workload to be taken.
+/// MockTensorMsg indicates the workload to be taken.
 #[derive(Clone, Debug, PartialEq)]
-pub struct WorkloadMsg {
-    workload: Workload,
+pub struct MockTensorMsg {
+    workload: MockTensor,
 }
 
-impl WorkloadMsg {
-    pub fn new(workload: Workload) -> Self {
+impl MockTensorMsg {
+    pub fn new(workload: MockTensor) -> Self {
         return Self { workload: workload };
     }
 }
@@ -85,14 +85,14 @@ mod tests {
 
     #[test]
     fn create_dummy_workload_test() {
-        let load = Workload::new(MockOpCode::AddOp);
+        let load = MockTensor::new(MockOpCode::AddOp);
         assert_eq!(load.payload(), 11 as usize);
         assert_eq!(load.op(), MockOpCode::AddOp);
     }
 
     #[test]
     fn worklaod_mock_run_test() {
-        let load = Workload::new(MockOpCode::ConvOp);
+        let load = MockTensor::new(MockOpCode::ConvOp);
         let now = time::Instant::now();
         load.mock_run();
         assert_eq!(load.op(), MockOpCode::ConvOp);
@@ -100,29 +100,29 @@ mod tests {
 
     #[test]
     fn workload_ops_default_test() {
-        let load = Workload::new(MockOpCode::default());
+        let load = MockTensor::new(MockOpCode::default());
         assert_eq!(load.op(), MockOpCode::IdentityOp);
     }
 
     #[test]
     fn workload_ops_matmul_test() {
-        let load = Workload::new(MockOpCode::MatmulOp);
+        let load = MockTensor::new(MockOpCode::MatmulOp);
         assert_eq!(load.op(), MockOpCode::MatmulOp);
     }
 
     #[test]
     fn workload_ops_exp_test() {
-        let load = Workload::new(MockOpCode::ExpOp);
+        let load = MockTensor::new(MockOpCode::ExpOp);
         assert_eq!(load.op(), MockOpCode::ExpOp);
     }
 
     #[test]
     fn workload_message_test() {
-        let load = Workload::new(MockOpCode::ExpOp);
-        let wlmsg = LoadfreeMessage::<Workload>::WorkloadMsg(load);
+        let load = MockTensor::new(MockOpCode::ExpOp);
+        let wlmsg = LoadfreeMessage::<MockTensor>::MockTensorMsg(load);
         assert_eq!(
             wlmsg,
-            LoadfreeMessage::<Workload>::WorkloadMsg(Workload::new(MockOpCode::ExpOp))
+            LoadfreeMessage::<MockTensor>::MockTensorMsg(MockTensor::new(MockOpCode::ExpOp))
         );
     }
 }

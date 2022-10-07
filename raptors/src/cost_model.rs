@@ -1,7 +1,7 @@
 // LICENSE PLACEHOLDER
 use std::collections::HashMap;
 
-use crate::tensor_types::Workload;
+use crate::tensor_types::MockTensor;
 
 // Definition for Opcode
 /// ```
@@ -76,7 +76,7 @@ impl CostModel {
         self.cost_model.clone()
     }
 
-    pub fn estimate(&self, workload: &Workload) -> usize {
+    pub fn estimate(&self, workload: &MockTensor) -> usize {
         *self.cost_model.get(&workload.op()).unwrap()
     }
 
@@ -138,11 +138,11 @@ mod tests {
     fn estimate_computation_cost_test() {
         let est = CostModel::new();
 
-        let load_1 = Workload::new(MockOpCode::AddOp);
+        let load_1 = MockTensor::new(MockOpCode::AddOp);
         let cost_1 = est.estimate(&load_1);
         assert_eq!(cost_1, 11);
 
-        let load_2 = Workload::new(MockOpCode::ConvOp);
+        let load_2 = MockTensor::new(MockOpCode::ConvOp);
         let cost_2 = est.estimate(&load_2);
         assert_eq!(cost_2, 107);
     }

@@ -26,14 +26,16 @@ macro_rules! build_mock_system {
         let mut sys_config = SystemConfig::new($name, "info");
         let mut sys_builder = SystemBuilder::new();
         sys_config.set_ranks(0 as usize);
-        let system = sys_builder.build_with_config::<Executor, Workload, MockOpCode>(sys_config);
+        let system =
+            sys_builder.build_with_config::<MockExecutor, MockTensor, MockOpCode>(sys_config);
         system
     }};
     ($name:expr, $cnt:expr) => {{
         let mut sys_config = SystemConfig::new($name, "info");
         let mut sys_builder = SystemBuilder::new();
         sys_config.set_ranks($cnt as usize);
-        let system = sys_builder.build_with_config::<Executor, Workload, MockOpCode>(sys_config);
+        let system =
+            sys_builder.build_with_config::<MockExecutor, MockTensor, MockOpCode>(sys_config);
         system
     }};
 }
@@ -75,23 +77,23 @@ macro_rules! try_init_raptors {
 // #[macro_export]
 // macro_rules! build_payload_msg {
 //     ("add-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::AddOp))
+//         LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::AddOp))
 //     };
 //     ("sub-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::SubOp))
+//         LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::SubOp))
 //     };
 //     };
 //     ("exp-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ExpOp))
+//         LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::ExpOp))
 //     };
 //     ("sin-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::SinOp))
+//         LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::SinOp))
 //     };
 //     ("Matmul-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::MatmulOp))
+//         LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::MatmulOp))
 //     };
 //     ("Conv-op") => {
-//         LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ConvOp))
+//         LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::ConvOp))
 //     };
 // }
 
@@ -118,25 +120,25 @@ macro_rules! build_loadfree_msg {
 
     // operation workload msg
     ("identity-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::IdentityOp))
+        LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::IdentityOp))
     };
     ("add-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::AddOp))
+        LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::AddOp))
     };
     ("sub-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::SubOp))
+        LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::SubOp))
     };
     ("exp-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ExpOp))
+        LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::ExpOp))
     };
     ("sin-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::SinOp))
+        LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::SinOp))
     };
     ("Matmul-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::MatmulOp))
+        LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::MatmulOp))
     };
     ("Conv-op") => {
-        LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ConvOp))
+        LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::ConvOp))
     };
 }
 
@@ -159,37 +161,37 @@ macro_rules! build_msg {
 
     // operation workload msg
     ("identity-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::MockTensorMsg(MockTensor::new(
             MockOpCode::IdentityOp,
         )))
     };
     ("add-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::MockTensorMsg(MockTensor::new(
             MockOpCode::AddOp,
         )))
     };
     ("sub-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::MockTensorMsg(MockTensor::new(
             MockOpCode::SubOp,
         )))
     };
     ("exp-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::MockTensorMsg(MockTensor::new(
             MockOpCode::ExpOp,
         )))
     };
     ("sin-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::MockTensorMsg(MockTensor::new(
             MockOpCode::SinOp,
         )))
     };
     ("Matmul-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::MockTensorMsg(MockTensor::new(
             MockOpCode::MatmulOp,
         )))
     };
     ("Conv-op") => {
-        RaptorMessage::LoadfreeMSG(LoadfreeMessage::WorkloadMsg(Workload::new(
+        RaptorMessage::LoadfreeMSG(LoadfreeMessage::MockTensorMsg(MockTensor::new(
             MockOpCode::ConvOp,
         )))
     };
@@ -215,48 +217,48 @@ mod tests {
 
     #[test]
     fn build_halt_all_test() {
-        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("halt-all");
+        let msg: LoadfreeMessage<MockTensor> = build_loadfree_msg!("halt-all");
         assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::HaltAll));
     }
 
     #[test]
     fn build_spawn_msg_test() {
-        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", "mock", 3);
+        let msg: LoadfreeMessage<MockTensor> = build_loadfree_msg!("spawn", "mock", 3);
         assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::Spawn(0, 3)));
-        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", "vulkan", 3);
+        let msg: LoadfreeMessage<MockTensor> = build_loadfree_msg!("spawn", "vulkan", 3);
         assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::Spawn(1, 3)));
     }
 
     #[test]
     fn build_halt_msg_test() {
-        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("halt", 3);
+        let msg: LoadfreeMessage<MockTensor> = build_loadfree_msg!("halt", 3);
         assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::HaltOn(3)));
     }
 
     #[test]
     fn build_add_op_test() {
-        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("add-op");
+        let msg: LoadfreeMessage<MockTensor> = build_loadfree_msg!("add-op");
         assert_eq!(
             msg,
-            LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::AddOp))
+            LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::AddOp))
         );
     }
 
     #[test]
     fn build_exp_op_test() {
-        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("exp-op");
+        let msg: LoadfreeMessage<MockTensor> = build_loadfree_msg!("exp-op");
         assert_eq!(
             msg,
-            LoadfreeMessage::WorkloadMsg(Workload::new(MockOpCode::ExpOp))
+            LoadfreeMessage::MockTensorMsg(MockTensor::new(MockOpCode::ExpOp))
         );
     }
 
     #[test]
     fn build_actor_available_msg_test() {
-        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("available", 0);
+        let msg: LoadfreeMessage<MockTensor> = build_loadfree_msg!("available", 0);
         assert_eq!(
             msg,
-            LoadfreeMessage::<Workload>::ActorMsg(ActorCommand::Available(0))
+            LoadfreeMessage::<MockTensor>::ActorMsg(ActorCommand::Available(0))
         );
     }
 }

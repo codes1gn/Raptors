@@ -19,7 +19,7 @@ impl Address {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Envelope {
-    pub msg: LoadfreeMessage<Workload>,
+    pub msg: LoadfreeMessage<MockTensor>,
     // sender: Address,
     pub receiver: Address,
 }
@@ -37,7 +37,7 @@ pub struct Mailbox {
     // *** ringbuffer
     // *** ringbuf
     // *** ring_queue
-    mails: Vec<LoadfreeMessage<Workload>>,
+    mails: Vec<LoadfreeMessage<MockTensor>>,
 }
 
 // TODO traits tobe put together, this is a trait only for util, not for interface
@@ -62,16 +62,16 @@ impl Mailbox {
         return Self { mails: vec![] };
     }
 
-    fn mails(&self) -> Vec<LoadfreeMessage<Workload>> {
+    fn mails(&self) -> Vec<LoadfreeMessage<MockTensor>> {
         self.mails.clone()
     }
 
-    pub fn enqueue(&mut self, msg: LoadfreeMessage<Workload>) -> Result<(), String> {
+    pub fn enqueue(&mut self, msg: LoadfreeMessage<MockTensor>) -> Result<(), String> {
         self.mails.push(msg);
         Ok(())
     }
 
-    pub fn dequeue(&mut self) -> Option<LoadfreeMessage<Workload>> {
+    pub fn dequeue(&mut self) -> Option<LoadfreeMessage<MockTensor>> {
         if self.mails.is_empty() {
             None
         } else {

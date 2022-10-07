@@ -302,7 +302,7 @@ where
                                     SystemCommand::HaltAll => self.halt_all(),
                                     _ => Err("not implemented".to_string()),
                                 },
-                                LoadfreeMessage::WorkloadMsg(_) => {
+                                LoadfreeMessage::MockTensorMsg(_) => {
                                     let idle_actor = self.poll_ready_actor();
                                     match idle_actor {
                                         None => {
@@ -352,7 +352,8 @@ mod tests {
 
     #[tokio::test]
     async fn create_system_with_new_test_1() {
-        let system = ActorSystemHandle::<Executor, Workload, MockOpCode>::new("raptor system");
+        let system =
+            ActorSystemHandle::<MockExecutor, MockTensor, MockOpCode>::new("raptor system");
         assert_eq!(system.name(), "raptor system");
     }
 

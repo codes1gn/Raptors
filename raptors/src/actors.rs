@@ -95,7 +95,7 @@ where
 
     fn fetch_and_handle_message(&mut self, msg: LoadfreeMessage<U>) -> Result<(), String> {
         match msg {
-            LoadfreeMessage::WorkloadMsg(_wkl) => {
+            LoadfreeMessage::MockTensorMsg(_wkl) => {
                 // info!("ACT#{} - COMPUTE {:?}", self.id, _wkl);
                 self.on_simulate(_wkl)
             }
