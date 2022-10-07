@@ -3,7 +3,7 @@
 use tokio::sync::oneshot;
 
 use crate::cost_model::OpCodeLike;
-use crate::tensor_types::{TensorLike};
+use crate::tensor_types::TensorLike;
 
 // Message Trait
 pub trait MessageLike {}
@@ -37,7 +37,7 @@ where
 ///```
 /// use raptors::prelude::*;
 ///
-/// let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", 1);
+/// let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", "mock", 1);
 ///
 /// # // define a test function for type check
 /// pub fn test_msg_type(msg: LoadfreeMessage<Workload>) -> bool {
@@ -80,7 +80,8 @@ pub struct SystemMsg {
 pub enum SystemCommand {
     HaltAll,
     HaltOn(usize),
-    Spawn(usize),
+    // WIP first usize is typeid, second usize is cnt
+    Spawn(usize, usize),
 }
 
 impl SystemMsg {
@@ -120,6 +121,4 @@ impl<T: TensorLike + Clone> Into<LoadfreeMessage<T>> for ActorCommand {
 }
 
 #[cfg(test)]
-mod tests {
-
-}
+mod tests {}

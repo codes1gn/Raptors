@@ -66,41 +66,11 @@ impl Mailbox {
         self.mails.clone()
     }
 
-    /// ```
-    /// use raptors::prelude::*;
-    ///
-    /// let mut mbx = Mailbox::new();
-    /// let msg = SystemCommand::Spawn(4);
-    /// mbx.enqueue(msg.into());
-    /// assert_eq!(mbx.len(), 1);
-    /// ```
     pub fn enqueue(&mut self, msg: LoadfreeMessage<Workload>) -> Result<(), String> {
         self.mails.push(msg);
         Ok(())
     }
 
-    /// ```
-    /// use raptors::prelude::*;
-    ///
-    /// let mut mbx = Mailbox::new();
-    /// let msg1 = SystemCommand::Spawn(4);
-    /// let msg2 = SystemCommand::Spawn(2);
-    /// mbx.enqueue(msg1.into());
-    /// mbx.enqueue(msg2.into());
-    /// let msg = mbx.dequeue();
-    /// assert_eq!(mbx.len(), 1);
-    /// assert_eq!(msg.is_some(), true);
-    /// assert_eq!(msg.unwrap(), SystemCommand::Spawn(4).into());
-    /// ```
-    ///
-    /// test dequeue from empty message queue
-    /// ```
-    /// use raptors::prelude::*;
-    ///
-    /// let mut mbx = Mailbox::new();
-    /// let msg = mbx.dequeue();
-    /// assert_eq!(msg.is_none(), true);
-    /// ```
     pub fn dequeue(&mut self) -> Option<LoadfreeMessage<Workload>> {
         if self.mails.is_empty() {
             None

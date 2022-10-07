@@ -22,7 +22,7 @@ pub struct Executor {}
 pub trait ExecutorLike {
     type TensorType;
     type OpCodeType;
-    fn new() -> Self;
+    fn new_with_typeid(typeid: usize) -> Self;
     fn init(&mut self) -> ();
     fn mock_compute(&mut self, arg: Self::TensorType) -> Self::TensorType;
     fn unary_compute(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType;
@@ -35,17 +35,17 @@ pub trait ExecutorLike {
     ) -> Self::TensorType;
 }
 
-// impl Executor {
-//     pub fn new() -> Self {
-//         return Self {};
-//     }
-// }
+impl Executor {
+    pub fn new() -> Self {
+        return Self {};
+    }
+}
 
 impl ExecutorLike for Executor {
     type OpCodeType = MockOpCode;
     type TensorType = Workload;
-    fn new() -> Executor {
-        Self {}
+    fn new_with_typeid(typeid: usize) -> Executor {
+        Self::new()
     }
 
     fn init(&mut self) -> () {}

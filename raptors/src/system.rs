@@ -1,14 +1,14 @@
 // use log::{info};
 use std::fmt::Debug;
-use tokio::sync::{mpsc};
+use tokio::sync::mpsc;
 use tracing::info;
 // use tracing::instrument;
 
 use std::marker::PhantomData;
 
 use crate::actors::*;
-use crate::cost_model::{OpCodeLike};
-use crate::executor::{ExecutorLike};
+use crate::cost_model::OpCodeLike;
+use crate::executor::ExecutorLike;
 use crate::messages::*;
 use crate::prelude::*;
 use crate::tensor_types::*;
@@ -148,8 +148,9 @@ where
         self.system_cmd_sendbox.send(msg).await;
     }
 
-    pub async fn spawn(&mut self, cnt: usize) {
-        let cmd: LoadfreeMessage<U> = build_loadfree_msg!("spawn", cnt);
+    pub async fn spawn(&mut self, executor_type: &str, cnt: usize) {
+        panic!("deprecated");
+        let cmd: LoadfreeMessage<U> = build_loadfree_msg!("spawn", executor_type, cnt);
         self.issue_order(RaptorMessage::LoadfreeMSG(cmd)).await
     }
 }
@@ -221,12 +222,13 @@ where
     }
 
     #[tracing::instrument(name = "actor_system", skip(self))]
-    pub fn spawn_actors(&mut self, cnt: usize) -> Result<(), String> {
+    pub fn spawn_actors(&mut self, typeid: usize, cnt: usize) -> Result<(), String> {
         for id in self.ranks..(self.ranks + cnt) {
             info!("ASYS - creating actor with id = #{}", id);
             let (sender, receiver) = mpsc::channel(16);
             self.mails.push(sender);
-            let mut actor = Actor::<T, U, O>::new(id, receiver, self.cloned_sendbox.clone());
+            let mut actor =
+                Actor::<T, U, O>::new(id, receiver, self.cloned_sendbox.clone(), typeid);
             tokio::spawn(async move { actor.run().await });
 
             self.availables.push(id);
@@ -292,9 +294,9 @@ where
                         RaptorMessage::LoadfreeMSG(ref msg) => {
                             match msg {
                                 LoadfreeMessage::SystemMsg(cmd) => match cmd {
-                                    SystemCommand::Spawn(cnt) => {
+                                    SystemCommand::Spawn(typeid, cnt) => {
                                         info!("ASYS - received spawn-actors cmd with #{}", cnt);
-                                        self.spawn_actors(*cnt)
+                                        self.spawn_actors(*typeid, *cnt)
                                     }
                                     SystemCommand::HaltOn(idx) => self.halt_actor(*idx),
                                     SystemCommand::HaltAll => self.halt_all(),

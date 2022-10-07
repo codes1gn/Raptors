@@ -41,8 +41,8 @@ async fn main() {
     let mut system = build_mock_system!("Raptors");
     // system.init();
 
-    let cmd = build_msg!("spawn", 3);
-    system.issue_order(cmd).await;
+    let msg = build_loadfree_msg!("spawn", "mock", 3);
+    system.issue_order(RaptorMessage::LoadfreeMSG(msg)).await;
 
     // // deliver msg to first idle
     system.issue_order(build_msg!("add-op")).await;

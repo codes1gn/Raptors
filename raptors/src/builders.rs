@@ -103,8 +103,12 @@ macro_rules! build_loadfree_msg {
     ("halt", $index:expr) => {
         LoadfreeMessage::SystemMsg(SystemCommand::HaltOn($index))
     };
-    ("spawn", $num:expr) => {
-        LoadfreeMessage::SystemMsg(SystemCommand::Spawn($num))
+    ("spawn", $typestr:expr, $num:expr) => {
+        match $typestr {
+            "mock" => LoadfreeMessage::SystemMsg(SystemCommand::Spawn(0 as usize, $num)),
+            "vulkan" => LoadfreeMessage::SystemMsg(SystemCommand::Spawn(1 as usize, $num)),
+            _ => panic!("fail to spawn"),
+        }
     };
 
     // actor msg
@@ -217,8 +221,10 @@ mod tests {
 
     #[test]
     fn build_spawn_msg_test() {
-        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", 3);
-        assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::Spawn(3)));
+        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", "mock", 3);
+        assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::Spawn(0, 3)));
+        let msg: LoadfreeMessage<Workload> = build_loadfree_msg!("spawn", "vulkan", 3);
+        assert_eq!(msg, LoadfreeMessage::SystemMsg(SystemCommand::Spawn(1, 3)));
     }
 
     #[test]

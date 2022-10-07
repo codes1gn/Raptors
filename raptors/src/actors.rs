@@ -2,18 +2,18 @@
 use tracing::info;
 // use tracing::instrument;
 // use tracing::{span, Level};
+use tokio::sync::mpsc;
 use tokio::sync::mpsc::error::TryRecvError;
-use tokio::sync::{mpsc};
-use uuid::{Uuid};
+use uuid::Uuid;
 
 use std::cmp::Ordering;
 use std::fmt::Debug;
 
 use crate::build_loadfree_msg;
-use crate::cost_model::{OpCodeLike};
-use crate::executor::{ExecutorLike};
+use crate::cost_model::OpCodeLike;
+use crate::executor::ExecutorLike;
 use crate::messages::{ActorCommand, LoadfreeMessage, PayloadMessage, RaptorMessage};
-use crate::tensor_types::{TensorLike};
+use crate::tensor_types::TensorLike;
 
 // T: executor type
 // U: Tensor type
@@ -42,9 +42,13 @@ where
         id: usize,
         receiver: mpsc::Receiver<RaptorMessage<U, O>>,
         respond_to: mpsc::Sender<RaptorMessage<U, O>>,
+        // WIP executor's typeid
+        typeid: usize,
     ) -> Self {
         let new_uuid = Uuid::new_v4();
-        let mut exec = T::new();
+        println!("should call actor new {}", typeid);
+        let mut exec = T::new_with_typeid(typeid);
+        println!("should call actor new - should not showup");
         exec.init();
         Actor {
             id: id,
@@ -212,6 +216,4 @@ where
 // unit tests
 #[cfg(test)]
 
-mod tests {
-
-}
+mod tests {}
