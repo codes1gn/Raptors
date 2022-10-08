@@ -2,7 +2,7 @@
 // use tracing_chrome::ChromeLayerBuilder;
 
 use crate::cost_model::MockOpCode;
-use crate::executor::*;
+use crate::executor_types::*;
 use crate::messages::*;
 use crate::system::*;
 use crate::tensor_types::*;
@@ -107,8 +107,10 @@ macro_rules! build_loadfree_msg {
     };
     ("spawn", $typestr:expr, $num:expr) => {
         match $typestr {
+            // TODO use small format as option bit
             "mock" => LoadfreeMessage::SystemMsg(SystemCommand::Spawn(0 as usize, $num)),
             "vulkan" => LoadfreeMessage::SystemMsg(SystemCommand::Spawn(1 as usize, $num)),
+            "blas" => LoadfreeMessage::SystemMsg(SystemCommand::Spawn(2 as usize, $num)),
             _ => panic!("fail to spawn"),
         }
     };

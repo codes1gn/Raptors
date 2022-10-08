@@ -11,7 +11,7 @@ use std::fmt::Debug;
 
 use crate::build_loadfree_msg;
 use crate::cost_model::OpCodeLike;
-use crate::executor::ExecutorLike;
+use crate::executor_types::ExecutorLike;
 use crate::messages::{ActorCommand, LoadfreeMessage, PayloadMessage, RaptorMessage};
 use crate::tensor_types::TensorLike;
 

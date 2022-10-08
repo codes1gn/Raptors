@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 
 use crate::actors::*;
 use crate::cost_model::OpCodeLike;
-use crate::executor::ExecutorLike;
+use crate::executor_types::ExecutorLike;
 use crate::messages::*;
 use crate::prelude::*;
 use crate::tensor_types::*;

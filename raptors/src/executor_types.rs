@@ -3,14 +3,6 @@
 use crate::cost_model::MockOpCode;
 use crate::tensor_types::{MockTensor, TensorLike};
 
-// wrap a dedicated executor module that only consider how to do computations
-//
-// TODO(long-term):
-// as a interface, make refactor as Trait and expose to CRT level,
-// make CRT vm to impl this trait
-#[derive(Debug)]
-pub struct MockExecutor {}
-
 // desugarized trait bounds in trait
 // trait-name {
 //     fn func(&self) -> impl TraitB;
@@ -34,6 +26,14 @@ pub trait ExecutorLike {
         rhs: Self::TensorType,
     ) -> Self::TensorType;
 }
+
+// wrap a dedicated executor module that only consider how to do computations
+//
+// TODO(long-term):
+// as a interface, make refactor as Trait and expose to CRT level,
+// make CRT vm to impl this trait
+#[derive(Debug)]
+pub struct MockExecutor {}
 
 impl MockExecutor {
     pub fn new() -> Self {

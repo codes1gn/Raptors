@@ -1,7 +1,7 @@
 pub mod actors;
 pub mod builders;
 pub mod cost_model;
-pub mod executor;
+pub mod executor_types;
 pub mod mailbox;
 pub mod messages;
 pub mod system;
@@ -15,7 +15,7 @@ pub mod tensor_types;
 pub mod prelude {
     pub use crate::actors::Actor;
     pub use crate::cost_model::{CostModel, MockOpCode, OpCodeLike};
-    pub use crate::executor::{ExecutorLike, MockExecutor};
+    pub use crate::executor_types::{ExecutorLike, MockExecutor};
     pub use crate::mailbox::{Address, Envelope, Len, Mailbox};
     pub use crate::messages::{
         ActorCommand, ActorMsg, LoadfreeMessage, MessageLike, PayloadMessage, RaptorMessage,
