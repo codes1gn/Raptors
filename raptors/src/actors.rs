@@ -120,9 +120,10 @@ where
         loop {
             match self.receiver.try_recv() {
                 Ok(_msg) => {
-                    info!("::actor#{}::receive msg from system ENTER", self.id);
+                    info!("::actor#{}::receive msg from system", self.id);
+                    info!("::actor#{}::enter-computation", self.id);
                     let status = self.fetch_and_handle(_msg);
-                    info!("::actor#{}::receive msg from system EXIT", self.id);
+                    info!("::actor#{}::exit-computation", self.id);
                 }
                 Err(TryRecvError::Empty) => {
                     let msg = build_loadfree_msg!("available", self.id);
@@ -132,7 +133,9 @@ where
                     match self.receiver.recv().await {
                         Some(_msg) => {
                             info!("::actor#{}::receive msg from system", self.id);
+                            info!("::actor#{}::enter-computation", self.id);
                             let status = self.fetch_and_handle(_msg);
+                            info!("::actor#{}::exit-computation", self.id);
                         }
                         None => {
                             info!("::actor#{}::DROPPED BY SUPERVISOR -> HALTING", self.id);

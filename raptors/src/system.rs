@@ -231,6 +231,7 @@ where
             tokio::spawn(async move { actor.run().await });
 
             self.availables.push(id);
+            info!("::actor-system::enqueue actor-#{} to avlb-queue", id);
         }
         self.ranks += cnt;
         Ok(())
@@ -279,10 +280,14 @@ where
                                     let idle_actor = self.poll_ready_actor();
                                     match idle_actor {
                                         None => {
+                                            info!("::actor-system::not-find avlb-actor");
+                                            info!("::actor-system::delay this unary-compute-task");
                                             self.delayed_tensor_types.push(gmsg);
                                             Ok(())
                                         }
                                         Some(idx) => {
+                                            info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
                                             info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                             self.deliver_to(gmsg, idx).await;
                                             Ok(())
@@ -294,10 +299,14 @@ where
                                     let idle_actor = self.poll_ready_actor();
                                     match idle_actor {
                                         None => {
+                                            info!("::actor-system::not-find avlb-actor");
+                                            info!("::actor-system::delay this binary-compute-task");
                                             self.delayed_tensor_types.push(gmsg);
                                             Ok(())
                                         }
                                         Some(idx) => {
+                                            info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
                                             info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                             self.deliver_to(gmsg, idx).await;
                                             Ok(())
@@ -333,15 +342,16 @@ where
                                 }
                                 LoadfreeMessage::ActorMsg(_amsg) => match _amsg {
                                     ActorCommand::Available(idx) => {
-                                        info!("::actor-system::reschedule actor #{}", idx);
+                                        info!("::actor-system::enqueue actor-#{} to avlb-queue", idx);
                                         self.availables.push(*idx);
                                         if self.delayed_tensor_types.is_empty() == false {
                                             let idle_actor = self.poll_ready_actor().unwrap();
                                             let _delayed_wkl = self.delayed_tensor_types.remove(0);
                                             info!(
-                                                "::actor-system::dispatch delayed payload-msg to actor #{}",
+                                                "::actor-system::dispatch delayed payload-msg to actor-#{}",
                                                 idle_actor
                                             );
+                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
                                             self.deliver_to(_delayed_wkl, idle_actor).await;
                                         }
                                         Ok(())
