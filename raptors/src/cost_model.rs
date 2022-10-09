@@ -20,11 +20,13 @@ impl OpCodeLike for MockOpCode {}
 pub enum MockOpCode {
     IdentityOp,
     AddOp,
+    SubOp,
+    MulOp,
+    DivOp,
     ConvOp,
     ExpOp,
     MatmulOp,
     SinOp,
-    SubOp,
 }
 
 impl Default for MockOpCode {
@@ -46,11 +48,13 @@ impl Default for CostModel {
         let mut cost_model = HashMap::new();
         cost_model.insert(MockOpCode::IdentityOp, 2);
         cost_model.insert(MockOpCode::AddOp, 11);
+        cost_model.insert(MockOpCode::SubOp, 17);
+        cost_model.insert(MockOpCode::MulOp, 71);
+        cost_model.insert(MockOpCode::DivOp, 87);
         cost_model.insert(MockOpCode::ConvOp, 107);
         cost_model.insert(MockOpCode::ExpOp, 173);
         cost_model.insert(MockOpCode::MatmulOp, 57);
         cost_model.insert(MockOpCode::SinOp, 127);
-        cost_model.insert(MockOpCode::SubOp, 17);
         return Self {
             cost_model: cost_model,
         };

@@ -1,5 +1,5 @@
 // LICENSE PLACEHOLDER
-use tracing::info;
+use tracing::{debug, info};
 // use tracing::instrument;
 // use tracing::{span, Level};
 use tokio::sync::mpsc;
@@ -46,9 +46,7 @@ where
         typeid: usize,
     ) -> Self {
         let new_uuid = Uuid::new_v4();
-        println!("should call actor new {}", typeid);
         let mut exec = T::new_with_typeid(typeid);
-        println!("should call actor new - should not showup");
         exec.init();
         Actor {
             id: id,
@@ -77,6 +75,16 @@ where
     fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
         match msg {
             // TODO need MSG to handle unary operations
+            PayloadMessage::UnaryComputeFunctorMsg {
+                op,
+                inp,
+                respond_to,
+            } => {
+                // TODO need unary branch
+                let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                respond_to.send(outs);
+                Ok(())
+            }
             PayloadMessage::ComputeFunctorMsg {
                 op,
                 lhs,
@@ -96,11 +104,11 @@ where
     fn fetch_and_handle_message(&mut self, msg: LoadfreeMessage<U>) -> Result<(), String> {
         match msg {
             LoadfreeMessage::MockTensorMsg(_wkl) => {
-                // info!("ACT#{} - COMPUTE {:?}", self.id, _wkl);
+                // info!("::actor#{}::COMPUTE {:?}", self.id, _wkl);
                 self.on_simulate(_wkl)
             }
             LoadfreeMessage::ActorMsg(_amsg) => {
-                info!("ACT#{} - HANDLE ActorMSG - {:#?}", self.id, _amsg);
+                info!("::actor#{}::HANDLE ActorMSG - {:#?}", self.id, _amsg);
                 Ok(())
             }
             _ => panic!("Unknown actormessage not implemented"),
@@ -112,28 +120,28 @@ where
         loop {
             match self.receiver.try_recv() {
                 Ok(_msg) => {
-                    info!("ACT#{} - receive msg from system ENTER", self.id);
+                    info!("::actor#{}::receive msg from system ENTER", self.id);
                     let status = self.fetch_and_handle(_msg);
-                    info!("ACT#{} - receive msg from system EXIT", self.id);
+                    info!("::actor#{}::receive msg from system EXIT", self.id);
                 }
                 Err(TryRecvError::Empty) => {
                     let msg = build_loadfree_msg!("available", self.id);
                     // TODO update build_msg with generalmessage
                     self.respond_to.try_send(RaptorMessage::LoadfreeMSG(msg));
-                    info!("ACT#{} - tell supervisor i am available", self.id);
+                    info!("::actor#{}::tell supervisor i am available", self.id);
                     match self.receiver.recv().await {
                         Some(_msg) => {
-                            info!("ACT#{} - receive msg from system", self.id);
+                            info!("::actor#{}::receive msg from system", self.id);
                             let status = self.fetch_and_handle(_msg);
                         }
                         None => {
-                            info!("ACT#{} - DROPPED BY SUPERVISOR -> HALTING", self.id);
+                            info!("::actor#{}::DROPPED BY SUPERVISOR -> HALTING", self.id);
                             break 1;
                         }
                     }
                 }
                 Err(TryRecvError::Disconnected) => {
-                    info!("ACT#{} - DROPPED BY SUPERVISOR -> HALTING", self.id);
+                    info!("::actor#{}::DROPPED BY SUPERVISOR -> HALTING", self.id);
                     break 1;
                 }
                 _ => (),
@@ -167,7 +175,7 @@ where
     O: OpCodeLike + Debug,
 {
     fn drop(&mut self) {
-        info!("ACT#{} - DROP", self.id);
+        info!("::actor#{}::DROP", self.id);
     }
 }
 

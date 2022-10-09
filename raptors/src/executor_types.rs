@@ -1,5 +1,7 @@
 // LICENSE PLACEHOLDER
 //
+use std::{thread, time};
+
 use crate::cost_model::MockOpCode;
 use crate::tensor_types::{MockTensor, TensorLike};
 
@@ -41,15 +43,13 @@ impl MockExecutor {
     }
 
     // TODO handle op
-    pub fn mock_unary(&mut self, arg: MockTensor) -> MockTensor {
+    pub fn mock_unary<T: TensorLike>(&mut self, op: MockOpCode, arg: T) -> T {
+        thread::sleep(time::Duration::from_millis((1000) as u64));
         arg
     }
 
-    // WIP pub fn mock_binary(&mut self, lhs: MockTensor, rhs: MockTensor) -> MockTensor {
-    // WIP     lhs
-    // WIP }
-
-    pub fn mock_binary<T: TensorLike>(&mut self, lhs: T, rhs: T) -> T {
+    pub fn mock_binary<T: TensorLike>(&mut self, op: MockOpCode, lhs: T, rhs: T) -> T {
+        thread::sleep(time::Duration::from_millis((2000) as u64));
         lhs
     }
 }
@@ -64,11 +64,11 @@ impl ExecutorLike for MockExecutor {
     fn init(&mut self) -> () {}
 
     fn mock_compute(&mut self, arg: Self::TensorType) -> Self::TensorType {
-        self.mock_unary(arg)
+        arg
     }
 
     fn unary_compute(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType {
-        self.mock_unary(arg)
+        self.mock_unary::<Self::TensorType>(op, arg)
     }
 
     fn binary_compute(
@@ -77,7 +77,7 @@ impl ExecutorLike for MockExecutor {
         lhs: Self::TensorType,
         rhs: Self::TensorType,
     ) -> Self::TensorType {
-        self.mock_binary::<Self::TensorType>(lhs, rhs)
+        self.mock_binary::<Self::TensorType>(op, lhs, rhs)
     }
 }
 

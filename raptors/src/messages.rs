@@ -68,6 +68,11 @@ where
         rhs: T,
         respond_to: oneshot::Sender<T>,
     },
+    UnaryComputeFunctorMsg {
+        op: O,
+        inp: T,
+        respond_to: oneshot::Sender<T>,
+    },
 }
 
 // SystemMsg that received and processed only by actor_system

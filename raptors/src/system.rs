@@ -1,10 +1,9 @@
 // use log::{info};
 use std::fmt::Debug;
-use tokio::sync::mpsc;
-use tracing::info;
-// use tracing::instrument;
-
 use std::marker::PhantomData;
+
+use tokio::sync::mpsc;
+use tracing::{debug, info};
 
 use crate::actors::*;
 use crate::cost_model::OpCodeLike;
@@ -143,8 +142,7 @@ where
     }
 
     pub async fn issue_order(&mut self, msg: RaptorMessage<U, O>) -> () {
-        // println!("issue order = {:#?}", msg);
-        info!("issue order = {:#?}", msg);
+        info!("::actor-system-handler::send msg {:?}", msg);
         self.system_cmd_sendbox.send(msg).await;
     }
 
@@ -221,14 +219,15 @@ where
         }
     }
 
-    #[tracing::instrument(name = "actor_system", skip(self))]
+    #[tracing::instrument(name = "actor_system", skip(self, typeid, cnt))]
     pub fn spawn_actors(&mut self, typeid: usize, cnt: usize) -> Result<(), String> {
         for id in self.ranks..(self.ranks + cnt) {
-            info!("ASYS - creating actor with id = #{}", id);
+            info!("::actor_system::new actor #{}", id);
             let (sender, receiver) = mpsc::channel(16);
             self.mails.push(sender);
             let mut actor =
                 Actor::<T, U, O>::new(id, receiver, self.cloned_sendbox.clone(), typeid);
+            info!("::actor_system::run-event-loop actor #{}", id);
             tokio::spawn(async move { actor.run().await });
 
             self.availables.push(id);
@@ -252,10 +251,10 @@ where
         Ok(())
     }
 
-    #[tracing::instrument(name = "actor_system", skip(self, msg))]
+    #[tracing::instrument(name = "actor_system", skip(self, msg, to))]
     pub async fn deliver_to(&self, msg: RaptorMessage<U, O>, to: usize) {
         self.mails[to].send(msg).await;
-        info!("ASYS - deliver message to {}", to);
+        info!("::actor_system::send msg to actor #{:?}", to);
     }
 
     #[tracing::instrument(name = "actor_system", skip(self, msg))]
@@ -263,19 +262,20 @@ where
         for mail in &self.mails {
             mail.send(RaptorMessage::LoadfreeMSG(msg.clone())).await;
         }
-        info!("ASYS - broadcast message to all");
+        info!("::actor_system::send msg to all actors");
     }
 
     #[tracing::instrument(name = "system::run", skip(self))]
     pub async fn run(&mut self) -> () {
-        info!("ASys - enter actor-system event-loop");
+        info!("::actor-system::start-event-loop");
         loop {
             match self.system_cmd_recvbox.recv().await {
                 Some(gmsg) => {
                     match gmsg {
                         RaptorMessage::PayloadMSG(ref msg) => {
                             match msg {
-                                PayloadMessage::ComputeFunctorMsg { .. } => {
+                                PayloadMessage::UnaryComputeFunctorMsg { .. } => {
+                                    info!("::actor-system::recv payload-msg {:?}", msg);
                                     let idle_actor = self.poll_ready_actor();
                                     match idle_actor {
                                         None => {
@@ -283,7 +283,22 @@ where
                                             Ok(())
                                         }
                                         Some(idx) => {
-                                            info!("ASYS - dispatch workload msg to first idle actor #{}", idx);
+                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                            self.deliver_to(gmsg, idx).await;
+                                            Ok(())
+                                        }
+                                    }
+                                }
+                                PayloadMessage::ComputeFunctorMsg { .. } => {
+                                    info!("::actor-system::recv payload-msg {:?}", msg);
+                                    let idle_actor = self.poll_ready_actor();
+                                    match idle_actor {
+                                        None => {
+                                            self.delayed_tensor_types.push(gmsg);
+                                            Ok(())
+                                        }
+                                        Some(idx) => {
+                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                             self.deliver_to(gmsg, idx).await;
                                             Ok(())
                                         }
@@ -295,7 +310,7 @@ where
                             match msg {
                                 LoadfreeMessage::SystemMsg(cmd) => match cmd {
                                     SystemCommand::Spawn(typeid, cnt) => {
-                                        info!("ASYS - received spawn-actors cmd with #{}", cnt);
+                                        info!("::actor-system::recv loadfree-msg-spawn {:?}", cnt);
                                         self.spawn_actors(*typeid, *cnt)
                                     }
                                     SystemCommand::HaltOn(idx) => self.halt_actor(*idx),
@@ -310,7 +325,7 @@ where
                                             Ok(())
                                         }
                                         Some(idx) => {
-                                            info!("ASYS - dispatch workload msg to first idle actor #{}", idx);
+                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                             self.deliver_to(gmsg, idx).await;
                                             Ok(())
                                         }
@@ -318,13 +333,13 @@ where
                                 }
                                 LoadfreeMessage::ActorMsg(_amsg) => match _amsg {
                                     ActorCommand::Available(idx) => {
-                                        info!("ASYS - requeue available actor #{}", idx);
+                                        info!("::actor-system::reschedule actor #{}", idx);
                                         self.availables.push(*idx);
                                         if self.delayed_tensor_types.is_empty() == false {
                                             let idle_actor = self.poll_ready_actor().unwrap();
                                             let _delayed_wkl = self.delayed_tensor_types.remove(0);
                                             info!(
-                                                "ASYS - delayed workload dispatched to actor #{}",
+                                                "::actor-system::dispatch delayed payload-msg to actor #{}",
                                                 idle_actor
                                             );
                                             self.deliver_to(_delayed_wkl, idle_actor).await;
