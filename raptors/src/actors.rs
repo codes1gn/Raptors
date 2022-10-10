@@ -2,8 +2,8 @@
 use tracing::{debug, info};
 // use tracing::instrument;
 // use tracing::{span, Level};
-use tokio::sync::mpsc;
 use tokio::sync::mpsc::error::TryRecvError;
+use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
 
 use std::cmp::Ordering;
@@ -65,15 +65,32 @@ where
         self.uuid
     }
 
-    fn fetch_and_handle(&mut self, msg: RaptorMessage<U, O>) -> Result<(), String> {
+    async fn fetch_and_handle(&mut self, msg: RaptorMessage<U, O>) -> Result<(), String> {
         match msg {
-            RaptorMessage::LoadfreeMSG(_msg) => self.fetch_and_handle_message(_msg),
-            RaptorMessage::PayloadMSG(_msg) => self.fetch_and_handle_payload(_msg),
+            RaptorMessage::LoadfreeMSG(_msg) => self.fetch_and_handle_message(_msg).await,
+            RaptorMessage::PayloadMSG(_msg) => self.fetch_and_handle_payload(_msg).await,
         }
     }
 
-    fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
+    async fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
         match msg {
+            // WIP add non-ret unary msg, just return a u8 signal that receives
+            // TODO maybe send a () is better
+            PayloadMessage::NonRetUnaryComputeFunctorMsg {
+                op,
+                inp,
+                inp_ready_checker,
+                respond_to,
+            } => {
+                // TODO need unary branch
+                info!("::actors::inp-ready-checker checking");
+                inp_ready_checker.await;
+                info!("::actors::inp-ready-checker ready");
+                let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                respond_to.send(0u8);
+                info!("::actors::out-ready-checker set-ready");
+                Ok(())
+            }
             // TODO need MSG to handle unary operations
             PayloadMessage::UnaryComputeFunctorMsg {
                 op,
@@ -101,7 +118,7 @@ where
         }
     }
 
-    fn fetch_and_handle_message(&mut self, msg: LoadfreeMessage<U>) -> Result<(), String> {
+    async fn fetch_and_handle_message(&mut self, msg: LoadfreeMessage<U>) -> Result<(), String> {
         match msg {
             LoadfreeMessage::MockTensorMsg(_wkl) => {
                 // info!("::actor#{}::COMPUTE {:?}", self.id, _wkl);
@@ -122,7 +139,7 @@ where
                 Ok(_msg) => {
                     info!("::actor#{}::receive msg from system", self.id);
                     info!("::actor#{}::enter-computation", self.id);
-                    let status = self.fetch_and_handle(_msg);
+                    let status = self.fetch_and_handle(_msg).await;
                     info!("::actor#{}::exit-computation", self.id);
                 }
                 Err(TryRecvError::Empty) => {
@@ -134,7 +151,7 @@ where
                         Some(_msg) => {
                             info!("::actor#{}::receive msg from system", self.id);
                             info!("::actor#{}::enter-computation", self.id);
-                            let status = self.fetch_and_handle(_msg);
+                            let status = self.fetch_and_handle(_msg).await;
                             info!("::actor#{}::exit-computation", self.id);
                         }
                         None => {

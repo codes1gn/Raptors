@@ -73,6 +73,12 @@ where
         inp: T,
         respond_to: oneshot::Sender<T>,
     },
+    NonRetUnaryComputeFunctorMsg {
+        op: O,
+        inp: T,
+        inp_ready_checker: oneshot::Receiver<u8>,
+        respond_to: oneshot::Sender<u8>,
+    },
 }
 
 // SystemMsg that received and processed only by actor_system

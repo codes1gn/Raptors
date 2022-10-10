@@ -275,6 +275,25 @@ where
                     match gmsg {
                         RaptorMessage::PayloadMSG(ref msg) => {
                             match msg {
+                                PayloadMessage::NonRetUnaryComputeFunctorMsg { .. } => {
+                                    info!("::actor-system::recv payload-msg {:?}", msg);
+                                    let idle_actor = self.poll_ready_actor();
+                                    match idle_actor {
+                                        None => {
+                                            info!("::actor-system::not-find avlb-actor");
+                                            info!("::actor-system::delay this unary-compute-task");
+                                            self.delayed_tensor_types.push(gmsg);
+                                            Ok(())
+                                        }
+                                        Some(idx) => {
+                                            info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                            self.deliver_to(gmsg, idx).await;
+                                            Ok(())
+                                        }
+                                    }
+                                }
                                 PayloadMessage::UnaryComputeFunctorMsg { .. } => {
                                     info!("::actor-system::recv payload-msg {:?}", msg);
                                     let idle_actor = self.poll_ready_actor();
@@ -342,7 +361,10 @@ where
                                 }
                                 LoadfreeMessage::ActorMsg(_amsg) => match _amsg {
                                     ActorCommand::Available(idx) => {
-                                        info!("::actor-system::enqueue actor-#{} to avlb-queue", idx);
+                                        info!(
+                                            "::actor-system::enqueue actor-#{} to avlb-queue",
+                                            idx
+                                        );
                                         self.availables.push(*idx);
                                         if self.delayed_tensor_types.is_empty() == false {
                                             let idle_actor = self.poll_ready_actor().unwrap();
