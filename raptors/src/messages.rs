@@ -77,7 +77,8 @@ where
         op: O,
         inp: T,
         inp_ready_checker: oneshot::Receiver<u8>,
-        respond_to: oneshot::Sender<u8>,
+        respond_to: Vec<oneshot::Sender<u8>>,
+        respond_id: usize,
     },
 }
 

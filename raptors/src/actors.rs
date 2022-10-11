@@ -81,14 +81,21 @@ where
                 inp,
                 inp_ready_checker,
                 respond_to,
+                respond_id,
             } => {
                 // TODO need unary branch
-                info!("::actors::inp-ready-checker checking");
+                info!("::actors#{}::inp-ready-checker checking", self.id);
                 inp_ready_checker.await;
-                info!("::actors::inp-ready-checker ready");
+                info!("::actors#{}::inp-ready-checker ready", self.id);
+                info!("::actor#{}::enter-computation", self.id);
                 let outs = self.on_unary_compute(op, inp).expect("compute failed");
-                respond_to.send(0u8);
-                info!("::actors::out-ready-checker set-ready");
+                info!("::actor#{}::exit-computation", self.id);
+                // respond_to.into_iter().map(|x| x.send(0u8) );
+                respond_to.into_iter().map(|x| {
+                    info!("::actors#{}::out-ready-checker set-ready to var #{}", self.id, respond_id);
+                    x.send(0u8);
+                    ()
+                }).collect::<()>();
                 Ok(())
             }
             // TODO need MSG to handle unary operations
@@ -98,7 +105,9 @@ where
                 respond_to,
             } => {
                 // TODO need unary branch
+                info!("::actor#{}::enter-computation", self.id);
                 let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                info!("::actor#{}::exit-computation", self.id);
                 respond_to.send(outs);
                 Ok(())
             }
@@ -109,9 +118,11 @@ where
                 respond_to,
             } => {
                 // TODO need unary branch
+                info!("::actor#{}::enter-computation", self.id);
                 let outs = self
                     .on_binary_compute(op, lhs, rhs)
                     .expect("compute failed");
+                info!("::actor#{}::exit-computation", self.id);
                 respond_to.send(outs);
                 Ok(())
             }
@@ -138,9 +149,7 @@ where
             match self.receiver.try_recv() {
                 Ok(_msg) => {
                     info!("::actor#{}::receive msg from system", self.id);
-                    info!("::actor#{}::enter-computation", self.id);
                     let status = self.fetch_and_handle(_msg).await;
-                    info!("::actor#{}::exit-computation", self.id);
                 }
                 Err(TryRecvError::Empty) => {
                     let msg = build_loadfree_msg!("available", self.id);
@@ -150,9 +159,7 @@ where
                     match self.receiver.recv().await {
                         Some(_msg) => {
                             info!("::actor#{}::receive msg from system", self.id);
-                            info!("::actor#{}::enter-computation", self.id);
                             let status = self.fetch_and_handle(_msg).await;
-                            info!("::actor#{}::exit-computation", self.id);
                         }
                         None => {
                             info!("::actor#{}::DROPPED BY SUPERVISOR -> HALTING", self.id);
