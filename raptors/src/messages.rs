@@ -1,4 +1,5 @@
 // LICENSE PLACEHOLDER
+use std::sync::Arc;
 
 use tokio::sync::oneshot;
 
@@ -64,18 +65,18 @@ where
 {
     ComputeFunctorMsg {
         op: O,
-        lhs: T,
-        rhs: T,
+        lhs: Arc<T>,
+        rhs: Arc<T>,
         respond_to: oneshot::Sender<T>,
     },
     UnaryComputeFunctorMsg {
         op: O,
-        inp: T,
+        inp: Arc<T>,
         respond_to: oneshot::Sender<T>,
     },
     NonRetUnaryComputeFunctorMsg {
         op: O,
-        inp: T,
+        inp: Arc<T>,
         inp_ready_checker: oneshot::Receiver<u8>,
         respond_to: Vec<oneshot::Sender<u8>>,
         respond_id: usize,

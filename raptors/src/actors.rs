@@ -1,4 +1,5 @@
 // LICENSE PLACEHOLDER
+use std::sync::Arc;
 use tracing::{debug, info};
 // use tracing::instrument;
 // use tracing::{span, Level};
@@ -189,13 +190,13 @@ where
     }
 
     #[tracing::instrument(name = "actor::on_binary_compute", skip(self, lhs, rhs))]
-    fn on_binary_compute(&mut self, op: O, lhs: U, rhs: U) -> Result<U, String> {
+    fn on_binary_compute(&mut self, op: O, lhs: Arc<U>, rhs: Arc<U>) -> Result<U, String> {
         let outs = self.executor.binary_compute(op, lhs, rhs);
         Ok(outs)
     }
 
     #[tracing::instrument(name = "actor::on_unary_compute", skip(self, operand))]
-    fn on_unary_compute(&mut self, op: O, operand: U) -> Result<U, String> {
+    fn on_unary_compute(&mut self, op: O, operand: Arc<U>) -> Result<U, String> {
         let outs = self.executor.unary_compute(op, operand);
         Ok(outs)
     }

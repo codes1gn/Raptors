@@ -1,5 +1,6 @@
 // LICENSE PLACEHOLDER
 //
+use std::sync::Arc;
 use std::{thread, time};
 
 use crate::cost_model::MockOpCode;
@@ -19,13 +20,17 @@ pub trait ExecutorLike {
     fn new_with_typeid(typeid: usize) -> Self;
     fn init(&mut self) -> ();
     fn mock_compute(&mut self, arg: Self::TensorType) -> Self::TensorType;
-    fn unary_compute(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType;
+    fn unary_compute(
+        &mut self,
+        op: Self::OpCodeType,
+        arg: Arc<Self::TensorType>,
+    ) -> Self::TensorType;
     // TODO need to support monomorphism for SupportedDataType
     fn binary_compute(
         &mut self,
         op: Self::OpCodeType,
-        lhs: Self::TensorType,
-        rhs: Self::TensorType,
+        lhs: Arc<Self::TensorType>,
+        rhs: Arc<Self::TensorType>,
     ) -> Self::TensorType;
 }
 
@@ -43,14 +48,21 @@ impl MockExecutor {
     }
 
     // TODO handle op
-    pub fn mock_unary<T: TensorLike>(&mut self, op: MockOpCode, arg: T) -> T {
+    pub fn mock_unary<T: TensorLike + Clone>(&mut self, op: MockOpCode, arg: Arc<T>) -> T {
         thread::sleep(time::Duration::from_millis((1000) as u64));
-        arg
+        let _y: T = (*arg).clone();
+        _y
     }
 
-    pub fn mock_binary<T: TensorLike>(&mut self, op: MockOpCode, lhs: T, rhs: T) -> T {
+    pub fn mock_binary<T: TensorLike + Clone>(
+        &mut self,
+        op: MockOpCode,
+        lhs: Arc<T>,
+        rhs: Arc<T>,
+    ) -> T {
         thread::sleep(time::Duration::from_millis((2000) as u64));
-        lhs
+        let _y: T = (*lhs).clone();
+        _y
     }
 }
 
@@ -67,15 +79,19 @@ impl ExecutorLike for MockExecutor {
         arg
     }
 
-    fn unary_compute(&mut self, op: Self::OpCodeType, arg: Self::TensorType) -> Self::TensorType {
+    fn unary_compute(
+        &mut self,
+        op: Self::OpCodeType,
+        arg: Arc<Self::TensorType>,
+    ) -> Self::TensorType {
         self.mock_unary::<Self::TensorType>(op, arg)
     }
 
     fn binary_compute(
         &mut self,
         op: Self::OpCodeType,
-        lhs: Self::TensorType,
-        rhs: Self::TensorType,
+        lhs: Arc<Self::TensorType>,
+        rhs: Arc<Self::TensorType>,
     ) -> Self::TensorType {
         self.mock_binary::<Self::TensorType>(op, lhs, rhs)
     }
