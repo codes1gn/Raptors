@@ -91,11 +91,17 @@ where
                 let outs = self.on_unary_compute(op, inp).expect("compute failed");
                 info!("::actor#{}::exit-computation", self.id);
                 // respond_to.into_iter().map(|x| x.send(0u8) );
-                respond_to.into_iter().map(|x| {
-                    info!("::actors#{}::out-ready-checker set-ready to var #{}", self.id, respond_id);
-                    x.send(0u8);
-                    ()
-                }).collect::<()>();
+                respond_to
+                    .into_iter()
+                    .map(|x| {
+                        info!(
+                            "::actors#{}::out-ready-checker set-ready to var #{}",
+                            self.id, respond_id
+                        );
+                        x.send(0u8);
+                        ()
+                    })
+                    .collect::<()>();
                 Ok(())
             }
             // TODO need MSG to handle unary operations

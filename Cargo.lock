@@ -544,13 +544,9 @@ dependencies = [
  "chrono",
  "env_logger",
  "log",
- "opentelemetry",
- "opentelemetry-jaeger",
  "rand 0.8.5",
  "tokio",
  "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
  "uuid",
 ]
 
