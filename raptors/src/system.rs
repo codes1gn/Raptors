@@ -142,7 +142,7 @@ where
     }
 
     pub async fn issue_order(&mut self, msg: RaptorMessage<U, O>) -> () {
-        info!("::actor-system-handler::send msg {:?}", msg);
+        debug!("::actor-system-handler::send msg {:?}", msg);
         self.system_cmd_sendbox.send(msg).await;
     }
 
@@ -255,7 +255,7 @@ where
     #[tracing::instrument(name = "actor_system", skip(self, msg, to))]
     pub async fn deliver_to(&self, msg: RaptorMessage<U, O>, to: usize) {
         self.mails[to].send(msg).await;
-        info!("::actor_system::send msg to actor #{:?}", to);
+        debug!("::actor_system::send msg to actor #{:?}", to);
     }
 
     #[tracing::instrument(name = "actor_system", skip(self, msg))]
@@ -263,7 +263,7 @@ where
         for mail in &self.mails {
             mail.send(RaptorMessage::LoadfreeMSG(msg.clone())).await;
         }
-        info!("::actor_system::send msg to all actors");
+        debug!("::actor_system::send msg to all actors");
     }
 
     #[tracing::instrument(name = "system::run", skip(self))]
@@ -275,8 +275,27 @@ where
                     match gmsg {
                         RaptorMessage::PayloadMSG(ref msg) => {
                             match msg {
+                                PayloadMessage::NonRetBinaryComputeFunctorMsg { .. } => {
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    let idle_actor = self.poll_ready_actor();
+                                    match idle_actor {
+                                        None => {
+                                            info!("::actor-system::not-find avlb-actor");
+                                            info!("::actor-system::delay this unary-compute-task");
+                                            self.delayed_tensor_types.push(gmsg);
+                                            Ok(())
+                                        }
+                                        Some(idx) => {
+                                            info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                            self.deliver_to(gmsg, idx).await;
+                                            Ok(())
+                                        }
+                                    }
+                                }
                                 PayloadMessage::NonRetUnaryComputeFunctorMsg { .. } => {
-                                    info!("::actor-system::recv payload-msg {:?}", msg);
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
                                     let idle_actor = self.poll_ready_actor();
                                     match idle_actor {
                                         None => {
@@ -295,7 +314,7 @@ where
                                     }
                                 }
                                 PayloadMessage::UnaryComputeFunctorMsg { .. } => {
-                                    info!("::actor-system::recv payload-msg {:?}", msg);
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
                                     let idle_actor = self.poll_ready_actor();
                                     match idle_actor {
                                         None => {
@@ -314,7 +333,7 @@ where
                                     }
                                 }
                                 PayloadMessage::ComputeFunctorMsg { .. } => {
-                                    info!("::actor-system::recv payload-msg {:?}", msg);
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
                                     let idle_actor = self.poll_ready_actor();
                                     match idle_actor {
                                         None => {

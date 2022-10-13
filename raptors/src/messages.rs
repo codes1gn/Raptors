@@ -1,5 +1,6 @@
 // LICENSE PLACEHOLDER
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
+// TODO replace Arc, RwLock with tokio Arc/RwLock
 
 use tokio::sync::oneshot;
 
@@ -65,19 +66,30 @@ where
 {
     ComputeFunctorMsg {
         op: O,
-        lhs: Arc<T>,
-        rhs: Arc<T>,
+        lhs: Arc<RwLock<T>>,
+        rhs: Arc<RwLock<T>>,
         respond_to: oneshot::Sender<T>,
     },
     UnaryComputeFunctorMsg {
         op: O,
-        inp: Arc<T>,
+        inp: Arc<RwLock<T>>,
         respond_to: oneshot::Sender<T>,
     },
     NonRetUnaryComputeFunctorMsg {
         op: O,
-        inp: Arc<T>,
+        inp: Arc<RwLock<T>>,
+        out: Arc<RwLock<T>>,
         inp_ready_checker: oneshot::Receiver<u8>,
+        respond_to: Vec<oneshot::Sender<u8>>,
+        respond_id: usize,
+    },
+    NonRetBinaryComputeFunctorMsg {
+        op: O,
+        lhs: Arc<RwLock<T>>,
+        rhs: Arc<RwLock<T>>,
+        out: Arc<RwLock<T>>,
+        lhs_ready_checker: oneshot::Receiver<u8>,
+        rhs_ready_checker: oneshot::Receiver<u8>,
         respond_to: Vec<oneshot::Sender<u8>>,
         respond_id: usize,
     },

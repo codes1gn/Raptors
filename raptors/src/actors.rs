@@ -1,5 +1,5 @@
 // LICENSE PLACEHOLDER
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use tracing::{debug, info};
 // use tracing::instrument;
 // use tracing::{span, Level};
@@ -75,11 +75,48 @@ where
 
     async fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
         match msg {
+            PayloadMessage::NonRetBinaryComputeFunctorMsg {
+                op,
+                lhs,
+                rhs,
+                out,
+                lhs_ready_checker,
+                rhs_ready_checker,
+                respond_to,
+                respond_id,
+            } => {
+                info!("::actors#{}::lhs-ready-checker checking", self.id);
+                lhs_ready_checker.await;
+                info!("::actors#{}::lhs-ready-checker ready", self.id);
+
+                info!("::actors#{}::rhs-ready-checker checking", self.id);
+                rhs_ready_checker.await;
+                info!("::actors#{}::rhs-ready-checker ready", self.id);
+
+                info!("::actor#{}::enter-computation", self.id);
+                let if_compute_successed = self.on_binary_compute_v2(op, lhs, rhs, out);
+                // WIP let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                info!("::actor#{}::exit-computation", self.id);
+                // respond_to.into_iter().map(|x| x.send(0u8) );
+                respond_to
+                    .into_iter()
+                    .map(|x| {
+                        info!(
+                            "::actors#{}::out-ready-checker set-ready to var #{}",
+                            self.id, respond_id
+                        );
+                        x.send(0u8);
+                        ()
+                    })
+                    .collect::<()>();
+                Ok(())
+            }
             // WIP add non-ret unary msg, just return a u8 signal that receives
             // TODO maybe send a () is better
             PayloadMessage::NonRetUnaryComputeFunctorMsg {
                 op,
                 inp,
+                out,
                 inp_ready_checker,
                 respond_to,
                 respond_id,
@@ -89,7 +126,8 @@ where
                 inp_ready_checker.await;
                 info!("::actors#{}::inp-ready-checker ready", self.id);
                 info!("::actor#{}::enter-computation", self.id);
-                let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                let if_compute_successed = self.on_unary_compute_v2(op, inp, out);
+                // WIP let outs = self.on_unary_compute(op, inp).expect("compute failed");
                 info!("::actor#{}::exit-computation", self.id);
                 // respond_to.into_iter().map(|x| x.send(0u8) );
                 respond_to
@@ -190,15 +228,44 @@ where
     }
 
     #[tracing::instrument(name = "actor::on_binary_compute", skip(self, lhs, rhs))]
-    fn on_binary_compute(&mut self, op: O, lhs: Arc<U>, rhs: Arc<U>) -> Result<U, String> {
+    fn on_binary_compute(
+        &mut self,
+        op: O,
+        lhs: Arc<RwLock<U>>,
+        rhs: Arc<RwLock<U>>,
+    ) -> Result<U, String> {
         let outs = self.executor.binary_compute(op, lhs, rhs);
         Ok(outs)
     }
 
+    #[tracing::instrument(name = "actor::on_binary_compute", skip(self, lhs, rhs))]
+    fn on_binary_compute_v2(
+        &mut self,
+        op: O,
+        lhs: Arc<RwLock<U>>,
+        rhs: Arc<RwLock<U>>,
+        out: Arc<RwLock<U>>,
+    ) -> Result<(), String> {
+        let outs = self.executor.binary_compute_v2(op, lhs, rhs, out);
+        Ok(outs)
+    }
+
     #[tracing::instrument(name = "actor::on_unary_compute", skip(self, operand))]
-    fn on_unary_compute(&mut self, op: O, operand: Arc<U>) -> Result<U, String> {
+    fn on_unary_compute(&mut self, op: O, operand: Arc<RwLock<U>>) -> Result<U, String> {
         let outs = self.executor.unary_compute(op, operand);
         Ok(outs)
+    }
+
+    // v2 consumes output, mutable into inner value, and returns status
+    #[tracing::instrument(name = "actor::on_unary_compute", skip(self, operand))]
+    fn on_unary_compute_v2(
+        &mut self,
+        op: O,
+        operand: Arc<RwLock<U>>,
+        result: Arc<RwLock<U>>,
+    ) -> Result<(), String> {
+        let status = self.executor.unary_compute_v2(op, operand, result);
+        Ok(status)
     }
 }
 

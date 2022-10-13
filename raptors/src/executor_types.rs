@@ -1,6 +1,6 @@
 // LICENSE PLACEHOLDER
 //
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::{thread, time};
 
 use crate::cost_model::MockOpCode;
@@ -23,15 +23,28 @@ pub trait ExecutorLike {
     fn unary_compute(
         &mut self,
         op: Self::OpCodeType,
-        arg: Arc<Self::TensorType>,
+        arg: Arc<RwLock<Self::TensorType>>,
     ) -> Self::TensorType;
+    fn unary_compute_v2(
+        &mut self,
+        op: Self::OpCodeType,
+        arg: Arc<RwLock<Self::TensorType>>,
+        out: Arc<RwLock<Self::TensorType>>,
+    ) -> ();
     // TODO need to support monomorphism for SupportedDataType
     fn binary_compute(
         &mut self,
         op: Self::OpCodeType,
-        lhs: Arc<Self::TensorType>,
-        rhs: Arc<Self::TensorType>,
+        lhs: Arc<RwLock<Self::TensorType>>,
+        rhs: Arc<RwLock<Self::TensorType>>,
     ) -> Self::TensorType;
+    fn binary_compute_v2(
+        &mut self,
+        op: Self::OpCodeType,
+        lhs: Arc<RwLock<Self::TensorType>>,
+        rhs: Arc<RwLock<Self::TensorType>>,
+        out: Arc<RwLock<Self::TensorType>>,
+    ) -> ();
 }
 
 // wrap a dedicated executor module that only consider how to do computations
@@ -48,21 +61,40 @@ impl MockExecutor {
     }
 
     // TODO handle op
-    pub fn mock_unary<T: TensorLike + Clone>(&mut self, op: MockOpCode, arg: Arc<T>) -> T {
+    pub fn mock_unary<T: TensorLike + Clone>(&mut self, op: MockOpCode, arg: Arc<RwLock<T>>) -> T {
         thread::sleep(time::Duration::from_millis((1000) as u64));
-        let _y: T = (*arg).clone();
+        let _y: T = (*arg).read().unwrap().clone();
         _y
+    }
+
+    pub fn mock_unary_v2<T: TensorLike + Clone>(
+        &mut self,
+        op: MockOpCode,
+        arg: Arc<RwLock<T>>,
+        ret: Arc<RwLock<T>>,
+    ) -> () {
+        thread::sleep(time::Duration::from_millis((1000) as u64));
     }
 
     pub fn mock_binary<T: TensorLike + Clone>(
         &mut self,
         op: MockOpCode,
-        lhs: Arc<T>,
-        rhs: Arc<T>,
+        lhs: Arc<RwLock<T>>,
+        rhs: Arc<RwLock<T>>,
     ) -> T {
         thread::sleep(time::Duration::from_millis((2000) as u64));
-        let _y: T = (*lhs).clone();
+        let _y: T = (*lhs).read().unwrap().clone();
         _y
+    }
+
+    pub fn mock_binary_v2<T: TensorLike + Clone>(
+        &mut self,
+        op: MockOpCode,
+        lhs: Arc<RwLock<T>>,
+        rhs: Arc<RwLock<T>>,
+        out: Arc<RwLock<T>>,
+    ) -> () {
+        thread::sleep(time::Duration::from_millis((2000) as u64));
     }
 }
 
@@ -82,18 +114,37 @@ impl ExecutorLike for MockExecutor {
     fn unary_compute(
         &mut self,
         op: Self::OpCodeType,
-        arg: Arc<Self::TensorType>,
+        arg: Arc<RwLock<Self::TensorType>>,
     ) -> Self::TensorType {
         self.mock_unary::<Self::TensorType>(op, arg)
+    }
+
+    fn unary_compute_v2(
+        &mut self,
+        op: Self::OpCodeType,
+        arg: Arc<RwLock<Self::TensorType>>,
+        out: Arc<RwLock<Self::TensorType>>,
+    ) -> () {
+        self.mock_unary_v2::<Self::TensorType>(op, arg, out);
     }
 
     fn binary_compute(
         &mut self,
         op: Self::OpCodeType,
-        lhs: Arc<Self::TensorType>,
-        rhs: Arc<Self::TensorType>,
+        lhs: Arc<RwLock<Self::TensorType>>,
+        rhs: Arc<RwLock<Self::TensorType>>,
     ) -> Self::TensorType {
         self.mock_binary::<Self::TensorType>(op, lhs, rhs)
+    }
+
+    fn binary_compute_v2(
+        &mut self,
+        op: Self::OpCodeType,
+        lhs: Arc<RwLock<Self::TensorType>>,
+        rhs: Arc<RwLock<Self::TensorType>>,
+        out: Arc<RwLock<Self::TensorType>>,
+    ) -> () {
+        self.mock_binary_v2::<Self::TensorType>(op, lhs, rhs, out);
     }
 }
 
