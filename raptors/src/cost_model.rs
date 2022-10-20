@@ -25,6 +25,7 @@ pub enum MockOpCode {
     DivOp,
     ConvOp,
     ExpOp,
+    ReshapeOp,
     MatmulOp,
     SinOp,
 }
@@ -53,6 +54,7 @@ impl Default for CostModel {
         cost_model.insert(MockOpCode::DivOp, 87);
         cost_model.insert(MockOpCode::ConvOp, 107);
         cost_model.insert(MockOpCode::ExpOp, 173);
+        cost_model.insert(MockOpCode::ReshapeOp, 37);
         cost_model.insert(MockOpCode::MatmulOp, 57);
         cost_model.insert(MockOpCode::SinOp, 127);
         return Self {
