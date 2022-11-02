@@ -66,14 +66,21 @@ where
         self.uuid
     }
 
-    async fn fetch_and_handle(&mut self, msg: RaptorMessage<U, O>) -> Result<(), String> {
+    async fn fetch_and_handle_async(&mut self, msg: RaptorMessage<U, O>) -> Result<(), String> {
         match msg {
-            RaptorMessage::LoadfreeMSG(_msg) => self.fetch_and_handle_message(_msg).await,
-            RaptorMessage::PayloadMSG(_msg) => self.fetch_and_handle_payload(_msg).await,
+            RaptorMessage::LoadfreeMSG(_msg) => self.fetch_and_handle_message_async(_msg).await,
+            RaptorMessage::PayloadMSG(_msg) => self.fetch_and_handle_payload_async(_msg).await,
         }
     }
 
-    async fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
+    fn fetch_and_handle(&mut self, msg: RaptorMessage<U, O>) -> Result<(), String> {
+        match msg {
+            RaptorMessage::LoadfreeMSG(_msg) => self.fetch_and_handle_message(_msg),
+            RaptorMessage::PayloadMSG(_msg) => self.fetch_and_handle_payload(_msg),
+        }
+    }
+
+    async fn fetch_and_handle_payload_async(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
         match msg {
             PayloadMessage::NonRetBinaryComputeFunctorMsg {
                 op,
@@ -84,6 +91,7 @@ where
                 rhs_ready_checker,
                 respond_to,
                 respond_id,
+                ..
             } => {
                 info!("::actors#{}::lhs-ready-checker checking", self.id);
                 lhs_ready_checker.await;
@@ -120,6 +128,7 @@ where
                 inp_ready_checker,
                 respond_to,
                 respond_id,
+                ..
             } => {
                 // TODO need unary branch
                 info!("::actors#{}::inp-ready-checker checking", self.id);
@@ -135,6 +144,38 @@ where
                     .map(|x| {
                         info!(
                             "::actors#{}::out-ready-checker set-ready to var #{}",
+                            self.id, respond_id
+                        );
+                        x.send(0u8);
+                        ()
+                    })
+                    .collect::<()>();
+                Ok(())
+            }
+            PayloadMessage::DMAOperationMsg {
+                op,
+                inp,
+                out,
+                inp_ready_checker,
+                respond_to,
+                respond_id,
+                shape,
+                ..
+            } => {
+                // TODO need unary branch
+                info!("::actors#{}::inp-ready-checker checking - DMA", self.id);
+                inp_ready_checker.await;
+                info!("::actors#{}::inp-ready-checker ready - DMA", self.id);
+                info!("::actor#{}::enter-computation - DMA", self.id);
+                let if_compute_successed = self.on_dma_operation(op, inp, out, shape);
+                // WIP let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                info!("::actor#{}::exit-computation - DMA", self.id);
+                // respond_to.into_iter().map(|x| x.send(0u8) );
+                respond_to
+                    .into_iter()
+                    .map(|x| {
+                        info!(
+                            "::actors#{}::out-ready-checker set-ready to var #{} - DMA",
                             self.id, respond_id
                         );
                         x.send(0u8);
@@ -174,7 +215,142 @@ where
         }
     }
 
-    async fn fetch_and_handle_message(&mut self, msg: LoadfreeMessage<U>) -> Result<(), String> {
+    fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
+        match msg {
+            PayloadMessage::NonRetBinaryComputeFunctorMsg {
+                op,
+                lhs,
+                rhs,
+                out,
+                mut lhs_ready_checker,
+                mut rhs_ready_checker,
+                respond_to,
+                respond_id,
+                ..
+            } => {
+                info!("::actors#{}::lhs-ready-checker checking", self.id);
+                lhs_ready_checker.try_recv();
+                info!("::actors#{}::lhs-ready-checker ready", self.id);
+
+                info!("::actors#{}::rhs-ready-checker checking", self.id);
+                rhs_ready_checker.try_recv();
+                info!("::actors#{}::rhs-ready-checker ready", self.id);
+
+                info!("::actor#{}::enter-computation", self.id);
+                let if_compute_successed = self.on_binary_compute_v2(op, lhs, rhs, out);
+                // WIP let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                info!("::actor#{}::exit-computation", self.id);
+                // respond_to.into_iter().map(|x| x.send(0u8) );
+                respond_to
+                    .into_iter()
+                    .map(|x| {
+                        info!(
+                            "::actors#{}::out-ready-checker set-ready to var #{}",
+                            self.id, respond_id
+                        );
+                        x.send(0u8);
+                        ()
+                    })
+                    .collect::<()>();
+                Ok(())
+            }
+            // WIP add non-ret unary msg, just return a u8 signal that receives
+            // TODO maybe send a () is better
+            PayloadMessage::NonRetUnaryComputeFunctorMsg {
+                op,
+                inp,
+                out,
+                mut inp_ready_checker,
+                respond_to,
+                respond_id,
+                ..
+            } => {
+                // TODO need unary branch
+                info!("::actors#{}::inp-ready-checker checking", self.id);
+                inp_ready_checker.try_recv();
+                info!("::actors#{}::inp-ready-checker ready", self.id);
+                info!("::actor#{}::enter-computation", self.id);
+                let if_compute_successed = self.on_unary_compute_v2(op, inp, out);
+                // WIP let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                info!("::actor#{}::exit-computation", self.id);
+                // respond_to.into_iter().map(|x| x.send(0u8) );
+                respond_to
+                    .into_iter()
+                    .map(|x| {
+                        info!(
+                            "::actors#{}::out-ready-checker set-ready to var #{}",
+                            self.id, respond_id
+                        );
+                        x.send(0u8);
+                        ()
+                    })
+                    .collect::<()>();
+                Ok(())
+            }
+            PayloadMessage::DMAOperationMsg {
+                op,
+                inp,
+                out,
+                mut inp_ready_checker,
+                respond_to,
+                respond_id,
+                shape,
+                ..
+            } => {
+                // TODO need unary branch
+                info!("::actors#{}::inp-ready-checker checking - DMA", self.id);
+                inp_ready_checker.try_recv();
+                info!("::actors#{}::inp-ready-checker ready - DMA", self.id);
+                info!("::actor#{}::enter-computation - DMA", self.id);
+                let if_compute_successed = self.on_dma_operation(op, inp, out, shape);
+                // WIP let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                info!("::actor#{}::exit-computation - DMA", self.id);
+                // respond_to.into_iter().map(|x| x.send(0u8) );
+                respond_to
+                    .into_iter()
+                    .map(|x| {
+                        info!(
+                            "::actors#{}::out-ready-checker set-ready to var #{} - DMA",
+                            self.id, respond_id
+                        );
+                        x.send(0u8);
+                        ()
+                    })
+                    .collect::<()>();
+                Ok(())
+            }
+            // TODO need MSG to handle unary operations
+            PayloadMessage::UnaryComputeFunctorMsg {
+                op,
+                inp,
+                respond_to,
+            } => {
+                // TODO need unary branch
+                info!("::actor#{}::enter-computation", self.id);
+                let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                info!("::actor#{}::exit-computation", self.id);
+                respond_to.send(outs);
+                Ok(())
+            }
+            PayloadMessage::ComputeFunctorMsg {
+                op,
+                lhs,
+                rhs,
+                respond_to,
+            } => {
+                // TODO need unary branch
+                info!("::actor#{}::enter-computation", self.id);
+                let outs = self
+                    .on_binary_compute(op, lhs, rhs)
+                    .expect("compute failed");
+                info!("::actor#{}::exit-computation", self.id);
+                respond_to.send(outs);
+                Ok(())
+            }
+        }
+    }
+
+    async fn fetch_and_handle_message_async(&mut self, msg: LoadfreeMessage<U>) -> Result<(), String> {
         match msg {
             LoadfreeMessage::MockTensorMsg(_wkl) => {
                 // info!("::actor#{}::COMPUTE {:?}", self.id, _wkl);
@@ -188,13 +364,26 @@ where
         }
     }
 
-    #[tracing::instrument(name = "actor::run", skip(self))]
+    fn fetch_and_handle_message(&mut self, msg: LoadfreeMessage<U>) -> Result<(), String> {
+        match msg {
+            LoadfreeMessage::MockTensorMsg(_wkl) => {
+                // info!("::actor#{}::COMPUTE {:?}", self.id, _wkl);
+                self.on_simulate(_wkl)
+            }
+            LoadfreeMessage::ActorMsg(_amsg) => {
+                info!("::actor#{}::HANDLE ActorMSG - {:#?}", self.id, _amsg);
+                Ok(())
+            }
+            _ => panic!("Unknown actormessage not implemented"),
+        }
+    }
+
     pub async fn run(&mut self) -> u32 {
         loop {
             match self.receiver.try_recv() {
                 Ok(_msg) => {
                     info!("::actor#{}::receive msg from system", self.id);
-                    let status = self.fetch_and_handle(_msg).await;
+                    let status = self.fetch_and_handle(_msg);
                 }
                 Err(TryRecvError::Empty) => {
                     let msg = build_loadfree_msg!("available", self.id);
@@ -204,7 +393,40 @@ where
                     match self.receiver.recv().await {
                         Some(_msg) => {
                             info!("::actor#{}::receive msg from system", self.id);
-                            let status = self.fetch_and_handle(_msg).await;
+                            let status = self.fetch_and_handle(_msg);
+                        }
+                        None => {
+                            info!("::actor#{}::DROPPED BY SUPERVISOR -> HALTING", self.id);
+                            break 1;
+                        }
+                    }
+                }
+                Err(TryRecvError::Disconnected) => {
+                    info!("::actor#{}::DROPPED BY SUPERVISOR -> HALTING", self.id);
+                    break 1;
+                }
+                _ => (),
+            }
+        }
+    }
+
+    #[tracing::instrument(name = "actor::run", skip(self))]
+    pub async fn run_async(&mut self) -> u32 {
+        loop {
+            match self.receiver.try_recv() {
+                Ok(_msg) => {
+                    info!("::actor#{}::receive msg from system", self.id);
+                    let status = self.fetch_and_handle_async(_msg).await;
+                }
+                Err(TryRecvError::Empty) => {
+                    let msg = build_loadfree_msg!("available", self.id);
+                    // TODO update build_msg with generalmessage
+                    self.respond_to.try_send(RaptorMessage::LoadfreeMSG(msg));
+                    info!("::actor#{}::tell supervisor i am available", self.id);
+                    match self.receiver.recv().await {
+                        Some(_msg) => {
+                            info!("::actor#{}::receive msg from system", self.id);
+                            let status = self.fetch_and_handle_async(_msg).await;
                         }
                         None => {
                             info!("::actor#{}::DROPPED BY SUPERVISOR -> HALTING", self.id);
@@ -238,7 +460,7 @@ where
         Ok(outs)
     }
 
-    #[tracing::instrument(name = "actor::on_binary_compute", skip(self, lhs, rhs))]
+    #[tracing::instrument(name = "actor::on_binary_compute", skip(self, lhs, rhs, out))]
     fn on_binary_compute_v2(
         &mut self,
         op: O,
@@ -257,7 +479,7 @@ where
     }
 
     // v2 consumes output, mutable into inner value, and returns status
-    #[tracing::instrument(name = "actor::on_unary_compute", skip(self, operand))]
+    #[tracing::instrument(name = "actor::on_unary_compute_v2", skip(self, operand, result))]
     fn on_unary_compute_v2(
         &mut self,
         op: O,
@@ -265,6 +487,17 @@ where
         result: Arc<RwLock<U>>,
     ) -> Result<(), String> {
         let status = self.executor.unary_compute_v2(op, operand, result);
+        Ok(status)
+    }
+
+    fn on_dma_operation(
+        &mut self,
+        op: O,
+        operand: Arc<RwLock<U>>,
+        result: Arc<RwLock<U>>,
+        shape: Vec<usize>,
+    ) -> Result<(), String> {
+        let status = self.executor.dma_operation(op, operand, result, shape);
         Ok(status)
     }
 }

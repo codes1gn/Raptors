@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use tokio::sync::mpsc;
+use tokio::task::spawn_blocking;
 use tracing::{debug, info};
 
 use crate::actors::*;
@@ -123,7 +124,12 @@ where
     pub fn new(name: &str) -> Self {
         let (sender, receiver) = mpsc::channel(100);
         let mut system = ActorSystem::<T, U, O>::new(name, receiver, sender.clone());
+        // spawn_blocking(move || { system.run() });
         tokio::spawn(async move { system.run().await });
+        // tokio::spawn(async move { system.blocking_run() });
+        // rayon::spawn(move || { 
+        //     system.blocking_run() 
+        // });
         Self {
             name: name.to_string(),
             system_cmd_sendbox: sender,
@@ -228,6 +234,9 @@ where
             let mut actor =
                 Actor::<T, U, O>::new(id, receiver, self.cloned_sendbox.clone(), typeid);
             info!("::actor_system::run-event-loop actor #{}", id);
+            // LEGACY WAY - all async
+            // tokio::spawn(async move { actor.run_async().await });
+            // NEW WAY - actor actions in blocking
             tokio::spawn(async move { actor.run().await });
 
             self.availables.push(id);
@@ -252,8 +261,19 @@ where
         Ok(())
     }
 
+    pub fn blocking_deliver_to(&self, msg: RaptorMessage<U, O>, to: usize) {
+        // if to > self.mails.len() {
+        //     panic!("device id to deliver msg succeeds max device id");
+        // }
+        self.mails[to].blocking_send(msg);
+        debug!("::actor_system::send msg to actor #{:?}", to);
+    }
+
     #[tracing::instrument(name = "actor_system", skip(self, msg, to))]
     pub async fn deliver_to(&self, msg: RaptorMessage<U, O>, to: usize) {
+        // if to > self.mails.len() {
+        //     panic!("device id to deliver msg succeeds max device id");
+        // }
         self.mails[to].send(msg).await;
         debug!("::actor_system::send msg to actor #{:?}", to);
     }
@@ -266,6 +286,202 @@ where
         debug!("::actor_system::send msg to all actors");
     }
 
+    pub fn blocking_run(&mut self) -> () {
+        info!("::actor-system::start-event-loop");
+        loop {
+            match self.system_cmd_recvbox.blocking_recv() {
+                Some(gmsg) => {
+                    match gmsg {
+                        RaptorMessage::PayloadMSG(ref msg) => {
+                            match msg {
+                                PayloadMessage::NonRetBinaryComputeFunctorMsg { dev_at, .. } => {
+                                    // TODO dispatch on dev_at idx
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    info!("ANCHOR DEV-AT = {:?}", dev_at);
+                                    let idle_actor = self.poll_ready_actor();
+                                    match dev_at.clone() {
+                                        Some(_dev_at) => {
+                                            info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
+                                            self.blocking_deliver_to(gmsg, _dev_at as usize);
+                                            Ok(())
+                                        },
+                                        None => {
+                                            let idle_actor = self.poll_ready_actor();
+                                            match idle_actor {
+                                                None => {
+                                                    info!("::actor-system::not-find avlb-actor");
+                                                    info!("::actor-system::delay this unary-compute-task");
+                                                    self.delayed_tensor_types.push(gmsg);
+                                                    Ok(())
+                                                }
+                                                Some(idx) => {
+                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                                    info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                                    self.blocking_deliver_to(gmsg, idx);
+                                                    Ok(())
+                                                }
+                                            }
+                                        },
+                                    }
+                                }
+                                PayloadMessage::DMAOperationMsg { dev_at, .. } => {
+                                    // TODO dispatch on dev_at idx
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    info!("ANCHOR DEV-AT = {:?}", dev_at);
+                                    match dev_at.clone() {
+                                        Some(_dev_at) => {
+                                            info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
+                                            self.blocking_deliver_to(gmsg, _dev_at as usize);
+                                            Ok(())
+                                        },
+                                        None => {
+                                            let idle_actor = self.poll_ready_actor();
+                                            match idle_actor {
+                                                None => {
+                                                    info!("::actor-system::not-find avlb-actor");
+                                                    info!("::actor-system::delay this unary-compute-task");
+                                                    self.delayed_tensor_types.push(gmsg);
+                                                    Ok(())
+                                                }
+                                                Some(idx) => {
+                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                                    info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                                    self.blocking_deliver_to(gmsg, idx);
+                                                    Ok(())
+                                                }
+                                            }
+                                        },
+                                    }
+                                }
+                                PayloadMessage::NonRetUnaryComputeFunctorMsg { dev_at, .. } => {
+                                    // TODO dispatch on dev_at idx
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    info!("ANCHOR DEV-AT = {:?}", dev_at);
+                                    match dev_at.clone() {
+                                        Some(_dev_at) => {
+                                            info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
+                                            self.blocking_deliver_to(gmsg, _dev_at as usize);
+                                            Ok(())
+                                        },
+                                        None => {
+                                            let idle_actor = self.poll_ready_actor();
+                                            match idle_actor {
+                                                None => {
+                                                    info!("::actor-system::not-find avlb-actor");
+                                                    info!("::actor-system::delay this unary-compute-task");
+                                                    self.delayed_tensor_types.push(gmsg);
+                                                    Ok(())
+                                                }
+                                                Some(idx) => {
+                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                                    info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                                    self.blocking_deliver_to(gmsg, idx);
+                                                    Ok(())
+                                                }
+                                            }
+                                        },
+                                    }
+                                }
+                                PayloadMessage::UnaryComputeFunctorMsg { .. } => {
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    let idle_actor = self.poll_ready_actor();
+                                    match idle_actor {
+                                        None => {
+                                            info!("::actor-system::not-find avlb-actor");
+                                            info!("::actor-system::delay this unary-compute-task");
+                                            self.delayed_tensor_types.push(gmsg);
+                                            Ok(())
+                                        }
+                                        Some(idx) => {
+                                            info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                            self.blocking_deliver_to(gmsg, idx);
+                                            Ok(())
+                                        }
+                                    }
+                                }
+                                PayloadMessage::ComputeFunctorMsg { .. } => {
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    let idle_actor = self.poll_ready_actor();
+                                    match idle_actor {
+                                        None => {
+                                            info!("::actor-system::not-find avlb-actor");
+                                            info!("::actor-system::delay this binary-compute-task");
+                                            self.delayed_tensor_types.push(gmsg);
+                                            Ok(())
+                                        }
+                                        Some(idx) => {
+                                            info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                            self.blocking_deliver_to(gmsg, idx);
+                                            Ok(())
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        RaptorMessage::LoadfreeMSG(ref msg) => {
+                            match msg {
+                                LoadfreeMessage::SystemMsg(cmd) => match cmd {
+                                    SystemCommand::Spawn(typeid, cnt) => {
+                                        info!("::actor-system::recv loadfree-msg-spawn {:?}", cnt);
+                                        self.spawn_actors(*typeid, *cnt)
+                                    }
+                                    SystemCommand::HaltOn(idx) => self.halt_actor(*idx),
+                                    SystemCommand::HaltAll => self.halt_all(),
+                                    _ => Err("not implemented".to_string()),
+                                },
+                                LoadfreeMessage::MockTensorMsg(_) => {
+                                    let idle_actor = self.poll_ready_actor();
+                                    match idle_actor {
+                                        None => {
+                                            self.delayed_tensor_types.push(gmsg);
+                                            Ok(())
+                                        }
+                                        Some(idx) => {
+                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                            self.blocking_deliver_to(gmsg, idx);
+                                            Ok(())
+                                        }
+                                    }
+                                }
+                                LoadfreeMessage::ActorMsg(_amsg) => match _amsg {
+                                    ActorCommand::Available(idx) => {
+                                        info!(
+                                            "::actor-system::enqueue actor-#{} to avlb-queue",
+                                            idx
+                                        );
+                                        self.availables.push(*idx);
+                                        if self.delayed_tensor_types.is_empty() == false {
+                                            let idle_actor = self.poll_ready_actor().unwrap();
+                                            let _delayed_wkl = self.delayed_tensor_types.remove(0);
+                                            info!(
+                                                "::actor-system::dispatch delayed payload-msg to actor-#{}",
+                                                idle_actor
+                                            );
+                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                            self.blocking_deliver_to(_delayed_wkl, idle_actor);
+                                        }
+                                        Ok(())
+                                    }
+                                    _ => panic!("not implemented"),
+                                },
+                            }
+                        }
+                        // not handle msg other than system cmd
+                        _ => Ok(()),
+                    }
+                }
+                _ => Ok(()),
+            };
+        }
+    }
+
     #[tracing::instrument(name = "system::run", skip(self))]
     pub async fn run(&mut self) -> () {
         info!("::actor-system::start-event-loop");
@@ -275,42 +491,95 @@ where
                     match gmsg {
                         RaptorMessage::PayloadMSG(ref msg) => {
                             match msg {
-                                PayloadMessage::NonRetBinaryComputeFunctorMsg { .. } => {
+                                PayloadMessage::NonRetBinaryComputeFunctorMsg { dev_at, .. } => {
+                                    // TODO dispatch on dev_at idx
                                     debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    info!("ANCHOR DEV-AT = {:?}", dev_at);
                                     let idle_actor = self.poll_ready_actor();
-                                    match idle_actor {
+                                    match dev_at.clone() {
+                                        Some(_dev_at) => {
+                                            info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
+                                            self.deliver_to(gmsg, _dev_at as usize).await;
+                                            Ok(())
+                                        },
                                         None => {
-                                            info!("::actor-system::not-find avlb-actor");
-                                            info!("::actor-system::delay this unary-compute-task");
-                                            self.delayed_tensor_types.push(gmsg);
-                                            Ok(())
-                                        }
-                                        Some(idx) => {
-                                            info!("::actor-system::find avlb-actor-#{:?}", idx);
-                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
-                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
-                                            self.deliver_to(gmsg, idx).await;
-                                            Ok(())
-                                        }
+                                            let idle_actor = self.poll_ready_actor();
+                                            match idle_actor {
+                                                None => {
+                                                    info!("::actor-system::not-find avlb-actor");
+                                                    info!("::actor-system::delay this unary-compute-task");
+                                                    self.delayed_tensor_types.push(gmsg);
+                                                    Ok(())
+                                                }
+                                                Some(idx) => {
+                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                                    info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                                    self.deliver_to(gmsg, idx).await;
+                                                    Ok(())
+                                                }
+                                            }
+                                        },
                                     }
                                 }
-                                PayloadMessage::NonRetUnaryComputeFunctorMsg { .. } => {
+                                PayloadMessage::DMAOperationMsg { dev_at, .. } => {
+                                    // TODO dispatch on dev_at idx
                                     debug!("::actor-system::recv payload-msg {:?}", msg);
-                                    let idle_actor = self.poll_ready_actor();
-                                    match idle_actor {
+                                    info!("ANCHOR DEV-AT = {:?}", dev_at);
+                                    match dev_at.clone() {
+                                        Some(_dev_at) => {
+                                            info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
+                                            self.deliver_to(gmsg, _dev_at as usize).await;
+                                            Ok(())
+                                        },
                                         None => {
-                                            info!("::actor-system::not-find avlb-actor");
-                                            info!("::actor-system::delay this unary-compute-task");
-                                            self.delayed_tensor_types.push(gmsg);
+                                            let idle_actor = self.poll_ready_actor();
+                                            match idle_actor {
+                                                None => {
+                                                    info!("::actor-system::not-find avlb-actor");
+                                                    info!("::actor-system::delay this unary-compute-task");
+                                                    self.delayed_tensor_types.push(gmsg);
+                                                    Ok(())
+                                                }
+                                                Some(idx) => {
+                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                                    info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                                    self.deliver_to(gmsg, idx).await;
+                                                    Ok(())
+                                                }
+                                            }
+                                        },
+                                    }
+                                }
+                                PayloadMessage::NonRetUnaryComputeFunctorMsg { dev_at, .. } => {
+                                    // TODO dispatch on dev_at idx
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    info!("ANCHOR DEV-AT = {:?}", dev_at);
+                                    match dev_at.clone() {
+                                        Some(_dev_at) => {
+                                            info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
+                                            self.deliver_to(gmsg, _dev_at as usize).await;
                                             Ok(())
-                                        }
-                                        Some(idx) => {
-                                            info!("::actor-system::find avlb-actor-#{:?}", idx);
-                                            info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
-                                            info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
-                                            self.deliver_to(gmsg, idx).await;
-                                            Ok(())
-                                        }
+                                        },
+                                        None => {
+                                            let idle_actor = self.poll_ready_actor();
+                                            match idle_actor {
+                                                None => {
+                                                    info!("::actor-system::not-find avlb-actor");
+                                                    info!("::actor-system::delay this unary-compute-task");
+                                                    self.delayed_tensor_types.push(gmsg);
+                                                    Ok(())
+                                                }
+                                                Some(idx) => {
+                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                                    info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                                    self.deliver_to(gmsg, idx).await;
+                                                    Ok(())
+                                                }
+                                            }
+                                        },
                                     }
                                 }
                                 PayloadMessage::UnaryComputeFunctorMsg { .. } => {

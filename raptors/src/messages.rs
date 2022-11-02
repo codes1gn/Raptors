@@ -75,6 +75,16 @@ where
         inp: Arc<RwLock<T>>,
         respond_to: oneshot::Sender<T>,
     },
+    DMAOperationMsg {
+        op: O,
+        inp: Arc<RwLock<T>>,
+        out: Arc<RwLock<T>>,
+        inp_ready_checker: oneshot::Receiver<u8>,
+        respond_to: Vec<oneshot::Sender<u8>>,
+        respond_id: usize,
+        dev_at: Option<u8>,
+        shape: Vec<usize>,
+    },
     NonRetUnaryComputeFunctorMsg {
         op: O,
         inp: Arc<RwLock<T>>,
@@ -82,6 +92,7 @@ where
         inp_ready_checker: oneshot::Receiver<u8>,
         respond_to: Vec<oneshot::Sender<u8>>,
         respond_id: usize,
+        dev_at: Option<u8>,
     },
     NonRetBinaryComputeFunctorMsg {
         op: O,
@@ -92,6 +103,7 @@ where
         rhs_ready_checker: oneshot::Receiver<u8>,
         respond_to: Vec<oneshot::Sender<u8>>,
         respond_id: usize,
+        dev_at: Option<u8>,
     },
 }
 

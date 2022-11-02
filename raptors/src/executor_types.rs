@@ -2,6 +2,7 @@
 //
 use std::sync::{Arc, RwLock};
 use std::{thread, time};
+use tracing::{debug, info};
 
 use crate::cost_model::MockOpCode;
 use crate::tensor_types::{MockTensor, TensorLike};
@@ -25,6 +26,13 @@ pub trait ExecutorLike {
         op: Self::OpCodeType,
         arg: Arc<RwLock<Self::TensorType>>,
     ) -> Self::TensorType;
+    fn dma_operation(
+        &mut self,
+        op: Self::OpCodeType,
+        arg: Arc<RwLock<Self::TensorType>>,
+        out: Arc<RwLock<Self::TensorType>>,
+        shape: Vec<usize>,
+    ) -> ();
     fn unary_compute_v2(
         &mut self,
         op: Self::OpCodeType,
@@ -67,26 +75,41 @@ impl MockExecutor {
         _y
     }
 
-    pub fn mock_unary_v2<T: TensorLike + Clone>(
-        &mut self,
-        op: MockOpCode,
-        arg: Arc<RwLock<T>>,
-        ret: Arc<RwLock<T>>,
-    ) -> () {
-        thread::sleep(time::Duration::from_millis((1000) as u64));
-    }
-
     pub fn mock_binary<T: TensorLike + Clone>(
         &mut self,
         op: MockOpCode,
         lhs: Arc<RwLock<T>>,
         rhs: Arc<RwLock<T>>,
     ) -> T {
-        thread::sleep(time::Duration::from_millis((2000) as u64));
+        thread::sleep(time::Duration::from_millis((1000) as u64));
         let _y: T = (*lhs).read().unwrap().clone();
         _y
     }
 
+    // ANCHOR
+    pub fn dma_operation<T: TensorLike + Clone>(
+        &mut self,
+        op: MockOpCode,
+        arg: Arc<RwLock<T>>,
+        ret: Arc<RwLock<T>>,
+        shape: Vec<usize>,
+    ) -> () {
+        info!("anchor - dma - {:?}", op);
+        thread::sleep(time::Duration::from_millis((1000) as u64));
+    }
+
+    // ANCHOR
+    pub fn mock_unary_v2<T: TensorLike + Clone>(
+        &mut self,
+        op: MockOpCode,
+        arg: Arc<RwLock<T>>,
+        ret: Arc<RwLock<T>>,
+    ) -> () {
+        info!("anchor - unary - {:?}", op);
+        thread::sleep(time::Duration::from_millis((1000) as u64));
+    }
+
+    // ANCHOR
     pub fn mock_binary_v2<T: TensorLike + Clone>(
         &mut self,
         op: MockOpCode,
@@ -94,7 +117,8 @@ impl MockExecutor {
         rhs: Arc<RwLock<T>>,
         out: Arc<RwLock<T>>,
     ) -> () {
-        thread::sleep(time::Duration::from_millis((2000) as u64));
+        info!("anchor - binary - {:?}", op);
+        thread::sleep(time::Duration::from_millis((1000) as u64));
     }
 }
 
@@ -119,6 +143,16 @@ impl ExecutorLike for MockExecutor {
         self.mock_unary::<Self::TensorType>(op, arg)
     }
 
+    fn dma_operation(
+        &mut self,
+        op: Self::OpCodeType,
+        arg: Arc<RwLock<Self::TensorType>>,
+        out: Arc<RwLock<Self::TensorType>>,
+        shape: Vec<usize>,
+    ) -> () {
+        self.dma_operation::<Self::TensorType>(op, arg, out, shape);
+    }
+
     fn unary_compute_v2(
         &mut self,
         op: Self::OpCodeType,
@@ -134,7 +168,10 @@ impl ExecutorLike for MockExecutor {
         lhs: Arc<RwLock<Self::TensorType>>,
         rhs: Arc<RwLock<Self::TensorType>>,
     ) -> Self::TensorType {
-        self.mock_binary::<Self::TensorType>(op, lhs, rhs)
+        info!("point enter #1");
+        let _i = self.mock_binary::<Self::TensorType>(op, lhs, rhs);
+        info!("point exit #1");
+        _i
     }
 
     fn binary_compute_v2(
@@ -144,7 +181,10 @@ impl ExecutorLike for MockExecutor {
         rhs: Arc<RwLock<Self::TensorType>>,
         out: Arc<RwLock<Self::TensorType>>,
     ) -> () {
+        info!("correct");
+        info!("point enter #2");
         self.mock_binary_v2::<Self::TensorType>(op, lhs, rhs, out);
+        info!("point exit #2");
     }
 }
 
