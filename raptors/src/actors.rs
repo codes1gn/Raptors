@@ -80,8 +80,54 @@ where
         }
     }
 
-    async fn fetch_and_handle_payload_async(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
+    async fn fetch_and_handle_payload_async(
+        &mut self,
+        msg: PayloadMessage<U, O>,
+    ) -> Result<(), String> {
         match msg {
+            PayloadMessage::NonRetTenaryComputeFunctorMsg {
+                op,
+                first,
+                second,
+                third,
+                out,
+                first_ready_checker,
+                second_ready_checker,
+                third_ready_checker,
+                respond_to,
+                respond_id,
+                ..
+            } => {
+                info!("::actors#{}::first-ready-checker checking", self.id);
+                first_ready_checker.await;
+                info!("::actors#{}::first-ready-checker ready", self.id);
+
+                info!("::actors#{}::second-ready-checker checking", self.id);
+                second_ready_checker.await;
+                info!("::actors#{}::second-ready-checker ready", self.id);
+
+                info!("::actors#{}::third-ready-checker checking", self.id);
+                third_ready_checker.await;
+                info!("::actors#{}::third-ready-checker ready", self.id);
+
+                info!("::actor#{}::enter-computation", self.id);
+                let if_compute_successed = self.on_tenary_compute_v2(op, first, second, third, out);
+                // WIP let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                info!("::actor#{}::exit-computation", self.id);
+                // respond_to.into_iter().map(|x| x.send(0u8) );
+                respond_to
+                    .into_iter()
+                    .map(|x| {
+                        info!(
+                            "::actors#{}::out-ready-checker set-ready to var #{}",
+                            self.id, respond_id
+                        );
+                        x.send(0u8);
+                        ()
+                    })
+                    .collect::<()>();
+                Ok(())
+            }
             PayloadMessage::NonRetBinaryComputeFunctorMsg {
                 op,
                 lhs,
@@ -217,6 +263,49 @@ where
 
     fn fetch_and_handle_payload(&mut self, msg: PayloadMessage<U, O>) -> Result<(), String> {
         match msg {
+            PayloadMessage::NonRetTenaryComputeFunctorMsg {
+                op,
+                first,
+                second,
+                third,
+                out,
+                mut first_ready_checker,
+                mut second_ready_checker,
+                mut third_ready_checker,
+                respond_to,
+                respond_id,
+                ..
+            } => {
+                info!("::actors#{}::first-ready-checker checking", self.id);
+                first_ready_checker.try_recv();
+                info!("::actors#{}::first-ready-checker ready", self.id);
+
+                info!("::actors#{}::second-ready-checker checking", self.id);
+                second_ready_checker.try_recv();
+                info!("::actors#{}::second-ready-checker ready", self.id);
+
+                info!("::actors#{}::third-ready-checker checking", self.id);
+                third_ready_checker.try_recv();
+                info!("::actors#{}::third-ready-checker ready", self.id);
+
+                info!("::actor#{}::enter-computation", self.id);
+                let if_compute_successed = self.on_tenary_compute_v2(op, first, second, third, out);
+                // WIP let outs = self.on_unary_compute(op, inp).expect("compute failed");
+                info!("::actor#{}::exit-computation", self.id);
+                // respond_to.into_iter().map(|x| x.send(0u8) );
+                respond_to
+                    .into_iter()
+                    .map(|x| {
+                        info!(
+                            "::actors#{}::out-ready-checker set-ready to var #{}",
+                            self.id, respond_id
+                        );
+                        x.send(0u8);
+                        ()
+                    })
+                    .collect::<()>();
+                Ok(())
+            }
             PayloadMessage::NonRetBinaryComputeFunctorMsg {
                 op,
                 lhs,
@@ -350,7 +439,10 @@ where
         }
     }
 
-    async fn fetch_and_handle_message_async(&mut self, msg: LoadfreeMessage<U>) -> Result<(), String> {
+    async fn fetch_and_handle_message_async(
+        &mut self,
+        msg: LoadfreeMessage<U>,
+    ) -> Result<(), String> {
         match msg {
             LoadfreeMessage::MockTensorMsg(_wkl) => {
                 // info!("::actor#{}::COMPUTE {:?}", self.id, _wkl);
@@ -499,6 +591,20 @@ where
     ) -> Result<(), String> {
         let status = self.executor.dma_operation(op, operand, result, shape);
         Ok(status)
+    }
+
+    fn on_tenary_compute_v2(
+        &mut self,
+        op: O,
+        first: Arc<RwLock<U>>,
+        second: Arc<RwLock<U>>,
+        third: Arc<RwLock<U>>,
+        out: Arc<RwLock<U>>,
+    ) -> Result<(), String> {
+        let outs = self
+            .executor
+            .tenary_compute_v2(op, first, second, third, out);
+        Ok(outs)
     }
 }
 

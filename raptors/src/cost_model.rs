@@ -28,6 +28,7 @@ pub enum MockOpCode {
     ReluOp,
     SoftmaxOp,
     MaxpoolOp,
+    GemmOp,
     ReshapeOp,
     TransposeOp,
     MatmulOp,
@@ -61,6 +62,7 @@ impl Default for CostModel {
         cost_model.insert(MockOpCode::ReluOp, 173);
         cost_model.insert(MockOpCode::SoftmaxOp, 173);
         cost_model.insert(MockOpCode::MaxpoolOp, 173);
+        cost_model.insert(MockOpCode::GemmOp, 173);
         cost_model.insert(MockOpCode::ReshapeOp, 17);
         cost_model.insert(MockOpCode::TransposeOp, 97);
         cost_model.insert(MockOpCode::MatmulOp, 57);

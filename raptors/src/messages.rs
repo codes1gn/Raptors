@@ -105,6 +105,19 @@ where
         respond_id: usize,
         dev_at: Option<u8>,
     },
+    NonRetTenaryComputeFunctorMsg {
+        op: O,
+        first: Arc<RwLock<T>>,
+        second: Arc<RwLock<T>>,
+        third: Arc<RwLock<T>>,
+        out: Arc<RwLock<T>>,
+        first_ready_checker: oneshot::Receiver<u8>,
+        second_ready_checker: oneshot::Receiver<u8>,
+        third_ready_checker: oneshot::Receiver<u8>,
+        respond_to: Vec<oneshot::Sender<u8>>,
+        respond_id: usize,
+        dev_at: Option<u8>,
+    },
 }
 
 // SystemMsg that received and processed only by actor_system

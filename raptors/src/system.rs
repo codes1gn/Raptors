@@ -127,8 +127,8 @@ where
         // spawn_blocking(move || { system.run() });
         tokio::spawn(async move { system.run().await });
         // tokio::spawn(async move { system.blocking_run() });
-        // rayon::spawn(move || { 
-        //     system.blocking_run() 
+        // rayon::spawn(move || {
+        //     system.blocking_run()
         // });
         Self {
             name: name.to_string(),
@@ -294,7 +294,9 @@ where
                     match gmsg {
                         RaptorMessage::PayloadMSG(ref msg) => {
                             match msg {
-                                PayloadMessage::NonRetBinaryComputeFunctorMsg { dev_at, .. } => {
+                                PayloadMessage::NonRetTenaryComputeFunctorMsg {
+                                    dev_at, ..
+                                } => {
                                     // TODO dispatch on dev_at idx
                                     debug!("::actor-system::recv payload-msg {:?}", msg);
                                     info!("ANCHOR DEV-AT = {:?}", dev_at);
@@ -304,7 +306,7 @@ where
                                             info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
                                             self.blocking_deliver_to(gmsg, _dev_at as usize);
                                             Ok(())
-                                        },
+                                        }
                                         None => {
                                             let idle_actor = self.poll_ready_actor();
                                             match idle_actor {
@@ -315,14 +317,53 @@ where
                                                     Ok(())
                                                 }
                                                 Some(idx) => {
-                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!(
+                                                        "::actor-system::find avlb-actor-#{:?}",
+                                                        idx
+                                                    );
                                                     info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
                                                     info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                                     self.blocking_deliver_to(gmsg, idx);
                                                     Ok(())
                                                 }
                                             }
-                                        },
+                                        }
+                                    }
+                                }
+                                PayloadMessage::NonRetBinaryComputeFunctorMsg {
+                                    dev_at, ..
+                                } => {
+                                    // TODO dispatch on dev_at idx
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    info!("ANCHOR DEV-AT = {:?}", dev_at);
+                                    let idle_actor = self.poll_ready_actor();
+                                    match dev_at.clone() {
+                                        Some(_dev_at) => {
+                                            info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
+                                            self.blocking_deliver_to(gmsg, _dev_at as usize);
+                                            Ok(())
+                                        }
+                                        None => {
+                                            let idle_actor = self.poll_ready_actor();
+                                            match idle_actor {
+                                                None => {
+                                                    info!("::actor-system::not-find avlb-actor");
+                                                    info!("::actor-system::delay this unary-compute-task");
+                                                    self.delayed_tensor_types.push(gmsg);
+                                                    Ok(())
+                                                }
+                                                Some(idx) => {
+                                                    info!(
+                                                        "::actor-system::find avlb-actor-#{:?}",
+                                                        idx
+                                                    );
+                                                    info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                                    info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                                    self.blocking_deliver_to(gmsg, idx);
+                                                    Ok(())
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                                 PayloadMessage::DMAOperationMsg { dev_at, .. } => {
@@ -334,7 +375,7 @@ where
                                             info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
                                             self.blocking_deliver_to(gmsg, _dev_at as usize);
                                             Ok(())
-                                        },
+                                        }
                                         None => {
                                             let idle_actor = self.poll_ready_actor();
                                             match idle_actor {
@@ -345,14 +386,17 @@ where
                                                     Ok(())
                                                 }
                                                 Some(idx) => {
-                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!(
+                                                        "::actor-system::find avlb-actor-#{:?}",
+                                                        idx
+                                                    );
                                                     info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
                                                     info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                                     self.blocking_deliver_to(gmsg, idx);
                                                     Ok(())
                                                 }
                                             }
-                                        },
+                                        }
                                     }
                                 }
                                 PayloadMessage::NonRetUnaryComputeFunctorMsg { dev_at, .. } => {
@@ -364,7 +408,7 @@ where
                                             info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
                                             self.blocking_deliver_to(gmsg, _dev_at as usize);
                                             Ok(())
-                                        },
+                                        }
                                         None => {
                                             let idle_actor = self.poll_ready_actor();
                                             match idle_actor {
@@ -375,14 +419,17 @@ where
                                                     Ok(())
                                                 }
                                                 Some(idx) => {
-                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!(
+                                                        "::actor-system::find avlb-actor-#{:?}",
+                                                        idx
+                                                    );
                                                     info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
                                                     info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                                     self.blocking_deliver_to(gmsg, idx);
                                                     Ok(())
                                                 }
                                             }
-                                        },
+                                        }
                                     }
                                 }
                                 PayloadMessage::UnaryComputeFunctorMsg { .. } => {
@@ -491,7 +538,9 @@ where
                     match gmsg {
                         RaptorMessage::PayloadMSG(ref msg) => {
                             match msg {
-                                PayloadMessage::NonRetBinaryComputeFunctorMsg { dev_at, .. } => {
+                                PayloadMessage::NonRetBinaryComputeFunctorMsg {
+                                    dev_at, ..
+                                } => {
                                     // TODO dispatch on dev_at idx
                                     debug!("::actor-system::recv payload-msg {:?}", msg);
                                     info!("ANCHOR DEV-AT = {:?}", dev_at);
@@ -501,7 +550,7 @@ where
                                             info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
                                             self.deliver_to(gmsg, _dev_at as usize).await;
                                             Ok(())
-                                        },
+                                        }
                                         None => {
                                             let idle_actor = self.poll_ready_actor();
                                             match idle_actor {
@@ -512,14 +561,53 @@ where
                                                     Ok(())
                                                 }
                                                 Some(idx) => {
-                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!(
+                                                        "::actor-system::find avlb-actor-#{:?}",
+                                                        idx
+                                                    );
                                                     info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
                                                     info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                                     self.deliver_to(gmsg, idx).await;
                                                     Ok(())
                                                 }
                                             }
-                                        },
+                                        }
+                                    }
+                                }
+                                PayloadMessage::NonRetTenaryComputeFunctorMsg {
+                                    dev_at, ..
+                                } => {
+                                    // TODO dispatch on dev_at idx
+                                    debug!("::actor-system::recv payload-msg {:?}", msg);
+                                    info!("ANCHOR DEV-AT = {:?}", dev_at);
+                                    let idle_actor = self.poll_ready_actor();
+                                    match dev_at.clone() {
+                                        Some(_dev_at) => {
+                                            info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
+                                            self.deliver_to(gmsg, _dev_at as usize).await;
+                                            Ok(())
+                                        }
+                                        None => {
+                                            let idle_actor = self.poll_ready_actor();
+                                            match idle_actor {
+                                                None => {
+                                                    info!("::actor-system::not-find avlb-actor");
+                                                    info!("::actor-system::delay this unary-compute-task");
+                                                    self.delayed_tensor_types.push(gmsg);
+                                                    Ok(())
+                                                }
+                                                Some(idx) => {
+                                                    info!(
+                                                        "::actor-system::find avlb-actor-#{:?}",
+                                                        idx
+                                                    );
+                                                    info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
+                                                    info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
+                                                    self.deliver_to(gmsg, idx).await;
+                                                    Ok(())
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                                 PayloadMessage::DMAOperationMsg { dev_at, .. } => {
@@ -531,7 +619,7 @@ where
                                             info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
                                             self.deliver_to(gmsg, _dev_at as usize).await;
                                             Ok(())
-                                        },
+                                        }
                                         None => {
                                             let idle_actor = self.poll_ready_actor();
                                             match idle_actor {
@@ -542,14 +630,17 @@ where
                                                     Ok(())
                                                 }
                                                 Some(idx) => {
-                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!(
+                                                        "::actor-system::find avlb-actor-#{:?}",
+                                                        idx
+                                                    );
                                                     info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
                                                     info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                                     self.deliver_to(gmsg, idx).await;
                                                     Ok(())
                                                 }
                                             }
-                                        },
+                                        }
                                     }
                                 }
                                 PayloadMessage::NonRetUnaryComputeFunctorMsg { dev_at, .. } => {
@@ -561,7 +652,7 @@ where
                                             info!("::actor-system::pre-dispatch payload-msg to actor #{:?}", _dev_at);
                                             self.deliver_to(gmsg, _dev_at as usize).await;
                                             Ok(())
-                                        },
+                                        }
                                         None => {
                                             let idle_actor = self.poll_ready_actor();
                                             match idle_actor {
@@ -572,14 +663,17 @@ where
                                                     Ok(())
                                                 }
                                                 Some(idx) => {
-                                                    info!("::actor-system::find avlb-actor-#{:?}", idx);
+                                                    info!(
+                                                        "::actor-system::find avlb-actor-#{:?}",
+                                                        idx
+                                                    );
                                                     info!("::actor-system::poll actor-#{} out from avlb-queue", idx);
                                                     info!("::actor-system::dispatch payload-msg to actor #{:?}", idx);
                                                     self.deliver_to(gmsg, idx).await;
                                                     Ok(())
                                                 }
                                             }
-                                        },
+                                        }
                                     }
                                 }
                                 PayloadMessage::UnaryComputeFunctorMsg { .. } => {

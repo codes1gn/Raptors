@@ -53,6 +53,14 @@ pub trait ExecutorLike {
         rhs: Arc<RwLock<Self::TensorType>>,
         out: Arc<RwLock<Self::TensorType>>,
     ) -> ();
+    fn tenary_compute_v2(
+        &mut self,
+        op: Self::OpCodeType,
+        first: Arc<RwLock<Self::TensorType>>,
+        second: Arc<RwLock<Self::TensorType>>,
+        third: Arc<RwLock<Self::TensorType>>,
+        out: Arc<RwLock<Self::TensorType>>,
+    ) -> ();
 }
 
 // wrap a dedicated executor module that only consider how to do computations
@@ -94,8 +102,9 @@ impl MockExecutor {
         ret: Arc<RwLock<T>>,
         shape: Vec<usize>,
     ) -> () {
-        info!("anchor - dma - {:?}", op);
+        info!("anchor - dma - {:?} - enter", op);
         thread::sleep(time::Duration::from_millis((1000) as u64));
+        info!("anchor - dma - {:?} - exit", op);
     }
 
     // ANCHOR
@@ -105,8 +114,10 @@ impl MockExecutor {
         arg: Arc<RwLock<T>>,
         ret: Arc<RwLock<T>>,
     ) -> () {
-        info!("anchor - unary - {:?}", op);
+        println!("{:?}", op);
+        info!("anchor - unary - {:?} - enter", op);
         thread::sleep(time::Duration::from_millis((1000) as u64));
+        info!("anchor - unary - {:?} - exit", op);
     }
 
     // ANCHOR
@@ -117,8 +128,22 @@ impl MockExecutor {
         rhs: Arc<RwLock<T>>,
         out: Arc<RwLock<T>>,
     ) -> () {
-        info!("anchor - binary - {:?}", op);
+        info!("anchor - binary - {:?} - enter", op);
         thread::sleep(time::Duration::from_millis((1000) as u64));
+        info!("anchor - binary - {:?} - exit", op);
+    }
+
+    pub fn mock_tenary_v2<T: TensorLike + Clone>(
+        &mut self,
+        op: MockOpCode,
+        first: Arc<RwLock<T>>,
+        second: Arc<RwLock<T>>,
+        third: Arc<RwLock<T>>,
+        out: Arc<RwLock<T>>,
+    ) -> () {
+        info!("anchor - binary - {:?} - enter", op);
+        thread::sleep(time::Duration::from_millis((1000) as u64));
+        info!("anchor - binary - {:?} - exit", op);
     }
 }
 
@@ -184,6 +209,20 @@ impl ExecutorLike for MockExecutor {
         info!("correct");
         info!("point enter #2");
         self.mock_binary_v2::<Self::TensorType>(op, lhs, rhs, out);
+        info!("point exit #2");
+    }
+
+    fn tenary_compute_v2(
+        &mut self,
+        op: Self::OpCodeType,
+        first: Arc<RwLock<Self::TensorType>>,
+        second: Arc<RwLock<Self::TensorType>>,
+        third: Arc<RwLock<Self::TensorType>>,
+        out: Arc<RwLock<Self::TensorType>>,
+    ) -> () {
+        info!("correct");
+        info!("point enter #2");
+        self.mock_tenary_v2::<Self::TensorType>(op, first, second, third, out);
         info!("point exit #2");
     }
 }
