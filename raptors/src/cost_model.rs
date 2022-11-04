@@ -24,10 +24,13 @@ pub enum MockOpCode {
     MulOp,
     DivOp,
     ConvOp,
+    ConvAddOp,
     ExpOp,
     ReluOp,
     SoftmaxOp,
     MaxpoolOp,
+    FlattenOp,
+    ReduceMeanOp,
     GemmOp,
     ReshapeOp,
     TransposeOp,
@@ -58,10 +61,13 @@ impl Default for CostModel {
         cost_model.insert(MockOpCode::MulOp, 71);
         cost_model.insert(MockOpCode::DivOp, 87);
         cost_model.insert(MockOpCode::ConvOp, 107);
+        cost_model.insert(MockOpCode::ConvAddOp, 107);
         cost_model.insert(MockOpCode::ExpOp, 173);
         cost_model.insert(MockOpCode::ReluOp, 173);
         cost_model.insert(MockOpCode::SoftmaxOp, 173);
         cost_model.insert(MockOpCode::MaxpoolOp, 173);
+        cost_model.insert(MockOpCode::FlattenOp, 173);
+        cost_model.insert(MockOpCode::ReduceMeanOp, 173);
         cost_model.insert(MockOpCode::GemmOp, 173);
         cost_model.insert(MockOpCode::ReshapeOp, 17);
         cost_model.insert(MockOpCode::TransposeOp, 97);
