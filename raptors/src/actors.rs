@@ -73,6 +73,12 @@ where
         }
     }
 
+    // fn fetch_and_handle(&mut self, msg: RaptorMessage<U, O>) -> Result<(), String> {
+    //     let future1 = async move {
+    //         self.fetch_and_handle_async(msg).await
+    //     };
+    // }
+
     fn fetch_and_handle(&mut self, msg: RaptorMessage<U, O>) -> Result<(), String> {
         match msg {
             RaptorMessage::LoadfreeMSG(_msg) => self.fetch_and_handle_message(_msg),
@@ -277,15 +283,16 @@ where
                 ..
             } => {
                 info!("::actors#{}::first-ready-checker checking", self.id);
-                first_ready_checker.try_recv();
+                first_ready_checker.blocking_recv();
+                // first_ready_checker.try_recv();
                 info!("::actors#{}::first-ready-checker ready", self.id);
 
                 info!("::actors#{}::second-ready-checker checking", self.id);
-                second_ready_checker.try_recv();
+                second_ready_checker.blocking_recv();
                 info!("::actors#{}::second-ready-checker ready", self.id);
 
                 info!("::actors#{}::third-ready-checker checking", self.id);
-                third_ready_checker.try_recv();
+                third_ready_checker.blocking_recv();
                 info!("::actors#{}::third-ready-checker ready", self.id);
 
                 info!("::actor#{}::enter-computation", self.id);
@@ -318,11 +325,11 @@ where
                 ..
             } => {
                 info!("::actors#{}::lhs-ready-checker checking", self.id);
-                lhs_ready_checker.try_recv();
+                lhs_ready_checker.blocking_recv();
                 info!("::actors#{}::lhs-ready-checker ready", self.id);
 
                 info!("::actors#{}::rhs-ready-checker checking", self.id);
-                rhs_ready_checker.try_recv();
+                rhs_ready_checker.blocking_recv();
                 info!("::actors#{}::rhs-ready-checker ready", self.id);
 
                 info!("::actor#{}::enter-computation", self.id);
@@ -355,9 +362,14 @@ where
                 ..
             } => {
                 // TODO need unary branch
-                info!("::actors#{}::inp-ready-checker checking", self.id);
-                inp_ready_checker.try_recv();
-                info!("::actors#{}::inp-ready-checker ready", self.id);
+                info!("::actors#{}::inp-ready-checker try-recv checking", self.id);
+                // use tokio::runtime::Handle;
+                // let handle = Handle::current();
+                // handle.spawn(async {
+                //     inp_ready_checker.await;
+                // });
+                inp_ready_checker.blocking_recv();
+                info!("::actors#{}::inp-ready-checker try-recv ready", self.id);
                 info!("::actor#{}::enter-computation", self.id);
                 let if_compute_successed = self.on_unary_compute_v2(op, inp, out);
                 // WIP let outs = self.on_unary_compute(op, inp).expect("compute failed");
@@ -388,7 +400,7 @@ where
             } => {
                 // TODO need unary branch
                 info!("::actors#{}::inp-ready-checker checking - DMA", self.id);
-                inp_ready_checker.try_recv();
+                inp_ready_checker.blocking_recv();
                 info!("::actors#{}::inp-ready-checker ready - DMA", self.id);
                 info!("::actor#{}::enter-computation - DMA", self.id);
                 let if_compute_successed = self.on_dma_operation(op, inp, out, shape);
@@ -467,6 +479,41 @@ where
                 Ok(())
             }
             _ => panic!("Unknown actormessage not implemented"),
+        }
+    }
+
+    pub fn run_blocking(&mut self) -> u32 {
+        loop {
+            match self.receiver.try_recv() {
+                Ok(_msg) => {
+                    info!("::actor#{}::receive msg from system", self.id);
+                    let status = self.fetch_and_handle(_msg);
+                }
+                Err(TryRecvError::Empty) => {
+                    let msg = build_loadfree_msg!("available", self.id);
+                    // TODO update build_msg with generalmessage
+                    self.respond_to.try_send(RaptorMessage::LoadfreeMSG(msg));
+                    info!("::actor#{}::tell supervisor i am available", self.id);
+                    use tokio::runtime::Handle;
+                    let handle = Handle::current();
+                    match handle.block_on(async { self.receiver.recv().await }) {
+                        // match self.receiver.recv().await {
+                        Some(_msg) => {
+                            info!("::actor#{}::receive msg from system", self.id);
+                            let status = self.fetch_and_handle(_msg);
+                        }
+                        None => {
+                            info!("::actor#{}::DROPPED BY SUPERVISOR -> HALTING", self.id);
+                            break 1;
+                        }
+                    }
+                }
+                Err(TryRecvError::Disconnected) => {
+                    info!("::actor#{}::DROPPED BY SUPERVISOR -> HALTING", self.id);
+                    break 1;
+                }
+                _ => (),
+            }
         }
     }
 

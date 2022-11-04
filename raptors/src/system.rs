@@ -124,7 +124,8 @@ where
     pub fn new(name: &str) -> Self {
         let (sender, receiver) = mpsc::channel(100);
         let mut system = ActorSystem::<T, U, O>::new(name, receiver, sender.clone());
-        // spawn_blocking(move || { system.run() });
+        // TODO use spawn_blocking for system thread
+        // spawn_blocking(move || { system.run_blocking() });
         tokio::spawn(async move { system.run().await });
         // tokio::spawn(async move { system.blocking_run() });
         // rayon::spawn(move || {
@@ -234,10 +235,16 @@ where
             let mut actor =
                 Actor::<T, U, O>::new(id, receiver, self.cloned_sendbox.clone(), typeid);
             info!("::actor_system::run-event-loop actor #{}", id);
-            // LEGACY WAY - all async
+            // LEGACY WAY - all async, not optimal for actor thread
             // tokio::spawn(async move { actor.run_async().await });
-            // NEW WAY - actor actions in blocking
-            tokio::spawn(async move { actor.run().await });
+            // method 2: - actor actions in blocking, should fail, use sync function in async
+            // runtime
+            // tokio::spawn(async move { actor.run().await });
+            // method 3: CALL run_blocking, should fail, since use blocking io in async io, is
+            // risky
+            // tokio::spawn(async move { actor.run_blocking() });
+            // method 4: spawn_blocking on run_blocking
+            spawn_blocking(move || actor.run_blocking());
 
             self.availables.push(id);
             info!("::actor-system::enqueue actor-#{} to avlb-queue", id);
